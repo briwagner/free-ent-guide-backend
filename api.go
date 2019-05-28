@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Cred struct {
 	Tms     string
 	Moviedb string
+	Port    int
 }
 
 func (c *Cred) getCreds() *Cred {
@@ -30,9 +31,11 @@ func (c *Cred) getCreds() *Cred {
 
 var tmsApi string
 var movieDb string
+var port string
 var today = time.Now()
 
-func getMovies(w http.ResponseWriter, r *http.Request) {
+// Response to /v1/movies?zip={ZIP}.
+func GetMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		enableCors(&w)
@@ -40,7 +43,7 @@ func getMovies(w http.ResponseWriter, r *http.Request) {
 			params := make(map[string]string)
 			params["zip"] = zip[0]
 			params["startDate"] = time.Now().Format("2006-01-02")
-			w.Write([]byte(getTMSReq(params, "movies/showings")))
+			w.Write([]byte(GetTMSReq(params, "movies/showings")))
 		} else {
 			w.Write([]byte("Must pass a valid zip code"))
 		}
@@ -85,7 +88,8 @@ func discoverMoviesReq(date string) (string, error) {
 	return string(body), nil
 }
 
-func discoverMovies(w http.ResponseWriter, r *http.Request) {
+// Response to /v1/discover?date={YYYY-MM-DD}.
+func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		enableCors(&w)
@@ -147,7 +151,7 @@ func getTvSearchReq(query string) string {
 	return string(body)
 }
 
-func getTMSReq(params map[string]string, loc string) string {
+func GetTMSReq(params map[string]string, loc string) string {
 	url := "http://data.tmsapi.com/v1.1/" + loc
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -184,7 +188,8 @@ func getTMSReq(params map[string]string, loc string) string {
 	return string(body)
 }
 
-func getTvMovies(w http.ResponseWriter, r *http.Request) {
+// Response to /v1/tv-movies?date={YYYY-MM-DD}.
+func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		enableCors(&w)
@@ -197,7 +202,7 @@ func getTvMovies(w http.ResponseWriter, r *http.Request) {
 				params := make(map[string]string)
 				params["startDate"] = date[0]
 				params["lineupId"] = "USA-TX42500-X"
-				req := getTMSReq(params, "movies/airings")
+				req := GetTMSReq(params, "movies/airings")
 				w.Write([]byte(req))
 				setCache(cacheKey, req)
 			} else {
@@ -205,6 +210,7 @@ func getTvMovies(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(cache))
 			}
 		} else {
+			w.WriteHeader(406)
 			w.Write([]byte("Must pass a date"))
 		}
 	default:
@@ -212,7 +218,8 @@ func getTvMovies(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getTvSports(w http.ResponseWriter, r *http.Request) {
+// Response to /v1/tv-sports?date={YYYY-MM-DD}.
+func GetTvSports(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		enableCors(&w)
@@ -225,7 +232,7 @@ func getTvSports(w http.ResponseWriter, r *http.Request) {
 				params := make(map[string]string)
 				params["startDate"] = date[0]
 				params["lineupId"] = "USA-TX42500-X"
-				req := getTMSReq(params, "sports/all/events/airings")
+				req := GetTMSReq(params, "sports/all/events/airings")
 				w.Write([]byte(req))
 				setCache(cacheKey, req)
 			} else {
@@ -240,7 +247,8 @@ func getTvSports(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getTvSearch(w http.ResponseWriter, r *http.Request) {
+// Response to /v1/tv-search?title={TITLE}.
+func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		enableCors(&w)
@@ -308,12 +316,13 @@ func main() {
 	c.getCreds()
 	tmsApi = c.Tms
 	movieDb = c.Moviedb
+	port = fmt.Sprintf(":%v", c.Port)
 
-	fmt.Println("ENT API is live. Listening on port 8000 ...")
-	http.HandleFunc("/v1/movies", getMovies)
-	http.HandleFunc("/v1/discover", discoverMovies)
-	http.HandleFunc("/v1/tv-movies", getTvMovies)
-	http.HandleFunc("/v1/tv-sports", getTvSports)
-	http.HandleFunc("/v1/tv-search", getTvSearch)
-	http.ListenAndServe(":8000", nil)
+	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
+	http.HandleFunc("/v1/movies", GetMovies)
+	http.HandleFunc("/v1/discover", DiscoverMovies)
+	http.HandleFunc("/v1/tv-movies", GetTvMovies)
+	http.HandleFunc("/v1/tv-sports", GetTvSports)
+	http.HandleFunc("/v1/tv-search", GetTvSearch)
+	http.ListenAndServe(port, nil)
 }
