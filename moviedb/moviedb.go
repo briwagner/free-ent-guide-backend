@@ -2,7 +2,6 @@ package moviedb
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,12 +17,12 @@ type Token struct {
 	Token   string `json:"request_token"`
 }
 
-func (m MovieDb) GetTrending() (int, string) {
+func (m MovieDb) GetTrending() (int, []byte) {
 	url := "https://api.themoviedb.org/3/trending/tv/week"
 	return m.Fetch(url)
 }
 
-func (m MovieDb) GetDiscover() (int, string) {
+func (m MovieDb) GetDiscover() (int, []byte) {
 	url := "https://api.themoviedb.org/3/discover/movie"
 	return m.Fetch(url)
 }
@@ -34,11 +33,10 @@ func (m MovieDb) GetToken() (int, Token) {
 
 	var token Token
 	json.Unmarshal([]byte(b), &token)
-	fmt.Printf("token %v", token)
 	return s, token
 }
 
-func (m MovieDb) Fetch(url string) (int, string) {
+func (m MovieDb) Fetch(url string) (int, []byte) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatalf("Cannot build URL for MovieDB. %v", err)
@@ -58,8 +56,8 @@ func (m MovieDb) Fetch(url string) (int, string) {
 	resp.Body.Close()
 
 	if err != nil {
-		return 0, string("Cannot parse body.")
+		return 0, []byte("Cannot parse body.")
 	}
 
-	return resp.StatusCode, string(body)
+	return resp.StatusCode, body
 }
