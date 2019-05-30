@@ -24,7 +24,7 @@ func TestGetMovies(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Hander returned wrong status. Got %v, Want %v", status, http.StatusOK)
+		t.Errorf("Handler returned wrong status. Got %v, Want %v", status, http.StatusOK)
 	}
 }
 
