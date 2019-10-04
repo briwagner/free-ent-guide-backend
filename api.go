@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,10 +12,33 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+var c Cred
+var tmsApi string
+var movieDb string
+var port string
+var env string
+var today = time.Now()
+
+func main() {
+	c.getCreds()
+	tmsApi = c.Tms
+	movieDb = c.Moviedb
+	port = fmt.Sprintf(":%v", c.Port)
+
+	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
+	http.HandleFunc("/v1/movies", GetMovies)
+	http.HandleFunc("/v1/discover", DiscoverMovies)
+	http.HandleFunc("/v1/tv-movies", GetTvMovies)
+	http.HandleFunc("/v1/tv-sports", GetTvSports)
+	http.HandleFunc("/v1/tv-search", GetTvSearch)
+	http.ListenAndServe(port, nil)
+}
+
 type Cred struct {
 	Tms     string
 	Moviedb string
 	Port    int
+	Env     string
 }
 
 func (c *Cred) getCreds() *Cred {
@@ -28,11 +52,6 @@ func (c *Cred) getCreds() *Cred {
 	}
 	return c
 }
-
-var tmsApi string
-var movieDb string
-var port string
-var today = time.Now()
 
 // Response to /v1/movies?zip={ZIP}.
 func GetMovies(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +113,10 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		enableCors(&w)
 		cacheKey := "discover"
-		if date, ok := r.URL.Query()["date"]; ok {
+		if date, ok := r.URL.Query()["date"]; !ok {
+			w.WriteHeader(406)
+			w.Write([]byte("Must pass a date"))
+		} else {
 			cache, err := getCache(cacheKey)
 			if err != nil {
 				cacheStatus(&w, false)
@@ -110,9 +132,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 				cacheStatus(&w, true)
 				w.Write([]byte(cache))
 			}
-		} else {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a date"))
+
 		}
 	default:
 		w.WriteHeader(403)
@@ -263,6 +283,9 @@ func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCache(key string) (string, error) {
+	if env != "prod" {
+		return "", errors.New("Caching is not enabled")
+	}
 	addr := "localhost:6379"
 	pw := ""
 	db := 0
@@ -280,6 +303,9 @@ func getCache(key string) (string, error) {
 }
 
 func setCache(key string, val string) {
+	if env != "prod" {
+		return
+	}
 	addr := "localhost:6379"
 	pw := ""
 	db := 0
@@ -298,6 +324,10 @@ func setCache(key string, val string) {
 }
 
 func enableCors(w *http.ResponseWriter) {
+	if env != "prod" {
+		(*w).Header().Set("Access-Control-Allow-Origin", "*")
+		return
+	}
 	(*w).Header().Set("Access-Control-Allow-Origin", "http://www.free-entertainment-guide.com")
 }
 
@@ -309,20 +339,4 @@ func cacheStatus(w *http.ResponseWriter, status bool) {
 		(*w).Header().Set("Cache", "MISS")
 		fmt.Println("Cache MISS")
 	}
-}
-
-func main() {
-	var c Cred
-	c.getCreds()
-	tmsApi = c.Tms
-	movieDb = c.Moviedb
-	port = fmt.Sprintf(":%v", c.Port)
-
-	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
-	http.HandleFunc("/v1/movies", GetMovies)
-	http.HandleFunc("/v1/discover", DiscoverMovies)
-	http.HandleFunc("/v1/tv-movies", GetTvMovies)
-	http.HandleFunc("/v1/tv-sports", GetTvSports)
-	http.HandleFunc("/v1/tv-search", GetTvSearch)
-	http.ListenAndServe(port, nil)
 }

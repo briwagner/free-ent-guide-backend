@@ -11,3 +11,7 @@ TV Maze
 TheMovieDB.org
   * discover movies (/v1/discover?date={YYYY-MM-DD})
   * TODO: tv show popular: https://developers.themoviedb.org/3/tv/get-popular-tv-shows
+
+TODO:
+  - set a username and pass on Redis; externalize to creds.yaml file
+  - add caching to movie by zip lookup, GetTMSReq
