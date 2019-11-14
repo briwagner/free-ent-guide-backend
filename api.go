@@ -9,14 +9,23 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	yaml "gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
 )
+
+type Cred struct {
+	Tms           string `mapstructure:"tms"`
+	Moviedb       string `mapstructure:"moviedb"`
+	Port          int    `mapstructure:"port"`
+	Env           string `mapstructure:"env"`
+	RedisPort     string `mapstructure:"redis_port"`
+	RedisPassword string `mapstructure:"redis_password"`
+	RedisDB       int    `mapstructure:"redis_db"`
+}
 
 var c Cred
 var tmsApi string
 var movieDb string
 var port string
-var env string
 var today = time.Now()
 
 func main() {
@@ -34,23 +43,19 @@ func main() {
 	http.ListenAndServe(port, nil)
 }
 
-type Cred struct {
-	Tms     string
-	Moviedb string
-	Port    int
-	Env     string
-}
-
-func (c *Cred) getCreds() *Cred {
-	yamlFile, err := ioutil.ReadFile("creds.yaml")
+func (c *Cred) getCreds() {
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	// SetConfigFile() can error as it looks for absolute path.
+	viper.SetConfigName("creds")
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Printf("File not loading: %v", err)
+		log.Fatalf("File not loading: %v", err)
 	}
-	err = yaml.Unmarshal(yamlFile, c)
+	err = viper.Unmarshal(&c)
 	if err != nil {
 		log.Fatalf("No credentials %v", err)
 	}
-	return c
 }
 
 // Response to /v1/movies?zip={ZIP}.
@@ -171,6 +176,7 @@ func getTvSearchReq(query string) string {
 	return string(body)
 }
 
+// General getter for API calls to TMS service.
 func GetTMSReq(params map[string]string, loc string) string {
 	url := "http://data.tmsapi.com/v1.1/" + loc
 
@@ -283,12 +289,12 @@ func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCache(key string) (string, error) {
-	if env != "prod" {
+	if c.Env != "prod" {
 		return "", errors.New("Caching is not enabled")
 	}
-	addr := "localhost:6379"
-	pw := ""
-	db := 0
+	addr := c.RedisPort
+	pw := c.RedisPassword
+	db := c.RedisDB
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
@@ -303,12 +309,12 @@ func getCache(key string) (string, error) {
 }
 
 func setCache(key string, val string) {
-	if env != "prod" {
+	if c.Env != "prod" {
 		return
 	}
-	addr := "localhost:6379"
-	pw := ""
-	db := 0
+	addr := c.RedisPort
+	pw := c.RedisPassword
+	db := c.RedisDB
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
@@ -324,7 +330,7 @@ func setCache(key string, val string) {
 }
 
 func enableCors(w *http.ResponseWriter) {
-	if env != "prod" {
+	if c.Env != "prod" {
 		(*w).Header().Set("Access-Control-Allow-Origin", "*")
 		return
 	}
