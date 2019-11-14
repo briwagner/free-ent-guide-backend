@@ -15,3 +15,8 @@ TheMovieDB.org
 TODO:
   - set a username and pass on Redis; externalize to creds.yaml file
   - add caching to movie by zip lookup, GetTMSReq
+  - fix episode links showing on search results
+  - fetch theaters in zip code
+
+Creds:
+  - port is 9000 on local, 8000 for prod
