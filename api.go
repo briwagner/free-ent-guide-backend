@@ -20,6 +20,7 @@ type Cred struct {
 	RedisPort     string `mapstructure:"redis_port"`
 	RedisPassword string `mapstructure:"redis_password"`
 	RedisDB       int    `mapstructure:"redis_db"`
+	Timezone      string `mapstructure:"timezone"`
 }
 
 var c Cred
@@ -66,7 +67,16 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 		if zip, ok := r.URL.Query()["zip"]; ok {
 			params := make(map[string]string)
 			params["zip"] = zip[0]
-			params["startDate"] = time.Now().Format("2006-01-02")
+
+			// Set timezone to avoid using UTC on server.
+			zone, err := time.LoadLocation(c.Timezone)
+			if err != nil {
+				log.Printf("Cannot load timezone %e", err)
+			}
+			tt := time.Now().In(zone).Format("2006-01-02")
+			log.Printf("Cinema request zip: %s, on: %v", zip[0], tt)
+
+			params["startDate"] = tt
 			w.Write([]byte(GetTMSReq(params, "movies/showings")))
 		} else {
 			w.Write([]byte("Must pass a valid zip code"))
