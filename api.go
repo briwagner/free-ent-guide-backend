@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Cred holds app credentials.
 type Cred struct {
 	Tms           string `mapstructure:"tms"`
 	Moviedb       string `mapstructure:"moviedb"`
@@ -24,18 +25,28 @@ type Cred struct {
 }
 
 var c Cred
-var tmsApi string
-var movieDb string
-var port string
-var today = time.Now()
+var cacheClient *redis.Client
 
 func main() {
+	// Set-up application config.
 	c.getCreds()
-	tmsApi = c.Tms
-	movieDb = c.Moviedb
-	port = fmt.Sprintf(":%v", c.Port)
+	port := fmt.Sprintf(":%v", c.Port)
+
+	if c.Env == "prod" {
+		// Set-up cache client for requests.
+		addr := c.RedisPort
+		pw := c.RedisPassword
+		db := c.RedisDB
+
+		cacheClient = redis.NewClient(&redis.Options{
+			Addr:     addr,
+			Password: pw,
+			DB:       db,
+		})
+	}
 
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
+
 	http.HandleFunc("/v1/movies", GetMovies)
 	http.HandleFunc("/v1/discover", DiscoverMovies)
 	http.HandleFunc("/v1/tv-movies", GetTvMovies)
@@ -59,7 +70,8 @@ func (c *Cred) getCreds() {
 	}
 }
 
-// Response to /v1/movies?zip={ZIP}.
+// GetMovies handler for movies by zip.
+// Responds to /v1/movies?zip={ZIP}.
 func GetMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -94,11 +106,11 @@ func discoverMoviesReq(date string) (string, error) {
 	var dateParam string
 
 	q := req.URL.Query()
-	q.Add("api_key", movieDb)
+	q.Add("api_key", c.Moviedb)
 	if date != "" {
 		dateParam = date
 	} else {
-		dateParam = today.Format("2006-01-02")
+		dateParam = time.Now().Format("2006-01-02")
 	}
 	q.Add("primary_release_date.gte", dateParam)
 	q.Add("adult", "false")
@@ -122,7 +134,8 @@ func discoverMoviesReq(date string) (string, error) {
 	return string(body), nil
 }
 
-// Response to /v1/discover?date={YYYY-MM-DD}.
+// DiscoverMovies handler for coming-soon movies.
+// Responds to /v1/discover?date={YYYY-MM-DD}.
 func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -186,7 +199,7 @@ func getTvSearchReq(query string) string {
 	return string(body)
 }
 
-// General getter for API calls to TMS service.
+// GetTMSReq is general getter for API calls to TMS service.
 func GetTMSReq(params map[string]string, loc string) string {
 	url := "http://data.tmsapi.com/v1.1/" + loc
 
@@ -197,7 +210,7 @@ func GetTMSReq(params map[string]string, loc string) string {
 	}
 
 	q := req.URL.Query()
-	q.Add("api_key", tmsApi)
+	q.Add("api_key", c.Tms)
 	for k, v := range params {
 		q.Add(k, v)
 	}
@@ -224,7 +237,7 @@ func GetTMSReq(params map[string]string, loc string) string {
 	return string(body)
 }
 
-// Response to /v1/tv-movies?date={YYYY-MM-DD}.
+// GetTvMovies responds to /v1/tv-movies?date={YYYY-MM-DD}.
 func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -254,7 +267,7 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Response to /v1/tv-sports?date={YYYY-MM-DD}.
+// GetTvSports responds to /v1/tv-sports?date={YYYY-MM-DD}.
 func GetTvSports(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -283,7 +296,7 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Response to /v1/tv-search?title={TITLE}.
+// GetTvSearch responds to /v1/tv-search?title={TITLE}.
 func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -302,16 +315,8 @@ func getCache(key string) (string, error) {
 	if c.Env != "prod" {
 		return "", errors.New("Caching is not enabled")
 	}
-	addr := c.RedisPort
-	pw := c.RedisPassword
-	db := c.RedisDB
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: pw,
-		DB:       db,
-	})
-	val, err := client.Get(key).Result()
+	val, err := cacheClient.Get(key).Result()
 	if err != nil {
 		log.Printf("Key not found for: %v", key)
 	}
@@ -322,18 +327,9 @@ func setCache(key string, val string) {
 	if c.Env != "prod" {
 		return
 	}
-	addr := c.RedisPort
-	pw := c.RedisPassword
-	db := c.RedisDB
-
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: pw,
-		DB:       db,
-	})
 
 	// Default cache timing to one hour.
-	err := client.Set(key, val, time.Hour).Err()
+	err := cacheClient.Set(key, val, time.Hour).Err()
 	if err != nil {
 		fmt.Println(err)
 	}
