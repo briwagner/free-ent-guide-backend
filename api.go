@@ -249,7 +249,7 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 				cacheStatus(&w, false)
 
 				params := make(map[string]string)
-				params["startDate"] = date[0]
+				params["startDateTime"] = date[0]
 				params["lineupId"] = "USA-TX42500-X"
 				req := GetTMSReq(params, "movies/airings")
 				w.Write([]byte(req))
@@ -279,7 +279,7 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 				cacheStatus(&w, false)
 
 				params := make(map[string]string)
-				params["startDate"] = date[0]
+				params["startDateTime"] = date[0]
 				params["lineupId"] = "USA-TX42500-X"
 				req := GetTMSReq(params, "sports/all/events/airings")
 				w.Write([]byte(req))
