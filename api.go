@@ -232,7 +232,9 @@ func GetTMSReq(params map[string]string, loc string) string {
 	}
 
 	if len(body) == 0 {
-		return "No programs found"
+		// During Covid, some requests return no showings.
+		log.Printf("No programs found: %s", loc)
+		return ""
 	}
 	return string(body)
 }
