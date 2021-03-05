@@ -21,6 +21,7 @@ type Cred struct {
 	RedisPort     string `mapstructure:"redis_port"`
 	RedisPassword string `mapstructure:"redis_password"`
 	RedisDB       int    `mapstructure:"redis_db"`
+	Cache         bool   `mapstructure:"use_cache"`
 	Timezone      string `mapstructure:"timezone"`
 }
 
@@ -32,7 +33,7 @@ func main() {
 	c.getCreds()
 	port := fmt.Sprintf(":%v", c.Port)
 
-	if c.Env == "prod" {
+	if c.Cache {
 		// Set-up cache client for requests.
 		addr := c.RedisPort
 		pw := c.RedisPassword
@@ -47,12 +48,16 @@ func main() {
 
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
 
-	http.HandleFunc("/v1/movies", GetMovies)
-	http.HandleFunc("/v1/discover", DiscoverMovies)
-	http.HandleFunc("/v1/tv-movies", GetTvMovies)
-	http.HandleFunc("/v1/tv-sports", GetTvSports)
-	http.HandleFunc("/v1/tv-search", GetTvSearch)
-	http.ListenAndServe(port, nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/movies", GetMovies)
+	mux.HandleFunc("/v1/discover", DiscoverMovies)
+	mux.HandleFunc("/v1/tv-movies", GetTvMovies)
+	mux.HandleFunc("/v1/tv-sports", GetTvSports)
+	mux.HandleFunc("/v1/tv-search", GetTvSearch)
+
+	mux.HandleFunc("/v1/users/get-zip", UsersGetZip)
+
+	http.ListenAndServe(port, mux)
 }
 
 func (c *Cred) getCreds() {
@@ -67,6 +72,35 @@ func (c *Cred) getCreds() {
 	err = viper.Unmarshal(&c)
 	if err != nil {
 		log.Fatalf("No credentials %v", err)
+	}
+}
+
+// UsersGetZip returns the stored zip-codes for a user.
+// Responds to /v1/users/get-zip?username={name}
+func UsersGetZip(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		enableCors(&w)
+		if c.Cache != true {
+			w.Write([]byte("Database not found."))
+			return
+		}
+		username, ok := r.URL.Query()["username"]
+		if !ok {
+			w.Write([]byte("Must pass a username"))
+			return
+		}
+
+		userZip, err := getCache(fmt.Sprintf("user:%s", username[0]))
+		if err != nil {
+			fmt.Println(err)
+			w.Write([]byte("User not found"))
+			return
+		}
+		w.Write([]byte(userZip))
+	default:
+		w.WriteHeader(403)
+		w.Write([]byte("Only GET requests are accepted."))
 	}
 }
 
@@ -145,7 +179,10 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a date"))
 		} else {
+			// Check cache for stored response.
 			cache, err := getCache(cacheKey)
+
+			// No cache found.
 			if err != nil {
 				cacheStatus(&w, false)
 
@@ -157,6 +194,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 				}
 				w.Write([]byte(req))
 			} else {
+				// Cache found.
 				cacheStatus(&w, true)
 				w.Write([]byte(cache))
 			}
@@ -314,7 +352,7 @@ func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCache(key string) (string, error) {
-	if c.Env != "prod" {
+	if c.Cache != true {
 		return "", errors.New("Caching is not enabled")
 	}
 
@@ -326,7 +364,7 @@ func getCache(key string) (string, error) {
 }
 
 func setCache(key string, val string) {
-	if c.Env != "prod" {
+	if c.Cache != true {
 		return
 	}
 
