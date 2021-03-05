@@ -19,4 +19,15 @@ TODO:
   - fetch theaters in zip code
 
 Creds:
-  - port is 9000 on local, 8000 for prod
+
+Application looks for a "creds.yaml" file in the root of the project. This file is required to build, as it is read by Viper to set up the application.
+
+  - tms: App ID for TMS.
+  - moviedb: Access key for Movie DB
+  - port: Port number
+  - env: Environment flag, e.g. "dev" or "prod"
+  - redis_port: URL for Redis with hostname and port
+  - redis_password: Redis password
+  - redis_db: Redis database number
+  - use_cache: Boolean flag to enable cache/storage
+  - timezone: Default timezone for server, used in querying results
