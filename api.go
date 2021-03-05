@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"free-ent-guide-backend/models"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -56,6 +58,8 @@ func main() {
 	mux.HandleFunc("/v1/tv-search", GetTvSearch)
 
 	mux.HandleFunc("/v1/users/get-zip", UsersGetZip)
+	mux.HandleFunc("/v1/users/clear-zip", UsersClearZip)
+	mux.HandleFunc("/v1/users/add-zip", UsersAddZip)
 
 	http.ListenAndServe(port, mux)
 }
@@ -82,25 +86,126 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		enableCors(&w)
 		if c.Cache != true {
+			w.WriteHeader(500)
 			w.Write([]byte("Database not found."))
 			return
 		}
-		username, ok := r.URL.Query()["username"]
+		qUser, ok := r.URL.Query()["username"]
 		if !ok {
+			w.WriteHeader(406)
 			w.Write([]byte("Must pass a username"))
 			return
 		}
 
-		userZip, err := getCache(fmt.Sprintf("user:%s", username[0]))
+		username := qUser[0]
+		records, err := cacheClient.LRange(fmt.Sprintf("user:%s", username), 0, -1).Result()
 		if err != nil {
-			fmt.Println(err)
+			w.WriteHeader(404)
 			w.Write([]byte("User not found"))
 			return
 		}
-		w.Write([]byte(userZip))
+
+		user := &models.User{
+			Name: username,
+			Zips: records,
+		}
+		jsonU, err := json.Marshal(user)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("JSON error"))
+			return
+		}
+		w.Write([]byte(jsonU))
 	default:
-		w.WriteHeader(403)
+		w.WriteHeader(405)
 		w.Write([]byte("Only GET requests are accepted."))
+	}
+}
+
+// UsersAddZip creates or appends a zip code to user in storage.
+// Responds to /v1/users/add-zip?username={name}&zip={zipcode}
+func UsersAddZip(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		enableCors(&w)
+		if c.Cache != true {
+			w.Write([]byte("Database not found."))
+			return
+		}
+
+		// Get parameters from request.
+		qUser, ok := r.URL.Query()["username"]
+		if !ok {
+			w.WriteHeader(406)
+			w.Write([]byte("Must pass a username"))
+			return
+		}
+		qZip, ok := r.URL.Query()["zip"]
+		if !ok {
+			w.WriteHeader(406)
+			w.Write([]byte("Must pass a zip"))
+			return
+		}
+
+		u := qUser[0]
+		z := qZip[0]
+
+		// User:{name} is a List type.
+		res := cacheClient.RPush(fmt.Sprintf("user:%s", u), z)
+		if res.Err() != nil {
+			log.Printf("Storage error %v", res.Err())
+			w.WriteHeader(500)
+			w.Write([]byte("Error storing zip."))
+			return
+		}
+
+		// Reload data to return to client.
+		records, err := cacheClient.LRange(fmt.Sprintf("user:%s", u), 0, -1).Result()
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Error fetching new data."))
+			return
+		}
+
+		user := &models.User{Zips: records}
+		jsonU, err := json.Marshal(user)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("JSON error"))
+			return
+		}
+		w.Write([]byte(jsonU))
+	default:
+		w.WriteHeader(405)
+		w.Write([]byte("Only POST requests are accepted."))
+	}
+}
+
+// UsersClearZip removes all stored zip-codes.
+// Responds to /v1/users/clear-zip?username={name}
+func UsersClearZip(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		enableCors(&w)
+		if c.Cache != true {
+			w.Write([]byte("Database not found."))
+			return
+		}
+
+		qUser, ok := r.URL.Query()["username"]
+		if !ok {
+			w.Write([]byte("Must pass a username"))
+			return
+		}
+		res := cacheClient.Del(fmt.Sprintf("user:%s", qUser[0]))
+		if res.Err() != nil {
+			w.Write([]byte("Error removing from storage."))
+			return
+		}
+		w.Write([]byte("OK"))
+	default:
+		w.WriteHeader(405)
+		w.Write([]byte("Only POST requests are accepted."))
 	}
 }
 
@@ -190,7 +295,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 				if getErr != nil {
 					w.WriteHeader(500)
 				} else {
-					setCache(cacheKey, req)
+					_ = setCache(cacheKey, req, time.Hour)
 				}
 				w.Write([]byte(req))
 			} else {
@@ -201,7 +306,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 
 		}
 	default:
-		w.WriteHeader(403)
+		w.WriteHeader(405)
 		w.Write([]byte("Only GET requests are accepted"))
 	}
 }
@@ -293,7 +398,7 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 				params["lineupId"] = "USA-TX42500-X"
 				req := GetTMSReq(params, "movies/airings")
 				w.Write([]byte(req))
-				setCache(cacheKey, req)
+				_ = setCache(cacheKey, req, time.Hour)
 			} else {
 				cacheStatus(&w, true)
 				w.Write([]byte(cache))
@@ -323,7 +428,7 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 				params["lineupId"] = "USA-TX42500-X"
 				req := GetTMSReq(params, "sports/all/events/airings")
 				w.Write([]byte(req))
-				setCache(cacheKey, req)
+				_ = setCache(cacheKey, req, time.Hour)
 			} else {
 				cacheStatus(&w, true)
 				w.Write([]byte(cache))
@@ -363,16 +468,17 @@ func getCache(key string) (string, error) {
 	return val, err
 }
 
-func setCache(key string, val string) {
+func setCache(key string, val string, t time.Duration) error {
 	if c.Cache != true {
-		return
+		return errors.New("No storage found")
 	}
 
 	// Default cache timing to one hour.
-	err := cacheClient.Set(key, val, time.Hour).Err()
+	err := cacheClient.Set(key, val, t).Err()
 	if err != nil {
 		fmt.Println(err)
 	}
+	return err
 }
 
 func enableCors(w *http.ResponseWriter) {
