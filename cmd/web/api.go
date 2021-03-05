@@ -55,8 +55,9 @@ func main() {
 	mux.HandleFunc("/v1/tv-search", GetTvSearch)
 
 	mux.HandleFunc("/v1/users/get-zip", UsersGetZip)
-	mux.HandleFunc("/v1/users/clear-zip", UsersClearZip)
 	mux.HandleFunc("/v1/users/add-zip", UsersAddZip)
+	mux.HandleFunc("/v1/users/delete-zip", UsersDeleteZip)
+	mux.HandleFunc("/v1/users/clear-zip", UsersClearZip)
 
 	http.ListenAndServe(port, mux)
 }

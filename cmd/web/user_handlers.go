@@ -38,13 +38,14 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 			Name: username,
 			Zips: records,
 		}
-		jsonU, err := json.Marshal(user)
+		userJSON, err := json.Marshal(user)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("JSON error"))
 			return
 		}
-		w.Write([]byte(jsonU))
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(userJSON))
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only GET requests are accepted."))
@@ -97,13 +98,62 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user := &models.User{Zips: records}
-		jsonU, err := json.Marshal(user)
+		userJSON, err := json.Marshal(user)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("JSON error"))
 			return
 		}
-		w.Write([]byte(jsonU))
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(userJSON))
+	default:
+		w.WriteHeader(405)
+		w.Write([]byte("Only POST requests are accepted."))
+	}
+}
+
+// UsersDeleteZip removes a zip-code from a users list.
+// Responds to /v1/users/delete-zip?username={name}&zip={zipcode}
+func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		enableCors(&w)
+		if c.Cache != true {
+			w.Write([]byte("Database not found."))
+			return
+		}
+
+		// Get parameters from request.
+		qUser, ok := r.URL.Query()["username"]
+		if !ok {
+			w.WriteHeader(406)
+			w.Write([]byte("Must pass a username"))
+			return
+		}
+		qZip, ok := r.URL.Query()["zip"]
+		if !ok {
+			w.WriteHeader(406)
+			w.Write([]byte("Must pass a zip"))
+			return
+		}
+
+		u := qUser[0]
+		z := qZip[0]
+
+		res, err := cacheClient.LRem(fmt.Sprintf("user:%s", u), 0, z).Result()
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Error deleting data."))
+			return
+		}
+		var msg string
+		if res == 1 {
+			msg = "ok"
+		} else {
+			msg = "not found"
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(msg))
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only POST requests are accepted."))
