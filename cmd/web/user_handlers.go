@@ -87,18 +87,11 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 		}
 
 		username := qUser[0]
+
 		records, err := cacheClient.LRange(fmt.Sprintf("user:%s:zip", username), 0, -1).Result()
 		if err != nil || len(records) == 0 {
 			w.WriteHeader(404)
 			w.Write([]byte("Not found"))
-			return
-		}
-
-		// Verify current-user has access to requested resource.
-		authUser := r.Context().Value(ContextUserKey)
-		if authUser != username {
-			w.WriteHeader(401)
-			w.Write([]byte("Not authorized for resource"))
 			return
 		}
 
@@ -214,7 +207,9 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if res == 1 {
+		// TODO: restrict entering repeated values.
+		// Redis returns # of items removed.
+		if res >= 1 {
 			w.Write([]byte("ok"))
 		} else {
 			w.Write([]byte("not found"))

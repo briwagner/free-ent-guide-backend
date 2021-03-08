@@ -63,12 +63,13 @@ func main() {
 	mux.HandleFunc("/v1/tv-sports", GetTvSports)
 	mux.HandleFunc("/v1/tv-search", GetTvSearch)
 
-	mux.HandleFunc("/v1/users/get-zip", AuthHandler(http.HandlerFunc(UsersGetZip))).Methods("GET")
-	mux.HandleFunc("/v1/users/add-zip", UsersAddZip)
-	mux.HandleFunc("/v1/users/delete-zip", UsersDeleteZip)
-	mux.HandleFunc("/v1/users/clear-zip", UsersClearZip)
 	mux.HandleFunc("/v1/users/create", UsersCreate)
 	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken))).Methods("GET")
+
+	mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip)))).Methods("GET")
+	mux.HandleFunc("/v1/users/add-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersAddZip))))
+	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersDeleteZip))))
+	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip))))
 
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
 	http.ListenAndServe(port, mux)
