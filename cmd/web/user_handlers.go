@@ -36,21 +36,21 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 func UsersCreate(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		qUser, ok := r.URL.Query()["username"]
-		if !ok {
+		qUser := r.URL.Query().Get("username")
+		if qUser == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a username"))
 			return
 		}
 
-		qPass, ok := r.URL.Query()["password"]
-		if !ok {
+		qPass := r.URL.Query().Get("password")
+		if qPass == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a password"))
 			return
 		}
 
-		user := &models.User{Name: qUser[0], Password: qPass[0]}
+		user := &models.User{Name: qUser, Password: qPass}
 		err := user.Create(cacheClient)
 		if err != nil {
 			w.WriteHeader(500)
@@ -79,16 +79,14 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Database not found."))
 			return
 		}
-		qUser, ok := r.URL.Query()["username"]
-		if !ok {
+		qUser := r.URL.Query().Get("username")
+		if qUser == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a username"))
 			return
 		}
 
-		username := qUser[0]
-
-		records, err := cacheClient.LRange(fmt.Sprintf("user:%s:zip", username), 0, -1).Result()
+		records, err := cacheClient.LRange(fmt.Sprintf("user:%s:zip", qUser), 0, -1).Result()
 		if err != nil || len(records) == 0 {
 			w.WriteHeader(404)
 			w.Write([]byte("Not found"))
@@ -96,7 +94,7 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user := &models.User{
-			Name: username,
+			Name: qUser,
 			Zips: records,
 		}
 		userJSON, err := json.Marshal(user)
@@ -125,23 +123,20 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Get parameters from request.
-		qUser, ok := r.URL.Query()["username"]
-		if !ok {
+		qUser := r.URL.Query().Get("username")
+		if qUser == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a username"))
 			return
 		}
-		qZip, ok := r.URL.Query()["zip"]
-		if !ok {
+		qZip := r.URL.Query().Get("zip")
+		if qZip == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a zip"))
 			return
 		}
 
-		u := qUser[0]
-		z := qZip[0]
-
-		res := cacheClient.RPush(fmt.Sprintf("user:%s:zip", u), z)
+		res := cacheClient.RPush(fmt.Sprintf("user:%s:zip", qUser), qZip)
 		if res.Err() != nil {
 			log.Printf("Storage error %v", res.Err())
 			w.WriteHeader(500)
@@ -150,7 +145,7 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Reload data to return to client.
-		records, err := cacheClient.LRange(fmt.Sprintf("user:%s:zip", u), 0, -1).Result()
+		records, err := cacheClient.LRange(fmt.Sprintf("user:%s:zip", qUser), 0, -1).Result()
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error fetching new data."))
@@ -184,30 +179,27 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Get parameters from request.
-		qUser, ok := r.URL.Query()["username"]
-		if !ok {
+		qUser := r.URL.Query().Get("username")
+		if qUser == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a username"))
 			return
 		}
-		qZip, ok := r.URL.Query()["zip"]
-		if !ok {
+		qZip := r.URL.Query().Get("zip")
+		if qZip == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a zip"))
 			return
 		}
 
-		u := qUser[0]
-		z := qZip[0]
-
-		res, err := cacheClient.LRem(fmt.Sprintf("user:%s:zip", u), 0, z).Result()
+		res, err := cacheClient.LRem(fmt.Sprintf("user:%s:zip", qUser), 0, qZip).Result()
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error deleting data."))
 			return
 		}
 
-		// TODO: restrict entering repeated values.
+		// TODO: restrict entering repeated values. Then change this to == 1.
 		// Redis returns # of items removed.
 		if res >= 1 {
 			w.Write([]byte("ok"))
@@ -231,12 +223,12 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		qUser, ok := r.URL.Query()["username"]
-		if !ok {
+		qUser := r.URL.Query().Get("username")
+		if qUser == "" {
 			w.Write([]byte("Must pass a username"))
 			return
 		}
-		res := cacheClient.Del(fmt.Sprintf("user:%s:zip", qUser[0]))
+		res := cacheClient.Del(fmt.Sprintf("user:%s:zip", qUser))
 		if res.Err() != nil {
 			w.Write([]byte("Error removing from storage."))
 			return
