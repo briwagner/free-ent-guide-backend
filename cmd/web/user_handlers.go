@@ -6,7 +6,30 @@ import (
 	"free-ent-guide-backend/models"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/shaj13/go-guardian/v2/auth"
 )
+
+// UsersCreateToken will return token for authenticated users.
+// Responds to /v1/users/token
+func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(ContextUserKey)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"iss": "ent_app",
+		"sub": username,
+		"aud": "any",
+		"exp": time.Now().Add(time.Minute * time.Duration(c.TokenDuration)).Unix(),
+	})
+
+	jwtToken, _ := token.SignedString([]byte(c.TokenSecret))
+
+	user := auth.NewDefaultUser(fmt.Sprintf("%s", username), "1", nil, nil)
+	auth.Append(tokenStrategy, jwtToken, user)
+	body := fmt.Sprintf("token: %s \n", jwtToken)
+	w.Write([]byte(body))
+}
 
 // UsersCreate adds a user to storage.
 // Responds to /v1/users/create
@@ -42,6 +65,9 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UsersCreateToken returns a token if user is authenticated.
+// Responds to /v1/users/token
+
 // UsersGetZip returns the stored zip-codes for a user.
 // Responds to /v1/users/get-zip?username={name}
 func UsersGetZip(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +91,14 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 		if err != nil || len(records) == 0 {
 			w.WriteHeader(404)
 			w.Write([]byte("Not found"))
+			return
+		}
+
+		// Verify current-user has access to requested resource.
+		authUser := r.Context().Value(ContextUserKey)
+		if authUser != username {
+			w.WriteHeader(401)
+			w.Write([]byte("Not authorized for resource"))
 			return
 		}
 
