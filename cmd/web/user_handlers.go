@@ -61,7 +61,7 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	default:
 		w.WriteHeader(405)
-		w.Write([]byte("Only GET requests are accepted."))
+		w.Write([]byte("Only POST requests are accepted."))
 	}
 }
 
