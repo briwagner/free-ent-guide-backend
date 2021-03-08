@@ -22,6 +22,8 @@ type Cred struct {
 	RedisDB       int    `mapstructure:"redis_db"`
 	Cache         bool   `mapstructure:"use_cache"`
 	Timezone      string `mapstructure:"timezone"`
+	TokenDuration int64  `mapstructure:"token_duration"`
+	TokenSecret   string `mapstructure:"token_secret"`
 }
 
 var c Cred
@@ -32,16 +34,12 @@ func main() {
 	c.getCreds()
 	port := fmt.Sprintf(":%v", c.Port)
 
+	// Set-up cache client for requests.
 	if c.Cache {
-		// Set-up cache client for requests.
-		addr := c.RedisPort
-		pw := c.RedisPassword
-		db := c.RedisDB
-
 		cacheClient = redis.NewClient(&redis.Options{
-			Addr:     addr,
-			Password: pw,
-			DB:       db,
+			Addr:     c.RedisPort,
+			Password: c.RedisPassword,
+			DB:       c.RedisDB,
 		})
 	}
 
@@ -58,6 +56,7 @@ func main() {
 	mux.HandleFunc("/v1/users/add-zip", UsersAddZip)
 	mux.HandleFunc("/v1/users/delete-zip", UsersDeleteZip)
 	mux.HandleFunc("/v1/users/clear-zip", UsersClearZip)
+	mux.HandleFunc("/v1/users/create", UsersCreate)
 
 	http.ListenAndServe(port, mux)
 }
