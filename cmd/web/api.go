@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"log"
@@ -31,7 +30,6 @@ type Cred struct {
 	RedisPort     string `mapstructure:"redis_port"`
 	RedisPassword string `mapstructure:"redis_password"`
 	RedisDB       int    `mapstructure:"redis_db"`
-	Cache         bool   `mapstructure:"use_cache"`
 	Timezone      string `mapstructure:"timezone"`
 	TokenDuration int64  `mapstructure:"token_duration"`
 	TokenSecret   string `mapstructure:"token_secret"`
@@ -46,13 +44,11 @@ func main() {
 	port := fmt.Sprintf(":%v", c.Port)
 
 	// Set-up cache client for requests.
-	if c.Cache {
-		cacheClient = redis.NewClient(&redis.Options{
-			Addr:     c.RedisPort,
-			Password: c.RedisPassword,
-			DB:       c.RedisDB,
-		})
-	}
+	cacheClient = redis.NewClient(&redis.Options{
+		Addr:     c.RedisPort,
+		Password: c.RedisPassword,
+		DB:       c.RedisDB,
+	})
 
 	setupGoGuardian()
 
@@ -91,10 +87,6 @@ func (c *Cred) getCreds() {
 }
 
 func getCache(key string) (string, error) {
-	if c.Cache != true {
-		return "", errors.New("Caching is not enabled")
-	}
-
 	val, err := cacheClient.Get(key).Result()
 	if err != nil {
 		log.Printf("Key not found for: %v", key)
@@ -103,10 +95,6 @@ func getCache(key string) (string, error) {
 }
 
 func setCache(key string, val string, t time.Duration) error {
-	if c.Cache != true {
-		return errors.New("No storage found")
-	}
-
 	err := cacheClient.Set(key, val, t).Err()
 	if err != nil {
 		fmt.Println(err)

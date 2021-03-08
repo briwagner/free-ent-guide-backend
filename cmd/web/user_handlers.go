@@ -74,11 +74,7 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		enableCors(&w)
-		if c.Cache != true {
-			w.WriteHeader(500)
-			w.Write([]byte("Database not found."))
-			return
-		}
+
 		qUser := r.URL.Query().Get("username")
 		if qUser == "" {
 			w.WriteHeader(406)
@@ -117,10 +113,6 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		enableCors(&w)
-		if c.Cache != true {
-			w.Write([]byte("Database not found."))
-			return
-		}
 
 		// Get parameters from request.
 		qUser := r.URL.Query().Get("username")
@@ -173,10 +165,6 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		enableCors(&w)
-		if c.Cache != true {
-			w.Write([]byte("Database not found."))
-			return
-		}
 
 		// Get parameters from request.
 		qUser := r.URL.Query().Get("username")
@@ -218,10 +206,6 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		enableCors(&w)
-		if c.Cache != true {
-			w.Write([]byte("Database not found."))
-			return
-		}
 
 		qUser := r.URL.Query().Get("username")
 		if qUser == "" {
