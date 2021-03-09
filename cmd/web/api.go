@@ -53,19 +53,19 @@ func main() {
 	setupGoGuardian()
 
 	mux := mux.NewRouter()
-	mux.HandleFunc("/v1/movies", GetMovies)
-	mux.HandleFunc("/v1/discover", DiscoverMovies)
-	mux.HandleFunc("/v1/tv-movies", GetTvMovies)
-	mux.HandleFunc("/v1/tv-sports", GetTvSports)
-	mux.HandleFunc("/v1/tv-search", GetTvSearch)
+	mux.HandleFunc("/v1/movies", GetMovies).Methods("GET")
+	mux.HandleFunc("/v1/discover", DiscoverMovies).Methods("GET")
+	mux.HandleFunc("/v1/tv-movies", GetTvMovies).Methods("GET")
+	mux.HandleFunc("/v1/tv-sports", GetTvSports).Methods("GET")
+	mux.HandleFunc("/v1/tv-search", GetTvSearch).Methods("GET")
 
-	mux.HandleFunc("/v1/users/create", UsersCreate)
+	mux.HandleFunc("/v1/users/create", UsersCreate).Methods("POST")
 	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken))).Methods("GET")
 
 	mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip)))).Methods("GET")
-	mux.HandleFunc("/v1/users/add-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersAddZip))))
-	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersDeleteZip))))
-	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip))))
+	mux.HandleFunc("/v1/users/add-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersAddZip)))).Methods("POST")
+	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersDeleteZip)))).Methods("POST")
+	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
 
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
 	http.ListenAndServe(port, mux)
@@ -128,7 +128,7 @@ var cacheObj libcache.Cache
 func validateUser(ctx context.Context, r *http.Request, username, password string) (auth.Info, error) {
 	val, err := cacheClient.Get(fmt.Sprintf("user:%s", username)).Result()
 	if err != nil {
-		// TODO: what does this return?
+		// TODO: what should this return?
 		return nil, fmt.Errorf("Invalid credentials")
 	}
 

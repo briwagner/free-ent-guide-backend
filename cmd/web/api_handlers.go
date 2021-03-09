@@ -11,29 +11,26 @@ import (
 // GetMovies handler for movies by zip.
 // Responds to /v1/movies?zip={ZIP}.
 func GetMovies(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		enableCors(&w)
-		if zip, ok := r.URL.Query()["zip"]; ok {
-			params := make(map[string]string)
-			params["zip"] = zip[0]
-
-			// Set timezone to avoid using UTC on server.
-			zone, err := time.LoadLocation(c.Timezone)
-			if err != nil {
-				log.Printf("Cannot load timezone %e", err)
-			}
-			tt := time.Now().In(zone).Format("2006-01-02")
-			log.Printf("Cinema request zip: %s, on: %v", zip[0], tt)
-
-			params["startDate"] = tt
-			w.Write([]byte(GetTMSReq(params, "movies/showings")))
-		} else {
-			w.Write([]byte("Must pass a valid zip code"))
-		}
-	default:
-		w.Write([]byte("Only GET requests are accepted."))
+	enableCors(&w)
+	zip := r.URL.Query().Get("zip")
+	if zip == "" {
+		w.Write([]byte("Must pass a valid zip code"))
+		return
 	}
+
+	params := make(map[string]string)
+	params["zip"] = zip
+
+	// Set timezone to avoid using UTC on server.
+	zone, err := time.LoadLocation(c.Timezone)
+	if err != nil {
+		log.Printf("Cannot load timezone %e", err)
+	}
+	tt := time.Now().In(zone).Format("2006-01-02")
+	log.Printf("Cinema request zip: %s, on: %v", zip, tt)
+
+	params["startDate"] = tt
+	w.Write([]byte(GetTMSReq(params, "movies/showings")))
 }
 
 func discoverMoviesReq(date string) (string, error) {
@@ -75,39 +72,34 @@ func discoverMoviesReq(date string) (string, error) {
 // DiscoverMovies handler for coming-soon movies.
 // Responds to /v1/discover?date={YYYY-MM-DD}.
 func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		enableCors(&w)
-		cacheKey := "discover"
-		if date, ok := r.URL.Query()["date"]; !ok {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a date"))
-		} else {
-			// Check cache for stored response.
-			cache, err := getCache(cacheKey)
-
-			// No cache found.
-			if err != nil {
-				cacheStatus(&w, false)
-
-				req, getErr := discoverMoviesReq(date[0])
-				if getErr != nil {
-					w.WriteHeader(500)
-				} else {
-					_ = setCache(cacheKey, req, time.Hour)
-				}
-				w.Write([]byte(req))
-			} else {
-				// Cache found.
-				cacheStatus(&w, true)
-				w.Write([]byte(cache))
-			}
-
-		}
-	default:
-		w.WriteHeader(405)
-		w.Write([]byte("Only GET requests are accepted"))
+	enableCors(&w)
+	cacheKey := "discover"
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		w.WriteHeader(406)
+		w.Write([]byte("Must pass a date"))
+		return
 	}
+	// Check cache for stored response.
+	cache, err := getCache(cacheKey)
+
+	// No cache found.
+	if err != nil {
+		cacheStatus(&w, false)
+
+		req, getErr := discoverMoviesReq(date)
+		if getErr != nil {
+			w.WriteHeader(500)
+		} else {
+			_ = setCache(cacheKey, req, time.Hour)
+		}
+		w.Write([]byte(req))
+	} else {
+		// Cache found.
+		cacheStatus(&w, true)
+		w.Write([]byte(cache))
+	}
+
 }
 
 func getTvSearchReq(query string) string {
@@ -183,74 +175,65 @@ func GetTMSReq(params map[string]string, loc string) string {
 
 // GetTvMovies responds to /v1/tv-movies?date={YYYY-MM-DD}.
 func GetTvMovies(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		enableCors(&w)
-		cacheKey := "tvmovies"
-		if date, ok := r.URL.Query()["date"]; ok {
-			cache, err := getCache(cacheKey)
-			if err != nil {
-				cacheStatus(&w, false)
+	enableCors(&w)
+	cacheKey := "tvmovies"
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		w.WriteHeader(406)
+		w.Write([]byte("Must pass a date"))
+		return
+	}
+	cache, err := getCache(cacheKey)
+	if err != nil {
+		cacheStatus(&w, false)
 
-				params := make(map[string]string)
-				params["startDateTime"] = date[0]
-				params["lineupId"] = "USA-TX42500-X"
-				req := GetTMSReq(params, "movies/airings")
-				w.Write([]byte(req))
-				_ = setCache(cacheKey, req, time.Hour)
-			} else {
-				cacheStatus(&w, true)
-				w.Write([]byte(cache))
-			}
-		} else {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a date"))
-		}
-	default:
-		w.Write([]byte("Only GET requests are accepted"))
+		params := make(map[string]string)
+		params["startDateTime"] = date
+		params["lineupId"] = "USA-TX42500-X"
+		req := GetTMSReq(params, "movies/airings")
+		w.Write([]byte(req))
+		_ = setCache(cacheKey, req, time.Hour)
+	} else {
+		cacheStatus(&w, true)
+		w.Write([]byte(cache))
 	}
 }
 
 // GetTvSports responds to /v1/tv-sports?date={YYYY-MM-DD}.
 func GetTvSports(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		enableCors(&w)
-		if date, ok := r.URL.Query()["date"]; ok {
-			cacheKey := "tvsports?" + date[0]
-			cache, err := getCache(cacheKey)
-			if err != nil {
-				cacheStatus(&w, false)
+	enableCors(&w)
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		w.WriteHeader(406)
+		w.Write([]byte("Must pass a date"))
+		return
+	}
 
-				params := make(map[string]string)
-				params["startDateTime"] = date[0]
-				params["lineupId"] = "USA-TX42500-X"
-				req := GetTMSReq(params, "sports/all/events/airings")
-				w.Write([]byte(req))
-				_ = setCache(cacheKey, req, time.Hour)
-			} else {
-				cacheStatus(&w, true)
-				w.Write([]byte(cache))
-			}
-		} else {
-			w.Write([]byte("Must pass a date"))
-		}
-	default:
-		w.Write([]byte("Only GET requests are accepted"))
+	cacheKey := "tvsports?" + date
+	cache, err := getCache(cacheKey)
+	if err != nil {
+		cacheStatus(&w, false)
+
+		params := make(map[string]string)
+		params["startDateTime"] = date
+		params["lineupId"] = "USA-TX42500-X"
+		req := GetTMSReq(params, "sports/all/events/airings")
+		w.Write([]byte(req))
+		_ = setCache(cacheKey, req, time.Hour)
+	} else {
+		cacheStatus(&w, true)
+		w.Write([]byte(cache))
 	}
 }
 
 // GetTvSearch responds to /v1/tv-search?title={TITLE}.
 func GetTvSearch(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		enableCors(&w)
-		if title, ok := r.URL.Query()["title"]; ok {
-			w.Write([]byte(getTvSearchReq(title[0])))
-		} else {
-			w.Write([]byte("Must pass a title to search"))
-		}
-	default:
-		w.Write([]byte("Only GET requests are accepted"))
+	enableCors(&w)
+	title := r.URL.Query().Get("title")
+	if title == "" {
+		w.WriteHeader(406)
+		w.Write([]byte("Must pass a title to search"))
+		return
 	}
+	w.Write([]byte(getTvSearchReq(title)))
 }

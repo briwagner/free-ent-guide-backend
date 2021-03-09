@@ -34,35 +34,29 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 // UsersCreate adds a user to storage.
 // Responds to /v1/users/create
 func UsersCreate(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		qUser := r.URL.Query().Get("username")
-		if qUser == "" {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a username"))
-			return
-		}
-
-		qPass := r.URL.Query().Get("password")
-		if qPass == "" {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a password"))
-			return
-		}
-
-		user := &models.User{Name: qUser, Password: qPass}
-		err := user.Create(cacheClient)
-		if err != nil {
-			w.WriteHeader(500)
-			w.Write([]byte(fmt.Sprintf("Error creating user. %v", err)))
-			return
-		}
-
-		w.Write([]byte("ok"))
-	default:
-		w.WriteHeader(405)
-		w.Write([]byte("Only POST requests are accepted."))
+	qUser := r.URL.Query().Get("username")
+	if qUser == "" {
+		w.WriteHeader(406)
+		w.Write([]byte("Must pass a username"))
+		return
 	}
+
+	qPass := r.URL.Query().Get("password")
+	if qPass == "" {
+		w.WriteHeader(406)
+		w.Write([]byte("Must pass a password"))
+		return
+	}
+
+	user := &models.User{Name: qUser, Password: qPass}
+	err := user.Create(cacheClient)
+	if err != nil {
+		w.WriteHeader(500)
+		w.Write([]byte(fmt.Sprintf("Error creating user. %v", err)))
+		return
+	}
+
+	w.Write([]byte("ok"))
 }
 
 // UsersCreateToken returns a token if user is authenticated.

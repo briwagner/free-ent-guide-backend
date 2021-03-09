@@ -32,8 +32,8 @@ func AuthHandler(next http.Handler) http.HandlerFunc {
 // RoleHandler enforces user access to specific resources, or role-based access.
 func RoleHandler(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		qUser, ok := r.URL.Query()["username"]
-		if !ok {
+		qUser := r.URL.Query().Get("username")
+		if qUser == "" {
 			w.WriteHeader(406)
 			w.Write([]byte("Must pass a username"))
 			return
