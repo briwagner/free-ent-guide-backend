@@ -59,8 +59,8 @@ func main() {
 	mux.HandleFunc("/v1/tv-sports", GetTvSports).Methods("GET")
 	mux.HandleFunc("/v1/tv-search", GetTvSearch).Methods("GET")
 
-	mux.HandleFunc("/v1/users/create", UsersCreate).Methods("POST")
-	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken))).Methods("GET")
+	mux.HandleFunc("/v1/users/create", UsersCreate)
+	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken)))
 
 	mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip)))).Methods("GET")
 	mux.HandleFunc("/v1/users/add-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersAddZip)))).Methods("POST")
@@ -105,6 +105,9 @@ func setCache(key string, val string, t time.Duration) error {
 func enableCors(w *http.ResponseWriter) {
 	if c.Env != "prod" {
 		(*w).Header().Set("Access-Control-Allow-Origin", "*")
+		(*w).Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
 		return
 	}
 	(*w).Header().Set("Access-Control-Allow-Origin", "http://www.free-entertainment-guide.com")

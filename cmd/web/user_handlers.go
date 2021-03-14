@@ -15,6 +15,7 @@ import (
 // UsersCreateToken will return token for authenticated users.
 // Responds to /v1/users/token
 func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	username := r.Context().Value(ContextUserKey)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss": "ent_app",
@@ -27,36 +28,59 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 
 	user := auth.NewDefaultUser(fmt.Sprintf("%s", username), "1", nil, nil)
 	auth.Append(tokenStrategy, jwtToken, user)
-	body := fmt.Sprintf("token: %s \n", jwtToken)
+	body := fmt.Sprintf("%s\n", jwtToken)
 	w.Write([]byte(body))
+}
+
+// UserCreateData is a map to accept form data for user-create form.
+type UserCreateData struct {
+	Username string
+	Password string
 }
 
 // UsersCreate adds a user to storage.
 // Responds to /v1/users/create
 func UsersCreate(w http.ResponseWriter, r *http.Request) {
-	qUser := r.URL.Query().Get("username")
-	if qUser == "" {
+	if r.Method == "OPTIONS" {
+		enableCors(&w)
+		// TODO: above is not enough for preflight options. Add below to default action?
+		(w).Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.WriteHeader(200)
+		return
+	}
+
+	enableCors(&w)
+
+	decoder := json.NewDecoder(r.Body)
+	var formData UserCreateData
+	err := decoder.Decode(&formData)
+	if err != nil {
+		panic(err)
+	}
+
+	// Get data from form-data.
+	if formData.Username == "" {
 		w.WriteHeader(406)
 		w.Write([]byte("Must pass a username"))
 		return
 	}
 
-	qPass := r.URL.Query().Get("password")
-	if qPass == "" {
+	if formData.Password == "" {
 		w.WriteHeader(406)
 		w.Write([]byte("Must pass a password"))
 		return
 	}
 
-	user := &models.User{Name: qUser, Password: qPass}
-	err := user.Create(cacheClient)
+	user := &models.User{Name: formData.Username, Password: formData.Password}
+	err = user.Create(cacheClient)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf("Error creating user. %v", err)))
 		return
 	}
 
-	w.Write([]byte("ok"))
+	w.WriteHeader(204)
 }
 
 // UsersCreateToken returns a token if user is authenticated.
@@ -65,6 +89,7 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 // UsersGetZip returns the stored zip-codes for a user.
 // Responds to /v1/users/get-zip?username={name}
 func UsersGetZip(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	switch r.Method {
 	case "GET":
 		enableCors(&w)
