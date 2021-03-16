@@ -62,8 +62,9 @@ func main() {
 	mux.HandleFunc("/v1/users/create", UsersCreate)
 	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken)))
 
-	mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip)))).Methods("GET")
-	mux.HandleFunc("/v1/users/add-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersAddZip)))).Methods("POST")
+	// mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
+	mux.HandleFunc("/v1/users/get-zip", AuthHandler(http.HandlerFunc(UsersGetZip)))
+	mux.HandleFunc("/v1/users/add-zip", AuthHandler(http.HandlerFunc(UsersAddZip)))
 	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersDeleteZip)))).Methods("POST")
 	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
 
@@ -143,9 +144,10 @@ func validateUser(ctx context.Context, r *http.Request, username, password strin
 	return nil, fmt.Errorf("Invalid credentials")
 }
 
+// Define strategies, set token expiration time.
 func setupGoGuardian() {
 	cacheObj = libcache.FIFO.New(0)
-	cacheObj.SetTTL(time.Minute * 5)
+	cacheObj.SetTTL(time.Hour * 72)
 	cacheObj.RegisterOnExpired(func(key, _ interface{}) {
 		cacheObj.Peek(key)
 	})
