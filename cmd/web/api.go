@@ -61,6 +61,7 @@ func main() {
 
 	mux.HandleFunc("/v1/users/create", UsersCreate)
 	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken)))
+	mux.HandleFunc("/v1/users/revoke", UsersRevokeToken).Methods("POST")
 
 	// mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
 	mux.HandleFunc("/v1/users/get-zip", AuthHandler(http.HandlerFunc(UsersGetZip)))

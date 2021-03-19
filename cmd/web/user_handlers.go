@@ -32,6 +32,33 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(body))
 }
 
+//UserTokenData is a map to accept form data for user-token-revoke.
+type UserTokenData struct {
+	Token string
+}
+
+// UsersRevokeToken revokes the token.
+// Responds to /v1/users/token
+func UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	r.ParseForm()
+	t := r.FormValue("token")
+	if t == "" {
+		w.Write([]byte("no data"))
+		w.WriteHeader(500)
+		return
+	}
+
+	err := auth.Revoke(tokenStrategy, t)
+	if err != nil {
+		w.Write([]byte("error revoking token"))
+		w.WriteHeader(500)
+		return
+	}
+	w.WriteHeader(204)
+}
+
 // UserCreateData is a map to accept form data for user-create form.
 type UserCreateData struct {
 	Username string
