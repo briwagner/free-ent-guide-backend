@@ -32,7 +32,7 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(body))
 }
 
-//UserTokenData is a map to accept form data for user-token-revoke.
+// UserTokenData is a map to accept form data for user-token-revoke.
 type UserTokenData struct {
 	Token string
 }
@@ -135,17 +135,14 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		records, err := cacheClient.LRange(fmt.Sprintf("user:%s:zip", qUser), 0, -1).Result()
-		if err != nil || len(records) == 0 {
+		user := &models.User{Name: qUser}
+		err := user.GetZips(cacheClient)
+		if err != nil {
 			w.WriteHeader(404)
 			w.Write([]byte("Not found"))
 			return
 		}
 
-		user := &models.User{
-			Name: qUser,
-			Zips: records,
-		}
 		userJSON, err := json.Marshal(user)
 		if err != nil {
 			w.WriteHeader(500)
@@ -188,23 +185,23 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		res := cacheClient.RPush(fmt.Sprintf("user:%s:zip", qUser), qZip)
-		if res.Err() != nil {
-			log.Printf("Storage error %v", res.Err())
+		user := &models.User{Name: qUser}
+		err := user.AddZip(cacheClient, qZip)
+		if err != nil {
+			log.Printf("Storage error %s", err.Error())
 			w.WriteHeader(500)
 			w.Write([]byte("Error storing zip."))
 			return
 		}
 
 		// Reload data to return to client.
-		records, err := cacheClient.LRange(fmt.Sprintf("user:%s:zip", qUser), 0, -1).Result()
+		err = user.GetZips(cacheClient)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error fetching new data."))
 			return
 		}
 
-		user := &models.User{Zips: records}
 		userJSON, err := json.Marshal(user)
 		if err != nil {
 			w.WriteHeader(500)
@@ -240,20 +237,16 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		res, err := cacheClient.LRem(fmt.Sprintf("user:%s:zip", qUser), 0, qZip).Result()
+		user := &models.User{Name: qUser}
+		err := user.DeleteZip(cacheClient, qZip)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error deleting data."))
 			return
 		}
 
-		// TODO: restrict entering repeated values. Then change this to == 1.
-		// Redis returns # of items removed.
-		if res >= 1 {
-			w.Write([]byte("ok"))
-		} else {
-			w.Write([]byte("not found"))
-		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte("ok"))
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only POST requests are accepted."))
@@ -272,8 +265,10 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Must pass a username"))
 			return
 		}
-		res := cacheClient.Del(fmt.Sprintf("user:%s:zip", qUser))
-		if res.Err() != nil {
+
+		user := &models.User{Name: qUser}
+		err := user.ClearZips(cacheClient)
+		if err != nil {
 			w.Write([]byte("Error removing from storage."))
 			return
 		}

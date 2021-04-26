@@ -131,15 +131,9 @@ var cacheObj libcache.Cache
 
 // Validate user with basic auth.
 func validateUser(ctx context.Context, r *http.Request, username, password string) (auth.Info, error) {
-	val, err := cacheClient.Get(fmt.Sprintf("user:%s", username)).Result()
-	if err != nil {
-		// TODO: what should this return?
-		return nil, fmt.Errorf("Invalid credentials")
-	}
-
-	user := &models.User{Name: username, Password: password}
-	if user.CheckPasswordHash(password, val) {
-		return auth.NewDefaultUser(user.Name, "1", nil, nil), nil
+	u := &models.User{Name: username, Password: password}
+	if u.CheckPasswordHash(cacheClient, password) {
+		return auth.NewDefaultUser(u.Name, "1", nil, nil), nil
 	}
 
 	return nil, fmt.Errorf("Invalid credentials")

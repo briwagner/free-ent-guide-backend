@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/go-redis/redis"
 	"golang.org/x/crypto/bcrypt"
@@ -16,11 +17,12 @@ type User struct {
 	PasswordHash string   `json:"-"`
 }
 
+// getDbKey formats the Redis key for a user.
 func (u *User) getDbKey() string {
 	return fmt.Sprintf("user:%s", u.Name)
 }
 
-// GetUserName will return the name field.
+// GetUserName returns the name field.
 func (u *User) GetUserName() string {
 	return u.Name
 }
@@ -31,7 +33,7 @@ func (u *User) Create(db *redis.Client) error {
 		return errors.New("username and password are required")
 	}
 
-	ph, err := u.HashPassword()
+	ph, err := u.hashPassword()
 	if err != nil {
 		return err
 	}
@@ -46,11 +48,13 @@ func (u *User) Create(db *redis.Client) error {
 		return fmt.Errorf("user exists: %s", u.Name)
 	}
 
+	log.Printf("New user created %s", u.Name)
+
 	return nil
 }
 
-// HashPassword returns the hashed password.
-func (u *User) HashPassword() (string, error) {
+// hashPassword returns the hashed password.
+func (u *User) hashPassword() (string, error) {
 	ph, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", errors.New("password hash error")
@@ -60,7 +64,57 @@ func (u *User) HashPassword() (string, error) {
 }
 
 // CheckPasswordHash compares pass to stored hash.
-func (u *User) CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+func (u *User) CheckPasswordHash(db *redis.Client, p string) bool {
+	h, err := db.Get(fmt.Sprintf("user:%s", u.Name)).Result()
+	if err != nil {
+		// TODO: what happens here?
+		return false
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(h), []byte(p))
 	return err == nil
+}
+
+// GetZips looks up the user's zip codes in storage.
+func (u *User) GetZips(db *redis.Client) error {
+	records, err := db.LRange(fmt.Sprintf("user:%s:zip", u.Name), 0, -1).Result()
+	if err != nil {
+		return errors.New("error uwer zips")
+	}
+	u.Zips = records
+	return nil
+}
+
+// AddZip adds an entry to user's zip codes in storage.
+func (u *User) AddZip(db *redis.Client, newZip string) error {
+	res := db.RPush(fmt.Sprintf("user:%s:zip", u.Name), newZip)
+	if res.Err() != nil {
+		return errors.New("cannot add zip")
+	}
+	return nil
+}
+
+// DeleteZip removes a user's zip code from storage.
+func (u *User) DeleteZip(db *redis.Client, zip string) error {
+	res, err := db.LRem(fmt.Sprintf("user:%s:zip", u.Name), 0, zip).Result()
+	if err != nil {
+		return errors.New("cannot delete zip")
+	}
+	// TODO: restrict entering repeated values. Then change this to == 1.
+	// How to pass this to frontend?
+	// Redis returns # of items removed.
+	if res >= 1 {
+		log.Println("ok removing zip")
+	} else {
+		log.Println("zip not found")
+	}
+	return nil
+}
+
+// ClearZips removes all user zip codes from storage.
+func (u *User) ClearZips(db *redis.Client) error {
+	res := db.Del(fmt.Sprintf("user:%s:zip", u.Name))
+	if res.Err() != nil {
+		return errors.New("cannot clear zips")
+	}
+	return nil
 }
