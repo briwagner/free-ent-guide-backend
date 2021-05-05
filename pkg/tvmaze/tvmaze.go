@@ -6,18 +6,25 @@ import (
 	"net/http"
 )
 
-type TvMaze struct{}
+// TvMaze is a wrapper for requests to Tv Maze api.
+type TvMaze struct {
+	Status   int
+	Response []byte
+}
 
-var base = "http://api.tvmaze.com/"
+const base = "http://api.tvmaze.com/"
 
-func (t TvMaze) GetSearch(title string) (int, []byte) {
+// GetSearch makes the api call to find a show by title.
+func (t *TvMaze) GetSearch(title string) {
 	url := base + "search/shows"
 	params := make(map[string]string)
 	params["q"] = title
-	return t.Fetch(url, params)
+	// Todo: should this be returned or pointer is good enough?
+	_ = t.fetch(url, params)
 }
 
-func (t TvMaze) Fetch(url string, params map[string]string) (int, []byte) {
+// Fetch is a wrapper for api calls.
+func (t *TvMaze) fetch(url string, params map[string]string) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatalf("Cannot build URL for TV Maze. %v", err)
@@ -32,15 +39,22 @@ func (t TvMaze) Fetch(url string, params map[string]string) (int, []byte) {
 	resp, doErr := client.Do(req)
 
 	if doErr != nil {
-		log.Fatalf("Failed to make request to TV Maze %v", doErr)
+		log.Printf("Failed to make request to TV Maze %v", doErr.Error())
+		t.Status = 500
+		t.Response = []byte("Server erro")
+		return doErr
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	if err != nil {
-		return 0, []byte("Cannot parse body.")
+		t.Status = 500
+		t.Response = []byte("Cannot parse body.")
+		return err
 	}
 
-	return resp.StatusCode, body
+	t.Status = resp.StatusCode
+	t.Response = body
+	return nil
 }

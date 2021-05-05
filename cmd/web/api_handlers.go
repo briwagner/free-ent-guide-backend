@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"free-ent-guide-backend/pkg/tvmaze"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -100,37 +101,6 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(cache))
 	}
 
-}
-
-func getTvSearchReq(query string) string {
-	url := "http://api.tvmaze.com/search/shows"
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println(err)
-		return "Could not build http request"
-	}
-
-	q := req.URL.Query()
-	q.Add("q", query)
-
-	req.URL.RawQuery = q.Encode()
-	client := &http.Client{}
-	resp, doErr := client.Do(req)
-
-	if doErr != nil {
-		fmt.Println(doErr)
-		return "Failed to make the request"
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-
-	if err != nil {
-		return "Failed to parse body"
-	}
-
-	return string(body)
 }
 
 // GetTMSReq is general getter for API calls to TMS service.
@@ -235,5 +205,10 @@ func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Must pass a title to search"))
 		return
 	}
-	w.Write([]byte(getTvSearchReq(title)))
+
+	tmz := tvmaze.TvMaze{}
+	tmz.GetSearch(title)
+
+	w.WriteHeader(tmz.Status)
+	w.Write(tmz.Response)
 }

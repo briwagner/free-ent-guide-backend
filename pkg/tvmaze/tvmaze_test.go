@@ -7,9 +7,9 @@ import (
 
 func TestGetSearch(t *testing.T) {
 	tmz := TvMaze{}
-	s, _ := tmz.GetSearch("Riverdale")
+	tmz.GetSearch("Riverdale")
 
-	if s != http.StatusOK {
-		t.Errorf("Fetch return wrong status. Got %v, Wanted %v", s, http.StatusOK)
+	if tmz.Status != http.StatusOK {
+		t.Errorf("Fetch return wrong status. Got %v, Wanted %v", tmz.Status, http.StatusOK)
 	}
 }
