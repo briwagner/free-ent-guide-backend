@@ -23,7 +23,7 @@ func (t *TvMaze) GetSearch(title string) {
 	_ = t.fetch(url, params)
 }
 
-// Fetch is a wrapper for api calls.
+// fetch is a wrapper for api calls.
 func (t *TvMaze) fetch(url string, params map[string]string) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -41,7 +41,7 @@ func (t *TvMaze) fetch(url string, params map[string]string) error {
 	if doErr != nil {
 		log.Printf("Failed to make request to TV Maze %v", doErr.Error())
 		t.Status = 500
-		t.Response = []byte("Server erro")
+		t.Response = []byte("Server error")
 		return doErr
 	}
 

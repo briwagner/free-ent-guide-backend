@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"free-ent-guide-backend/pkg/moviedb"
 	"free-ent-guide-backend/pkg/tvmaze"
 	"io/ioutil"
 	"log"
@@ -34,42 +35,6 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(GetTMSReq(params, "movies/showings")))
 }
 
-func discoverMoviesReq(date string) (string, error) {
-	url := "https://api.themoviedb.org/3/discover/movie"
-
-	req, _ := http.NewRequest("GET", url, nil)
-
-	var dateParam string
-
-	q := req.URL.Query()
-	q.Add("api_key", c.Moviedb)
-	if date != "" {
-		dateParam = date
-	} else {
-		dateParam = time.Now().Format("2006-01-02")
-	}
-	q.Add("primary_release_date.gte", dateParam)
-	q.Add("adult", "false")
-
-	req.URL.RawQuery = q.Encode()
-
-	client := http.Client{Timeout: time.Second * 2}
-	resp, doErr := client.Do(req)
-
-	if doErr != nil {
-		fmt.Println(doErr)
-		return "Failed to make the discover request from TMS.", doErr
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return "Failed to parse body", err
-	}
-	return string(body), nil
-}
-
 // DiscoverMovies handler for coming-soon movies.
 // Responds to /v1/discover?date={YYYY-MM-DD}.
 func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
@@ -88,19 +53,20 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		cacheStatus(&w, false)
 
-		req, getErr := discoverMoviesReq(date)
-		if getErr != nil {
-			w.WriteHeader(500)
+		mdb := moviedb.MovieDb{}
+		mdb.GetDiscover(date)
+
+		if mdb.Status == http.StatusOK {
+			_ = setCache(cacheKey, string(mdb.Response), time.Hour)
 		} else {
-			_ = setCache(cacheKey, req, time.Hour)
+			w.WriteHeader(500)
 		}
-		w.Write([]byte(req))
+		w.Write(mdb.Response)
 	} else {
 		// Cache found.
 		cacheStatus(&w, true)
 		w.Write([]byte(cache))
 	}
-
 }
 
 // GetTMSReq is general getter for API calls to TMS service.

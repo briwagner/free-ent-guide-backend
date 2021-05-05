@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"testing"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -18,7 +19,7 @@ type Cred struct {
 }
 
 func (c *Cred) Setup() {
-	yamlFile, err := ioutil.ReadFile("../creds.yaml")
+	yamlFile, err := ioutil.ReadFile("../../creds.yaml")
 	if err != nil {
 		log.Fatalf("File not loading: %v", err)
 	}
@@ -31,31 +32,32 @@ func (c *Cred) Setup() {
 
 func TestGetTrending(t *testing.T) {
 	c.Setup()
-	mdb := MovieDb{Key}
-	s, _ := mdb.GetTrending()
+	mdb := MovieDb{Key: Key}
+	mdb.GetTrending()
 
-	if s != http.StatusOK {
-		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", s, http.StatusOK)
+	if mdb.Status != http.StatusOK {
+		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", mdb.Status, http.StatusOK)
 	}
 }
 
 func TestGetDiscover(t *testing.T) {
-	mdb := MovieDb{Key}
-	s, _ := mdb.GetDiscover()
+	mdb := MovieDb{Key: Key}
+	dateParam := time.Now().Format("2006-01-02")
+	mdb.GetDiscover(dateParam)
 
-	if s != http.StatusOK {
-		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", s, http.StatusOK)
+	if mdb.Status != http.StatusOK {
+		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", mdb.Status, http.StatusOK)
 	}
 }
 
 func TestGetToken(t *testing.T) {
-	mdb := MovieDb{Key}
-	s, tok := mdb.GetToken()
+	mdb := MovieDb{Key: Key}
+	mdb.GetToken()
 
-	if s != http.StatusOK {
-		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", s, http.StatusOK)
+	if mdb.Status != http.StatusOK {
+		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", mdb.Status, http.StatusOK)
 	}
-	if tok.Success != true {
-		t.Errorf("Token returned wrong status. Got %v, Wanted %v", tok.Success, true)
+	if mdb.Token.Success != true {
+		t.Errorf("Token returned wrong status. Got %v, Wanted %v", mdb.Token.Success, true)
 	}
 }
