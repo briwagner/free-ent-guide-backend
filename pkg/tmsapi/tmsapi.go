@@ -6,41 +6,52 @@ import (
 	"net/http"
 )
 
+const base = "http://data.tmsapi.com/v1.1/"
+const lineup = "USA-TX42500-X"
+
 type TmsApi struct {
-	Key string
+	Key      string
+	Status   int
+	Response []byte
 }
 
-func (t TmsApi) GetCinema(zip string, date string) (int, []byte) {
-	url := "http://data.tmsapi.com/v1.1/movies/showings"
+// GetCinema returns listings for movies showing by date, zip.
+func (t *TmsApi) GetCinema(zip string, date string) {
+	url := base + "movies/showings"
 	params := make(map[string]string)
 	params["zip"] = zip
 	params["startDate"] = date
 
-	return t.Fetch(url, params)
+	_ = t.fetch(url, params)
 }
 
-func (t TmsApi) GetTvMovies(date string) (int, []byte) {
-	url := "http://data.tmsapi.com/v1.1/movies/airings"
+// GetTvMovies returns listings for tv movies by date, lineup.
+func (t *TmsApi) GetTvMovies(date string, lineup string) {
+	url := base + "movies/airings"
 	params := make(map[string]string)
-	params["startDate"] = date
-	params["lineupId"] = "USA-TX42500-X"
+	params["startDateTime"] = date
+	params["lineupId"] = lineup
 
-	return t.Fetch(url, params)
+	_ = t.fetch(url, params)
 }
 
-func (t TmsApi) GetTvSports(date string) (int, []byte) {
-	url := "http://data.tmsapi.com/v1.1/sports/all/events/airings"
+// GetTvSports returns listings for tv sports by date, lineup.
+func (t *TmsApi) GetTvSports(date string, lineup string) {
+	url := base + "sports/all/events/airings"
 	params := make(map[string]string)
-	params["startDate"] = date
-	params["lineupId"] = "USA-TX42500-X"
+	params["startDateTime"] = date
+	params["lineupId"] = lineup
 
-	return t.Fetch(url, params)
+	_ = t.fetch(url, params)
 }
 
-func (t TmsApi) Fetch(url string, p map[string]string) (int, []byte) {
+// fetch is a wrapper for api calls.
+func (t *TmsApi) fetch(url string, p map[string]string) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatalf("Cannot build URL for TmsApi. %v", err)
+		t.Status = 500
+		return err
 	}
 
 	q := req.URL.Query()
@@ -53,15 +64,22 @@ func (t TmsApi) Fetch(url string, p map[string]string) (int, []byte) {
 	resp, doErr := client.Do(req)
 
 	if doErr != nil {
-		log.Fatalf("Failed to make request to TmsApi %v", doErr)
+		log.Printf("Failed to make request to TmsApi %v", doErr.Error())
+		t.Status = 500
+		return doErr
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	if err != nil {
-		return 0, []byte("Cannot parse body.")
+		t.Status = 500
+		t.Response = []byte("Cannot parse body.")
+		return err
 	}
 
-	return resp.StatusCode, body
+	t.Status = resp.StatusCode
+	t.Response = body
+
+	return nil
 }

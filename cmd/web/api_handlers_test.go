@@ -3,7 +3,10 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/go-redis/redis"
 )
 
 type requestTest struct {
@@ -13,6 +16,8 @@ type requestTest struct {
 }
 
 func TestGetMovies(t *testing.T) {
+	c.GetCreds("creds", "../../")
+
 	req, err := http.NewRequest("GET", "/v1/movies", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -29,9 +34,16 @@ func TestGetMovies(t *testing.T) {
 }
 
 func TestDiscoverMovies(t *testing.T) {
+	// Override the default Redis config to avoid using it entirely.
+	cacheClient = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "123",
+		DB:       2,
+	})
+
 	requests := []requestTest{
-		{"/v1/discover", "Must pass a date", 406},
-		{"/v1/discover?date=2019-05-05", `{"status_code":7,"status_message":"Invalid API key: You must be granted a valid key.","success":false}`, 200},
+		{"/v1/discover", "Must pass a date", 400},
+		{"/v1/discover?date=2021-05-06", `{"page":1,"results":[`, 200},
 	}
 
 	for _, tt := range requests {
@@ -51,16 +63,16 @@ func TestDiscoverMovies(t *testing.T) {
 		}
 
 		expectedBody := tt.expected
-		if rr.Body.String() != expectedBody {
-			t.Errorf("Handler returned wrong body. Got %v, Want %v", rr.Body.String(), expectedBody)
+		if !strings.HasPrefix(rr.Body.String(), expectedBody) {
+			t.Errorf("Handler returned wrong body. Got %v, Want %v", rr.Body.String()[0:16], expectedBody)
 		}
 	}
 }
 
 func TestGetTvMovies(t *testing.T) {
 	requests := []requestTest{
-		{"/v1/tv-movies", "Must pass a date", 406},
-		{"/v1/tv-movies?date=2019-05-28", `{"status_code":7,"status_message":"Invalid API key: You must be granted a valid key.","success":false}`, 200},
+		{"/v1/tv-movies", "Must pass a date", 400},
+		{"/v1/tv-movies?date=2021-05-06", `[{"startTime":"2021-05-05T21:33Z",`, 200},
 	}
 
 	for _, tt := range requests {
@@ -80,8 +92,8 @@ func TestGetTvMovies(t *testing.T) {
 		}
 
 		expectedBody := tt.expected
-		if rr.Body.String() != expectedBody {
-			t.Errorf("Handler returned wrong body. Got %v, Want %v", rr.Body.String(), expectedBody)
+		if !strings.HasPrefix(rr.Body.String(), expectedBody) {
+			t.Errorf("Handler returned wrong body. Got %v, Want %v", rr.Body.String()[0:16], expectedBody)
 		}
 	}
 }

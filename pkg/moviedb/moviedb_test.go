@@ -11,7 +11,6 @@ import (
 )
 
 var c Cred
-var Key string
 
 type Cred struct {
 	Tms     string
@@ -27,12 +26,11 @@ func (c *Cred) Setup() {
 	if err != nil {
 		log.Fatalf("No credentials %v", err)
 	}
-	Key = c.Moviedb
 }
 
 func TestGetTrending(t *testing.T) {
 	c.Setup()
-	mdb := MovieDb{Key: Key}
+	mdb := MovieDb{Key: c.Moviedb}
 	mdb.GetTrending()
 
 	if mdb.Status != http.StatusOK {
@@ -41,7 +39,7 @@ func TestGetTrending(t *testing.T) {
 }
 
 func TestGetDiscover(t *testing.T) {
-	mdb := MovieDb{Key: Key}
+	mdb := MovieDb{Key: c.Moviedb}
 	dateParam := time.Now().Format("2006-01-02")
 	mdb.GetDiscover(dateParam)
 
@@ -51,7 +49,7 @@ func TestGetDiscover(t *testing.T) {
 }
 
 func TestGetToken(t *testing.T) {
-	mdb := MovieDb{Key: Key}
+	mdb := MovieDb{Key: c.Moviedb}
 	mdb.GetToken()
 
 	if mdb.Status != http.StatusOK {

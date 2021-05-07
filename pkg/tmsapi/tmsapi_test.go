@@ -11,7 +11,6 @@ import (
 )
 
 var c Cred
-var Key string
 
 type Cred struct {
 	Tms     string
@@ -19,7 +18,7 @@ type Cred struct {
 }
 
 func (c *Cred) Setup() {
-	yamlFile, err := ioutil.ReadFile("../creds.yaml")
+	yamlFile, err := ioutil.ReadFile("../../creds.yaml")
 	if err != nil {
 		log.Fatalf("File not loading: %v", err)
 	}
@@ -27,38 +26,37 @@ func (c *Cred) Setup() {
 	if err != nil {
 		log.Fatalf("No credentials %v", err)
 	}
-	Key = c.Tms
 }
 
 func TestGetCinema(t *testing.T) {
 	c.Setup()
-	tms := TmsApi{Key}
+	tms := TmsApi{Key: c.Tms}
 	d := time.Now().Format("2006-01-02")
-	s, _ := tms.GetCinema("60048", d)
+	tms.GetCinema("60048", d)
 
-	if s != http.StatusOK {
-		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", s, http.StatusOK)
+	if tms.Status != http.StatusOK {
+		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", tms.Status, http.StatusOK)
 	}
 }
 
 func TestGetTvMovies(t *testing.T) {
-	c.Setup()
-	tms := TmsApi{Key}
+	// c.Setup()
+	tms := TmsApi{Key: c.Tms}
 	d := time.Now().Format("2006-01-02")
-	s, _ := tms.GetTvMovies(d)
+	tms.GetTvMovies(d, lineup)
 
-	if s != http.StatusOK {
-		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", s, http.StatusOK)
+	if tms.Status != http.StatusOK {
+		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", tms.Status, http.StatusOK)
 	}
 }
 
 func TestGetTvSports(t *testing.T) {
-	c.Setup()
-	tms := TmsApi{Key}
+	// c.Setup()
+	tms := TmsApi{Key: c.Tms}
 	d := time.Now().Format("2006-01-02")
-	s, _ := tms.GetTvSports(d)
+	tms.GetTvSports(d, lineup)
 
-	if s != http.StatusOK {
-		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", s, http.StatusOK)
+	if tms.Status != http.StatusOK {
+		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", tms.Status, http.StatusOK)
 	}
 }

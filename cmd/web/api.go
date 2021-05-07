@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/pkg/cred"
+
 	"log"
 	"net/http"
 	"time"
@@ -18,29 +20,14 @@ import (
 	"github.com/shaj13/go-guardian/v2/auth/strategies/basic"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/token"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
-	"github.com/spf13/viper"
 )
 
-// Cred holds app credentials.
-type Cred struct {
-	Tms           string `mapstructure:"tms"`
-	Moviedb       string `mapstructure:"moviedb"`
-	Port          int    `mapstructure:"port"`
-	Env           string `mapstructure:"env"`
-	RedisPort     string `mapstructure:"redis_port"`
-	RedisPassword string `mapstructure:"redis_password"`
-	RedisDB       int    `mapstructure:"redis_db"`
-	Timezone      string `mapstructure:"timezone"`
-	TokenDuration int64  `mapstructure:"token_duration"`
-	TokenSecret   string `mapstructure:"token_secret"`
-}
-
-var c Cred
+var c cred.Cred
 var cacheClient *redis.Client
 
 func main() {
 	// Set-up application config.
-	c.getCreds()
+	c.GetCreds("creds", ".")
 	port := fmt.Sprintf(":%v", c.Port)
 
 	// Set-up cache client for requests.
@@ -73,21 +60,6 @@ func main() {
 	http.ListenAndServe(port, mux)
 }
 
-func (c *Cred) getCreds() {
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	// SetConfigFile() can error as it looks for absolute path.
-	viper.SetConfigName("creds")
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatalf("File not loading: %v", err)
-	}
-	err = viper.Unmarshal(&c)
-	if err != nil {
-		log.Fatalf("No credentials %v", err)
-	}
-}
-
 func getCache(key string) (string, error) {
 	val, err := cacheClient.Get(key).Result()
 	if err != nil {
@@ -99,7 +71,7 @@ func getCache(key string) (string, error) {
 func setCache(key string, val string, t time.Duration) error {
 	err := cacheClient.Set(key, val, t).Err()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Redis setCache: %s\n", err.Error())
 	}
 	return err
 }
