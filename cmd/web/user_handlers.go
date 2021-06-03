@@ -40,17 +40,31 @@ type UserTokenData struct {
 // UsersRevokeToken revokes the token.
 // Responds to /v1/users/token
 func UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-
-	r.ParseForm()
-	t := r.FormValue("token")
-	if t == "" {
-		w.Write([]byte("no data"))
-		w.WriteHeader(500)
+	if r.Method == "OPTIONS" {
+		enableCors(&w)
+		// TODO: above is not enough for preflight options. Add below to default action?
+		(w).Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.WriteHeader(200)
 		return
 	}
 
-	err := auth.Revoke(tokenStrategy, t)
+	enableCors(&w)
+
+	decoder := json.NewDecoder(r.Body)
+	var formData UserTokenData
+	err := decoder.Decode(&formData)
+	if err != nil {
+		panic(err)
+	}
+
+	if formData.Token == "" {
+		w.Write([]byte("no data"))
+		w.WriteHeader(400)
+		return
+	}
+
+	err = auth.Revoke(tokenStrategy, formData.Token)
 	if err != nil {
 		w.Write([]byte("error revoking token"))
 		w.WriteHeader(500)
