@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/pkg/authenticator"
 	"free-ent-guide-backend/pkg/cred"
 
 	"log"
@@ -18,12 +19,13 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/basic"
-	"github.com/shaj13/go-guardian/v2/auth/strategies/token"
+	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 )
 
 var c cred.Cred
 var cacheClient *redis.Client
+var author authenticator.Authenticator
 
 func main() {
 	// Set-up application config.
@@ -37,7 +39,9 @@ func main() {
 		DB:       c.RedisDB,
 	})
 
-	setupGoGuardian()
+	author = authenticator.Authenticator{}
+	// Pass secret to setup JWT authenticator.
+	setupGoGuardian(c.TokenSecret)
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/v1/movies", GetMovies).Methods("GET")
@@ -98,7 +102,7 @@ func cacheStatus(w *http.ResponseWriter, status bool) {
 }
 
 var strategy union.Union
-var tokenStrategy auth.Strategy
+var jwtStrategy auth.Strategy
 var cacheObj libcache.Cache
 
 // Validate user with basic auth.
@@ -112,13 +116,18 @@ func validateUser(ctx context.Context, r *http.Request, username, password strin
 }
 
 // Define strategies, set token expiration time.
-func setupGoGuardian() {
+func setupGoGuardian(secret string) {
 	cacheObj = libcache.FIFO.New(0)
 	cacheObj.SetTTL(time.Hour * 72)
 	cacheObj.RegisterOnExpired(func(key, _ interface{}) {
 		cacheObj.Peek(key)
 	})
 	basicStrategy := basic.NewCached(validateUser, cacheObj)
-	tokenStrategy = token.New(token.NoOpAuthenticate, cacheObj)
-	strategy = union.New(tokenStrategy, basicStrategy)
+
+	author.AttachSecret(secret)
+	author.Audience = jwt.SetAudience("any")
+	author.Issuer = jwt.SetIssuer(("ent_api"))
+	author.Duration = c.TokenDuration
+	jwtStrategy = jwt.New(cacheObj, author.Secret, author.Audience)
+	strategy = union.New(jwtStrategy, basicStrategy)
 }

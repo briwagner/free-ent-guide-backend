@@ -6,9 +6,7 @@ import (
 	"free-ent-guide-backend/models"
 	"log"
 	"net/http"
-	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/shaj13/go-guardian/v2/auth"
 )
 
@@ -17,17 +15,12 @@ import (
 func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	username := r.Context().Value(ContextUserKey)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": "ent_app",
-		"sub": username,
-		"aud": "any",
-		"exp": time.Now().Add(time.Minute * time.Duration(c.TokenDuration)).Unix(),
-	})
+	jwtToken := author.IssueJWT(fmt.Sprintf("%v", username), "1")
+	// Does not throw error, only empty string, if it fails.
+	if jwtToken == "" {
+		log.Printf("Failed to generate JWT for %s", username)
+	}
 
-	jwtToken, _ := token.SignedString([]byte(c.TokenSecret))
-
-	user := auth.NewDefaultUser(fmt.Sprintf("%s", username), "1", nil, nil)
-	auth.Append(tokenStrategy, jwtToken, user)
 	body := fmt.Sprintf("%s\n", jwtToken)
 	w.Write([]byte(body))
 }
@@ -64,7 +57,7 @@ func UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = auth.Revoke(tokenStrategy, formData.Token)
+	err = auth.Revoke(jwtStrategy, formData.Token)
 	if err != nil {
 		w.Write([]byte("error revoking token"))
 		w.WriteHeader(500)
