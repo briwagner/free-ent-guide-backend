@@ -1,4 +1,4 @@
-name: Go: Build and test backend
+name: Go
 on: [push]
 jobs:
 
