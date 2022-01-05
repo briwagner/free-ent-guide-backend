@@ -16,6 +16,8 @@ const lineup = "USA-TX42500-X"
 // Responds to /v1/movies?zip={ZIP}.
 func GetMovies(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+	cacheKey := r.URL.String()
+
 	zip := r.URL.Query().Get("zip")
 	if zip == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -23,23 +25,39 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Date is optional to look at future days.
-	date := r.URL.Query().Get("date")
-	if date == "" {
-		// Set timezone to avoid using UTC on server.
-		zone, err := time.LoadLocation(c.Timezone)
-		if err != nil {
-			log.Printf("Cannot load timezone %e", err)
+	// Check cache for stored response.
+	cache, err := getCache(cacheKey)
+
+	if err != nil {
+		cacheStatus(&w, false)
+
+		// Date is optional to look at future days.
+		date := r.URL.Query().Get("date")
+		if date == "" {
+			// Set timezone to avoid using UTC on server.
+			zone, err := time.LoadLocation(c.Timezone)
+			if err != nil {
+				log.Printf("Cannot load timezone %e", err)
+			}
+			date = time.Now().In(zone).Format("2006-01-02")
 		}
-		date = time.Now().In(zone).Format("2006-01-02")
+
+		tms := tmsapi.TmsApi{Key: c.Tms}
+		tms.GetCinema(zip, date)
+
+		// Save to cache.
+		if tms.Status == http.StatusOK {
+			_ = setCache(cacheKey, string(tms.Response), time.Hour)
+		} else {
+			w.WriteHeader(500)
+		}
+		w.Write(tms.Response)
+		return
 	}
-	log.Printf("Cinema request zip: %s, on: %v", zip, date)
 
-	tms := tmsapi.TmsApi{Key: c.Tms}
-	tms.GetCinema(zip, date)
-
-	w.WriteHeader(tms.Status)
-	w.Write(tms.Response)
+	// Cache found.
+	cacheStatus(&w, true)
+	w.Write([]byte(cache))
 }
 
 // DiscoverMovies handler for coming-soon movies.
@@ -70,11 +88,11 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 		}
 		w.Write(mdb.Response)
-	} else {
-		// Cache found.
-		cacheStatus(&w, true)
-		w.Write([]byte(cache))
+		return
 	}
+	// Cache found.
+	cacheStatus(&w, true)
+	w.Write([]byte(cache))
 }
 
 // GetTvMovies responds to /v1/tv-movies?date={YYYY-MM-DD}.
