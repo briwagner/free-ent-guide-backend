@@ -18,21 +18,25 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	zip := r.URL.Query().Get("zip")
 	if zip == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Must pass a valid zip code"))
-		w.WriteHeader(400)
 		return
 	}
 
-	// Set timezone to avoid using UTC on server.
-	zone, err := time.LoadLocation(c.Timezone)
-	if err != nil {
-		log.Printf("Cannot load timezone %e", err)
+	// Date is optional to look at future days.
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		// Set timezone to avoid using UTC on server.
+		zone, err := time.LoadLocation(c.Timezone)
+		if err != nil {
+			log.Printf("Cannot load timezone %e", err)
+		}
+		date = time.Now().In(zone).Format("2006-01-02")
 	}
-	tt := time.Now().In(zone).Format("2006-01-02")
-	log.Printf("Cinema request zip: %s, on: %v", zip, tt)
+	log.Printf("Cinema request zip: %s, on: %v", zip, date)
 
 	tms := tmsapi.TmsApi{Key: c.Tms}
-	tms.GetCinema(zip, tt)
+	tms.GetCinema(zip, date)
 
 	w.WriteHeader(tms.Status)
 	w.Write(tms.Response)
