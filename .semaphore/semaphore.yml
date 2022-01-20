@@ -16,4 +16,4 @@ blocks:
             - 'export PATH=/home/semaphore/go/bin:$PATH'
             - checkout
             - go get ./...
-            - go test ./cmd/app
+            - go test ./pkg/tvmaze/
