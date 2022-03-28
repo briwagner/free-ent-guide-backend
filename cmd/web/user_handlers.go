@@ -227,6 +227,13 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 // Responds to /v1/users/delete-zip?username={name}&zip={zipcode}
 func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+	case "OPTIONS":
+		enableCors(&w)
+		// TODO: above is not enough for preflight options. Add below to default action?
+		(w).Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.WriteHeader(200)
+		return
 	case "POST":
 		enableCors(&w)
 
@@ -252,8 +259,23 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Reload data to return to client.
+		err = user.GetZips(cacheClient)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Error fetching user data."))
+			return
+		}
+
+		userJSON, err := json.Marshal(user)
+		if err != nil {
+			log.Print("Error marshaling user zips; UsersDeleteZip")
+			w.WriteHeader(200)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("ok"))
+		w.Write([]byte(userJSON))
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only POST requests are accepted."))
