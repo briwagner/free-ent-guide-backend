@@ -40,6 +40,10 @@ func (m *MovieDb) GetDiscover(date string) {
 		"api_key":                  m.Key,
 		"primary_release_date.gte": date,
 		"adult":                    "false",
+		// todo: language filter was added because Asian
+		// languages cannot be entered into DB as utf-8.
+		// Try to convert text before pushing to DB?
+		"with_original_language": "en",
 	}
 	_ = m.fetch(url, params)
 }

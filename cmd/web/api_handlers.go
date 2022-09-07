@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"free-ent-guide-backend/pkg/moviedb"
+	"free-ent-guide-backend/pkg/storage"
 	"free-ent-guide-backend/pkg/tmsapi"
 	"free-ent-guide-backend/pkg/tvmaze"
 	"log"
@@ -26,7 +28,8 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check cache for stored response.
-	cache, err := getCache(cacheKey)
+	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	cache, err := DB.GetCache(cacheKey)
 
 	if err != nil {
 		cacheStatus(&w, false)
@@ -47,7 +50,7 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 
 		// Save to cache.
 		if tms.Status == http.StatusOK {
-			_ = setCache(cacheKey, string(tms.Response), time.Hour)
+			_ = DB.SetCache(cacheKey, string(tms.Response), time.Hour)
 		} else {
 			w.WriteHeader(500)
 		}
@@ -64,15 +67,16 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 // Responds to /v1/discover?date={YYYY-MM-DD}.
 func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
-	cacheKey := "discover"
 	date := r.URL.Query().Get("date")
 	if date == "" {
 		w.WriteHeader(400)
 		w.Write([]byte("Must pass a date"))
 		return
 	}
+	cacheKey := fmt.Sprintf("discover?date=%s", date)
 	// Check cache for stored response.
-	cache, err := getCache(cacheKey)
+	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	cache, err := DB.GetCache(cacheKey)
 
 	// No cache found.
 	if err != nil {
@@ -83,7 +87,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 		mdb.GetDiscover(date)
 
 		if mdb.Status == http.StatusOK {
-			_ = setCache(cacheKey, string(mdb.Response), time.Hour)
+			_ = DB.SetCache(cacheKey, string(mdb.Response), time.Hour)
 		} else {
 			w.WriteHeader(500)
 		}
@@ -105,7 +109,10 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Must pass a date"))
 		return
 	}
-	cache, err := getCache(cacheKey)
+
+	// Cache
+	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	cache, err := DB.GetCache(cacheKey)
 	if err != nil {
 		cacheStatus(&w, false)
 
@@ -114,7 +121,7 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 		tms.GetTvMovies(date, lineup)
 		w.WriteHeader(tms.Status)
 		w.Write(tms.Response)
-		_ = setCache(cacheKey, string(tms.Response), time.Hour)
+		_ = DB.SetCache(cacheKey, string(tms.Response), time.Hour)
 	} else {
 		cacheStatus(&w, true)
 		w.Write([]byte(cache))
@@ -132,7 +139,8 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cacheKey := "tvsports?" + date
-	cache, err := getCache(cacheKey)
+	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	cache, err := DB.GetCache(cacheKey)
 	if err != nil {
 		cacheStatus(&w, false)
 
@@ -141,7 +149,7 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 		tms.GetTvSports(date, lineup)
 		w.WriteHeader(tms.Status)
 		w.Write(tms.Response)
-		_ = setCache(cacheKey, string(tms.Response), time.Hour)
+		_ = DB.SetCache(cacheKey, string(tms.Response), time.Hour)
 	} else {
 		cacheStatus(&w, true)
 		w.Write([]byte(cache))

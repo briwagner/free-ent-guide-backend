@@ -6,8 +6,8 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/pkg/authenticator"
 	"free-ent-guide-backend/pkg/cred"
+	"free-ent-guide-backend/pkg/storage"
 
-	"log"
 	"net/http"
 	"time"
 
@@ -25,6 +25,9 @@ import (
 
 var c cred.Cred
 var cacheClient *redis.Client
+
+// var DB *gorm.DB
+var DB storage.Store
 var author authenticator.Authenticator
 
 func main() {
@@ -38,6 +41,9 @@ func main() {
 		Password: c.RedisPassword,
 		DB:       c.RedisDB,
 	})
+
+	// Set-up database.
+	DB = storage.Setup(c)
 
 	author = authenticator.Authenticator{}
 	// Pass secret to setup JWT authenticator.
@@ -60,24 +66,20 @@ func main() {
 	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(http.HandlerFunc(UsersDeleteZip)))
 	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
 
+	// Middleware
+	mux.Use(StorageHandler)
+
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
 	http.ListenAndServe(port, mux)
 }
 
-func getCache(key string) (string, error) {
-	val, err := cacheClient.Get(key).Result()
-	if err != nil {
-		log.Printf("Key not found for: %v", key)
-	}
-	return val, err
-}
-
-func setCache(key string, val string, t time.Duration) error {
-	err := cacheClient.Set(key, val, t).Err()
-	if err != nil {
-		fmt.Printf("Redis setCache: %s\n", err.Error())
-	}
-	return err
+func StorageHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Add Store on all requests.
+		ctx := context.WithValue(r.Context(), storage.StorageContextKey, DB)
+		r = r.WithContext(ctx)
+		h.ServeHTTP(w, r)
+	})
 }
 
 func enableCors(w *http.ResponseWriter) {
@@ -112,7 +114,7 @@ func validateUser(ctx context.Context, r *http.Request, username, password strin
 		return auth.NewDefaultUser(u.Name, "1", nil, nil), nil
 	}
 
-	return nil, fmt.Errorf("Invalid credentials")
+	return nil, fmt.Errorf("invalid credentials")
 }
 
 // Define strategies, set token expiration time.

@@ -15,6 +15,7 @@ type Cred struct {
 	RedisPort     string `mapstructure:"redis_port"`
 	RedisPassword string `mapstructure:"redis_password"`
 	RedisDB       int    `mapstructure:"redis_db"`
+	DB            string `mapstructure:"db_string"`
 	Timezone      string `mapstructure:"timezone"`
 	TokenDuration int64  `mapstructure:"token_duration"`
 	TokenSecret   string `mapstructure:"token_secret"`
