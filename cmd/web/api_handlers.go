@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/pkg/moviedb"
-	"free-ent-guide-backend/pkg/storage"
 	"free-ent-guide-backend/pkg/tmsapi"
 	"free-ent-guide-backend/pkg/tvmaze"
 	"log"
@@ -28,7 +28,7 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check cache for stored response.
-	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 	cache, err := DB.GetCache(cacheKey)
 
 	if err != nil {
@@ -75,7 +75,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	}
 	cacheKey := fmt.Sprintf("discover?date=%s", date)
 	// Check cache for stored response.
-	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 	cache, err := DB.GetCache(cacheKey)
 
 	// No cache found.
@@ -111,7 +111,7 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Cache
-	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 	cache, err := DB.GetCache(cacheKey)
 	if err != nil {
 		cacheStatus(&w, false)
@@ -139,7 +139,7 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cacheKey := "tvsports?" + date
-	DB := r.Context().Value(storage.StorageContextKey).(storage.Store)
+	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 	cache, err := DB.GetCache(cacheKey)
 	if err != nil {
 		cacheStatus(&w, false)

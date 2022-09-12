@@ -15,10 +15,25 @@ import (
 func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	username := r.Context().Value(ContextUserKey)
-	jwtToken := author.IssueJWT(fmt.Sprintf("%v", username), "1")
+
+	// Load user to get ID and add to token.
+	DB := r.Context().Value(models.StorageContextKey).(models.Store)
+	u := models.User{Name: fmt.Sprintf("%v", username)}
+	err := u.LoadByName(DB)
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// @todo: add named scopes.
+
+	jwtToken := author.IssueJWT(u.Name, fmt.Sprintf("%d", u.ID))
 	// Does not throw error, only empty string, if it fails.
 	if jwtToken == "" {
 		log.Printf("Failed to generate JWT for %s", username)
+		w.WriteHeader(500)
+		return
 	}
 
 	body := fmt.Sprintf("%s\n", jwtToken)
@@ -90,7 +105,9 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 	var formData UserCreateData
 	err := decoder.Decode(&formData)
 	if err != nil {
-		panic(err)
+		log.Print(err)
+		w.WriteHeader(500)
+		return
 	}
 
 	// Get data from form-data.
@@ -106,8 +123,9 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 	user := &models.User{Name: formData.Username, Password: formData.Password}
-	err = user.Create(cacheClient)
+	err = user.Create(DB)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf("Error creating user. %v", err)))
@@ -116,9 +134,6 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(204)
 }
-
-// UsersCreateToken returns a token if user is authenticated.
-// Responds to /v1/users/token
 
 // UsersGetZip returns the stored zip-codes for a user.
 // Responds to /v1/users/get-zip?username={name}
@@ -135,15 +150,18 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		enableCors(&w)
 
-		qUser := r.URL.Query().Get("username")
-		if qUser == "" {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a username"))
+		// Infer user from authentication.
+		uname := r.Context().Value(ContextUserKey)
+		username := fmt.Sprintf("%v", uname)
+		if username == "" {
+			w.WriteHeader(404)
+			w.Write([]byte("User not found"))
 			return
 		}
 
-		user := &models.User{Name: qUser}
-		err := user.GetZips(cacheClient)
+		DB := r.Context().Value(models.StorageContextKey).(models.Store)
+		user := &models.User{Name: username}
+		err := user.GetZips(DB)
 		if err != nil {
 			w.WriteHeader(404)
 			w.Write([]byte("Not found"))
@@ -178,11 +196,12 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		enableCors(&w)
 
-		// Get parameters from request.
-		qUser := r.URL.Query().Get("username")
-		if qUser == "" {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a username"))
+		// Infer user from authentication.
+		uname := r.Context().Value(ContextUserKey)
+		username := fmt.Sprintf("%v", uname)
+		if username == "" {
+			w.WriteHeader(404)
+			w.Write([]byte("User not found"))
 			return
 		}
 		qZip := r.URL.Query().Get("zip")
@@ -192,20 +211,13 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user := &models.User{Name: qUser}
-		err := user.AddZip(cacheClient, qZip)
+		DB := r.Context().Value(models.StorageContextKey).(models.Store)
+		user := &models.User{Name: username}
+		err := user.AddZip(DB, qZip)
 		if err != nil {
 			log.Printf("Storage error %s", err.Error())
 			w.WriteHeader(500)
 			w.Write([]byte("Error storing zip."))
-			return
-		}
-
-		// Reload data to return to client.
-		err = user.GetZips(cacheClient)
-		if err != nil {
-			w.WriteHeader(500)
-			w.Write([]byte("Error fetching new data."))
 			return
 		}
 
@@ -237,11 +249,12 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		enableCors(&w)
 
-		// Get parameters from request.
-		qUser := r.URL.Query().Get("username")
-		if qUser == "" {
-			w.WriteHeader(406)
-			w.Write([]byte("Must pass a username"))
+		// Infer user from authentication.
+		uname := r.Context().Value(ContextUserKey)
+		username := fmt.Sprintf("%v", uname)
+		if username == "" {
+			w.WriteHeader(404)
+			w.Write([]byte("User not found"))
 			return
 		}
 		qZip := r.URL.Query().Get("zip")
@@ -251,19 +264,12 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user := &models.User{Name: qUser}
-		err := user.DeleteZip(cacheClient, qZip)
+		DB := r.Context().Value(models.StorageContextKey).(models.Store)
+		user := &models.User{Name: username}
+		err := user.DeleteZip(DB, qZip)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error deleting data."))
-			return
-		}
-
-		// Reload data to return to client.
-		err = user.GetZips(cacheClient)
-		if err != nil {
-			w.WriteHeader(500)
-			w.Write([]byte("Error fetching user data."))
 			return
 		}
 
@@ -289,14 +295,18 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		enableCors(&w)
 
-		qUser := r.URL.Query().Get("username")
-		if qUser == "" {
-			w.Write([]byte("Must pass a username"))
+		// Infer user from authentication.
+		uname := r.Context().Value(ContextUserKey)
+		username := fmt.Sprintf("%v", uname)
+		if username == "" {
+			w.WriteHeader(404)
+			w.Write([]byte("User not found"))
 			return
 		}
 
-		user := &models.User{Name: qUser}
-		err := user.ClearZips(cacheClient)
+		DB := r.Context().Value(models.StorageContextKey).(models.Store)
+		user := &models.User{Name: username}
+		err := user.ClearZips(DB)
 		if err != nil {
 			w.Write([]byte("Error removing from storage."))
 			return

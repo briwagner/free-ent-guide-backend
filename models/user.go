@@ -1,25 +1,35 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 
-	"github.com/go-redis/redis"
+	"gorm.io/gorm"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
 // User model.
+// @todo: force unique Name.
 type User struct {
-	Name         string   `json:"username,omitempty"`
-	Zips         []string `json:"zipcodes"`
-	Password     string   `json:"-"`
-	PasswordHash string   `json:"-"`
+	gorm.Model
+	Name         string    `json:"username,omitempty"`
+	Zips         []UserZip `json:"zipcodes"`
+	Password     string    `json:"-" gorm:"-"`
+	PasswordHash string    `json:"-"`
 }
 
-// getDbKey formats the Redis key for a user.
-func (u *User) getDbKey() string {
-	return fmt.Sprintf("user:%s", u.Name)
+type UserZip struct {
+	gorm.Model
+	Zip    string
+	UserID uint
+}
+
+// MarshalJSON converts struct to string value.
+func (uz UserZip) MarshalJSON() ([]byte, error) {
+	return json.Marshal(uz.Zip)
 }
 
 // GetUserName returns the name field.
@@ -27,8 +37,17 @@ func (u *User) GetUserName() string {
 	return u.Name
 }
 
+// LoadByName uses name as key to find user in DB.
+func (u *User) LoadByName(db Store) error {
+	tx := db.First(&u, "name=?", u.Name)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	return nil
+}
+
 // Create generates a new user in storage.
-func (u *User) Create(db *redis.Client) error {
+func (u *User) Create(db Store) error {
 	if u.Name == "" || u.Password == "" {
 		return errors.New("username and password are required")
 	}
@@ -40,12 +59,10 @@ func (u *User) Create(db *redis.Client) error {
 	u.PasswordHash = ph
 
 	// Add to storage, if entry does not exist.
-	ok, err := db.SetNX(u.getDbKey(), u.PasswordHash, 0).Result()
-	if err != nil {
+	tx := db.Create(&u)
+
+	if tx.Error != nil {
 		return fmt.Errorf("failed to add user")
-	}
-	if !ok {
-		return fmt.Errorf("user exists: %s", u.Name)
 	}
 
 	log.Printf("New user created %s", u.Name)
@@ -64,57 +81,125 @@ func (u *User) hashPassword() (string, error) {
 }
 
 // CheckPasswordHash compares pass to stored hash.
-func (u *User) CheckPasswordHash(db *redis.Client, p string) bool {
-	h, err := db.Get(fmt.Sprintf("user:%s", u.Name)).Result()
-	if err != nil {
+func (u *User) CheckPasswordHash(db Store, p string) bool {
+	if u.ID == 0 {
+		err := u.LoadByName(db)
+		if err != nil {
+			log.Print(err)
+			return false
+		}
+	}
+	tx := db.First(&u, "id=?", u.ID)
+	if tx.Error != nil {
 		// TODO: what happens here?
 		return false
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(h), []byte(p))
+	err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(p))
 	return err == nil
 }
 
 // GetZips looks up the user's zip codes in storage.
-func (u *User) GetZips(db *redis.Client) error {
-	records, err := db.LRange(fmt.Sprintf("user:%s:zip", u.Name), 0, -1).Result()
-	if err != nil {
-		return errors.New("error uwer zips")
+func (u *User) GetZips(db Store) error {
+	if u.ID == 0 {
+		err := u.LoadByName(db)
+		if err != nil {
+			log.Print(err)
+			return errors.New("nil user")
+		}
 	}
-	u.Zips = records
+	var uz []UserZip
+	tx := db.Find(&uz, "user_id=?", u.ID)
+	if tx.Error != nil {
+		return errors.New("error user zips")
+	}
+	u.Zips = uz
 	return nil
 }
 
-// AddZip adds an entry to user's zip codes in storage.
-func (u *User) AddZip(db *redis.Client, newZip string) error {
-	res := db.RPush(fmt.Sprintf("user:%s:zip", u.Name), newZip)
-	if res.Err() != nil {
-		return errors.New("cannot add zip")
+// HasZip checks if zip is stored in DB.
+func (u *User) HasZip(db Store, zip string) (bool, error) {
+	if u.ID == 0 {
+		err := u.LoadByName(db)
+		if err != nil {
+			log.Print(err)
+			return false, errors.New("nil user")
+		}
 	}
+	var z UserZip
+	tx := db.First(&z, "user_id=? AND zip=?", u.ID, zip)
+	// No errors means zip is present in DB.
+	if tx.Error == nil {
+		return true, nil
+	}
+	// @todo: properly handle this error in this function?
+	return false, tx.Error
+}
+
+// AddZip adds an entry to user's zip codes in storage.
+func (u *User) AddZip(db Store, newZip string) error {
+	if u.ID == 0 {
+		err := u.LoadByName(db)
+		if err != nil {
+			log.Print(err)
+			return errors.New("nil user")
+		}
+	}
+	ok, _ := u.HasZip(db, newZip)
+	if ok {
+		return errors.New("user already has zip")
+	}
+	z := UserZip{Zip: newZip, UserID: u.ID}
+	tx := db.Create(&z)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// Reload user to properly set zips.
+	db.Preload("Zips").First(&u, u.ID)
 	return nil
 }
 
 // DeleteZip removes a user's zip code from storage.
-func (u *User) DeleteZip(db *redis.Client, zip string) error {
-	res, err := db.LRem(fmt.Sprintf("user:%s:zip", u.Name), 0, zip).Result()
-	if err != nil {
-		return errors.New("cannot delete zip")
+func (u *User) DeleteZip(db Store, zip string) error {
+	if u.ID == 0 {
+		err := u.LoadByName(db)
+		if err != nil {
+			log.Print(err)
+			return errors.New("nil user")
+		}
 	}
-	// TODO: restrict entering repeated values. Then change this to == 1.
-	// How to pass this to frontend?
-	// Redis returns # of items removed.
-	if res >= 1 {
-		log.Println("ok removing zip")
-	} else {
-		log.Println("zip not found")
+	z := UserZip{}
+	tx := db.First(&z, "user_id=? AND zip=?", u.ID, zip)
+	if tx.Error != nil {
+		return tx.Error
 	}
+	tx = db.Delete(&z)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	// Reload user to properly set zips.
+	db.Preload("Zips").First(&u, u.ID)
 	return nil
 }
 
 // ClearZips removes all user zip codes from storage.
-func (u *User) ClearZips(db *redis.Client) error {
-	res := db.Del(fmt.Sprintf("user:%s:zip", u.Name))
-	if res.Err() != nil {
-		return errors.New("cannot clear zips")
+func (u *User) ClearZips(db Store) error {
+	if u.ID == 0 {
+		err := u.LoadByName(db)
+		if err != nil {
+			log.Print(err)
+			return errors.New("nil user")
+		}
+	}
+	var zs []UserZip
+	tx := db.Delete(&zs, "user_id=?", u.ID)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Reload user to properly set zips.
+	tx = db.Preload("Zips").First(&u, u.ID)
+	if tx.Error != nil {
+		return tx.Error
 	}
 	return nil
 }

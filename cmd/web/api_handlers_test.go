@@ -5,8 +5,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/go-redis/redis"
 )
 
 type requestTest struct {
@@ -34,13 +32,6 @@ func TestGetMovies(t *testing.T) {
 }
 
 func TestDiscoverMovies(t *testing.T) {
-	// Override the default Redis config to avoid using it entirely.
-	cacheClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "123",
-		DB:       2,
-	})
-
 	requests := []requestTest{
 		{"/v1/discover", "Must pass a date", 400},
 		{"/v1/discover?date=2021-05-06", `{"page":1,"results":[`, 200},

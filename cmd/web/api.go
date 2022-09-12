@@ -6,7 +6,7 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/pkg/authenticator"
 	"free-ent-guide-backend/pkg/cred"
-	"free-ent-guide-backend/pkg/storage"
+	"log"
 
 	"net/http"
 	"time"
@@ -16,7 +16,6 @@ import (
 	"github.com/shaj13/libcache"
 	_ "github.com/shaj13/libcache/fifo"
 
-	"github.com/go-redis/redis"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/basic"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
@@ -24,10 +23,9 @@ import (
 )
 
 var c cred.Cred
-var cacheClient *redis.Client
 
 // var DB *gorm.DB
-var DB storage.Store
+var DB models.Store
 var author authenticator.Authenticator
 
 func main() {
@@ -35,19 +33,17 @@ func main() {
 	c.GetCreds("creds", ".")
 	port := fmt.Sprintf(":%v", c.Port)
 
-	// Set-up cache client for requests.
-	cacheClient = redis.NewClient(&redis.Options{
-		Addr:     c.RedisPort,
-		Password: c.RedisPassword,
-		DB:       c.RedisDB,
-	})
-
 	// Set-up database.
-	DB = storage.Setup(c)
+	DB = models.Setup(c)
 
-	author = authenticator.Authenticator{}
-	// Pass secret to setup JWT authenticator.
-	setupGoGuardian(c.TokenSecret)
+	// Set-up authentication.
+	author = authenticator.Authenticator{
+		Audience: jwt.SetAudience("any"),
+		Issuer:   jwt.SetIssuer("ent_api"),
+		Duration: c.TokenDuration,
+	}
+	author.AttachSecret(c.TokenSecret)
+	setupGoGuardian()
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/v1/movies", GetMovies).Methods("GET")
@@ -73,10 +69,10 @@ func main() {
 	http.ListenAndServe(port, mux)
 }
 
+// Middleware to add Storage ref to context.
 func StorageHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Add Store on all requests.
-		ctx := context.WithValue(r.Context(), storage.StorageContextKey, DB)
+		ctx := context.WithValue(r.Context(), models.StorageContextKey, DB)
 		r = r.WithContext(ctx)
 		h.ServeHTTP(w, r)
 	})
@@ -110,15 +106,20 @@ var cacheObj libcache.Cache
 // Validate user with basic auth.
 func validateUser(ctx context.Context, r *http.Request, username, password string) (auth.Info, error) {
 	u := &models.User{Name: username, Password: password}
-	if u.CheckPasswordHash(cacheClient, password) {
-		return auth.NewDefaultUser(u.Name, "1", nil, nil), nil
+	err := u.LoadByName(DB)
+	if err != nil {
+		log.Print(err)
+		return nil, fmt.Errorf("failed to load user")
+	}
+	if u.CheckPasswordHash(DB, password) {
+		return auth.NewDefaultUser(u.Name, fmt.Sprintf("%d", u.ID), nil, nil), nil
 	}
 
 	return nil, fmt.Errorf("invalid credentials")
 }
 
 // Define strategies, set token expiration time.
-func setupGoGuardian(secret string) {
+func setupGoGuardian() {
 	cacheObj = libcache.FIFO.New(0)
 	cacheObj.SetTTL(time.Hour * 72)
 	cacheObj.RegisterOnExpired(func(key, _ interface{}) {
@@ -126,10 +127,6 @@ func setupGoGuardian(secret string) {
 	})
 	basicStrategy := basic.NewCached(validateUser, cacheObj)
 
-	author.AttachSecret(secret)
-	author.Audience = jwt.SetAudience("any")
-	author.Issuer = jwt.SetIssuer(("ent_api"))
-	author.Duration = c.TokenDuration
 	jwtStrategy = jwt.New(cacheObj, author.Secret, author.Audience)
 	strategy = union.New(jwtStrategy, basicStrategy)
 }

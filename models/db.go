@@ -1,8 +1,7 @@
-package storage
+package models
 
 import (
 	"errors"
-	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/pkg/cred"
 	"time"
 
@@ -21,7 +20,11 @@ func Setup(c cred.Cred) Store {
 		panic(err)
 	}
 
-	db.AutoMigrate(&models.Cache{})
+	db.AutoMigrate(
+		&Cache{},
+		&User{},
+		&UserZip{},
+	)
 	store := Store{db}
 	return store
 }
@@ -32,9 +35,8 @@ const StorageContextKey StorageContextType = "store"
 
 // GetCache
 func (db Store) GetCache(key string) (string, error) {
-	c := models.Cache{}
-	// todo: modify query to pass expires time?
-	tx := db.First(&c, "name = ?", key)
+	c := Cache{}
+	tx := db.First(&c, "name = ? AND expires > ?", key, time.Now())
 	if tx.Error != nil {
 		return "", tx.Error
 	}
@@ -48,7 +50,7 @@ func (db Store) GetCache(key string) (string, error) {
 
 // SetCache
 func (db Store) SetCache(key string, val string, t time.Duration) error {
-	c := models.Cache{
+	c := Cache{
 		Name:    key,
 		Value:   val,
 		Expires: time.Now().Add(t),

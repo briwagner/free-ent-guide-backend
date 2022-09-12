@@ -49,6 +49,7 @@ func (a *Authenticator) IssueJWT(username string, uid string) string {
 	u := auth.NewUserInfo(username, uid, nil, nil)
 
 	exp := jwt.SetExpDuration(time.Minute * time.Duration(a.Duration))
+	// @todo: add jwt.SetNamedScopes()
 	token, err := jwt.IssueAccessToken(u, a.Secret, a.Audience, a.Issuer, exp)
 	if err != nil {
 		log.Println(err)
@@ -59,6 +60,7 @@ func (a *Authenticator) IssueJWT(username string, uid string) string {
 }
 
 // IssueToken generates a token.
+// @todo: we're not using this.
 func (a *Authenticator) IssueToken(username string, uid string) string {
 	// Some user info is passed
 	u := auth.NewUserInfo(username, uid, nil, nil)
