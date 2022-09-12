@@ -60,7 +60,7 @@ func (a *Authenticator) IssueJWT(username string, uid string) string {
 }
 
 // IssueToken generates a token.
-// @todo: we're not using this.
+// @todo: we're not using this. Or re-purpose for password reset.
 func (a *Authenticator) IssueToken(username string, uid string) string {
 	// Some user info is passed
 	u := auth.NewUserInfo(username, uid, nil, nil)

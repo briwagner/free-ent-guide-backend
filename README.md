@@ -1,33 +1,16 @@
-Data Sources
+# Free Entertainment Guide
 
-TMS
-  * get tv movie listings (/v1/tv-movies?date={YYYY-MM-DD})
-  * get tv sports listings (/v1/tv-sports?date={YYYY-MM-DD})
-  * get cinema listings by zip (/v1/movies?zip={ZIP})
+This project is a 100% Go backend to support a Javascript-driven frontend web application. The backend manages the following:
+* user account creation and authentication
+* integration with <a href="https://github.com/shaj13/go-guardian">Go-Guardian</a> for authorization via basic auth and JWT
+* proxy and caching for requests to third-party data providers
 
-TV Maze
-  * tv show search (/v1/tv-search?title={TITLE})
+## Authentication and Authorization
 
-TheMovieDB.org
-  * discover movies (/v1/discover?date={YYYY-MM-DD})
-  * TODO: tv show popular: https://developers.themoviedb.org/3/tv/get-popular-tv-shows
+The Go-Guardian library allows us to register multiple methods for authenticating requests. FEG supports basic auth, which integrates with a database. If approved, the client receives a JWT which is stored by the frontend application and used for subsequent requests.
 
-TODO:
-  - set a username and pass on Redis; externalize to creds.yaml file
-  - add caching to movie by zip lookup, GetTMSReq
-  - fix episode links showing on search results
-  - fetch theaters in zip code
+## Proxy and Caching
 
-Creds:
+The Go server is an efficient method for proxying requests to third-party data providers. Details about URL paths and authentication credentials for the third-party providers are not exposed to the client on the frontend, a common problem for Javascript-only applications.
 
-Application looks for a "creds.yaml" file in the root of the project. This file is required to build, as it is read by Viper to set up the application.
-
-  - tms: App ID for TMS.
-  - moviedb: Access key for Movie DB
-  - port: Port number
-  - env: Environment flag, e.g. "dev" or "prod"
-  - redis_port: URL for Redis with hostname and port
-  - redis_password: Redis password
-  - redis_db: Redis database number
-  - use_cache: Boolean flag to enable cache/storage
-  - timezone: Default timezone for server, used in querying results
+By integrating with database storage, we can also cache responses for reuse instead of forwarding all requests to the third-party provider.
