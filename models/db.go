@@ -24,6 +24,10 @@ func Setup(c cred.Cred) Store {
 		&Cache{},
 		&User{},
 		&UserZip{},
+		&MLBGame{},
+		&MLBTeam{},
+		&NHLGame{},
+		&NHLTeam{},
 	)
 	store := Store{db}
 	return store

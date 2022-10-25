@@ -62,6 +62,10 @@ func main() {
 	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(http.HandlerFunc(UsersDeleteZip)))
 	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
 
+	// Docker importers
+	mux.HandleFunc("/v1/admin/import-nhl", NHLImportHandler)
+	mux.HandleFunc("/v1/admin/import-mlb", MLBImportHandler)
+
 	// Middleware
 	mux.Use(StorageHandler)
 
