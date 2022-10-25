@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"log"
@@ -11,11 +12,32 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"gorm.io/gorm"
 )
+
+// GetNetwork finds the proper network to attach to the container.
+// This should exist and connect to outside the host.
+func GetNetwork(cli *client.Client) (string, error) {
+	ctx := context.Background()
+	f := filters.NewArgs()
+	// This `common` network should have been manually created.
+	f.Add("name", "common")
+	nets, err := cli.NetworkList(ctx, types.NetworkListOptions{Filters: f})
+	if err != nil {
+		return "", err
+	}
+
+	if len(nets) == 0 {
+		return "", errors.New("docker network `common` not found")
+	}
+
+	// Assume only one network is found.
+	return nets[0].ID, nil
+}
 
 // ImportNHL runs the Docker container to fetch NHL game schedule
 // for a given date, and import games and teams to the DB.
@@ -67,6 +89,12 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 	portBinding := nat.PortMap{containerPort: []nat.PortBinding{hostBinding}}
 	platform := v1.Platform{OS: "linux", Architecture: "amd64"}
 
+	// Check for custom network which allows internet outside of host.
+	netID, err := GetNetwork(cli)
+	if err != nil {
+		return err
+	}
+
 	cont, err := cli.ContainerCreate(
 		ctx,
 		&container.Config{
@@ -83,6 +111,12 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 	)
 	if err != nil {
 		log.Print(err)
+		return err
+	}
+
+	// Attach container to network to allow internet access.
+	err = cli.NetworkConnect(ctx, netID, cont.ID, &network.EndpointSettings{})
+	if err != nil {
 		return err
 	}
 
@@ -223,6 +257,12 @@ func ImportMLB(db *gorm.DB, startDate string) error {
 	portBinding := nat.PortMap{containerPort: []nat.PortBinding{hostBinding}}
 	platform := v1.Platform{OS: "linux", Architecture: "amd64"}
 
+	// Check for custom network which allows internet outside of host.
+	netID, err := GetNetwork(cli)
+	if err != nil {
+		return err
+	}
+
 	cont, err := cli.ContainerCreate(
 		ctx,
 		&container.Config{
@@ -239,6 +279,12 @@ func ImportMLB(db *gorm.DB, startDate string) error {
 	)
 	if err != nil {
 		log.Print(err)
+		return err
+	}
+
+	// Attach container to network to allow internet access.
+	err = cli.NetworkConnect(ctx, netID, cont.ID, &network.EndpointSettings{})
+	if err != nil {
 		return err
 	}
 
