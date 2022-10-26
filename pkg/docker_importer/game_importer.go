@@ -36,6 +36,7 @@ func GetNetwork(cli *client.Client) (string, error) {
 	}
 
 	// Assume only one network is found.
+	log.Printf("docker network found %s", nets[0].ID)
 	return nets[0].ID, nil
 }
 
@@ -104,6 +105,7 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 		},
 		&container.HostConfig{
 			PortBindings: portBinding,
+			NetworkMode:  "common",
 		},
 		nil,
 		&platform,
@@ -111,12 +113,6 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 	)
 	if err != nil {
 		log.Print(err)
-		return err
-	}
-
-	// Attach container to network to allow internet access.
-	err = cli.NetworkConnect(ctx, netID, cont.ID, &network.EndpointSettings{})
-	if err != nil {
 		return err
 	}
 
@@ -141,6 +137,12 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 		}
 	case <-statusCh:
 		// fmt.Println("Container is ok")
+	}
+
+	// Attach container to network to allow internet access.
+	err = cli.NetworkConnect(ctx, netID, cont.ID, &network.EndpointSettings{NetworkID: netID})
+	if err != nil {
+		return err
 	}
 
 	out, err := cli.ContainerLogs(ctx, cont.ID, types.ContainerLogsOptions{
@@ -272,6 +274,7 @@ func ImportMLB(db *gorm.DB, startDate string) error {
 		},
 		&container.HostConfig{
 			PortBindings: portBinding,
+			NetworkMode:  "common",
 		},
 		nil,
 		&platform,
@@ -279,12 +282,6 @@ func ImportMLB(db *gorm.DB, startDate string) error {
 	)
 	if err != nil {
 		log.Print(err)
-		return err
-	}
-
-	// Attach container to network to allow internet access.
-	err = cli.NetworkConnect(ctx, netID, cont.ID, &network.EndpointSettings{})
-	if err != nil {
 		return err
 	}
 
@@ -309,6 +306,12 @@ func ImportMLB(db *gorm.DB, startDate string) error {
 		}
 	case <-statusCh:
 		// fmt.Println("Container is ok")
+	}
+
+	// Attach container to network to allow internet access.
+	err = cli.NetworkConnect(ctx, netID, cont.ID, &network.EndpointSettings{NetworkID: netID})
+	if err != nil {
+		return err
 	}
 
 	out, err := cli.ContainerLogs(ctx, cont.ID, types.ContainerLogsOptions{
