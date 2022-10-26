@@ -17,6 +17,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // GetNetwork finds the proper network to attach to the container.
@@ -176,14 +177,14 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 		g.HomeID = home.ID
 
 		visitor := g.Visitor
-		tx = db.FirstOrCreate(&g.Visitor, models.NHLTeam{TeamID: g.Visitor.TeamID})
+		tx = db.FirstOrCreate(&visitor, models.NHLTeam{TeamID: g.Visitor.TeamID})
 		if tx.Error != nil {
 			log.Print(tx.Error)
 			continue
 		}
 		g.VisitorID = visitor.ID
 
-		tx = db.Create(&g)
+		tx = db.Omit(clause.Associations).Create(&g)
 		if tx.Error != nil {
 			log.Print(tx.Error)
 			return tx.Error
@@ -346,14 +347,14 @@ func ImportMLB(db *gorm.DB, startDate string) error {
 		g.HomeID = home.ID
 
 		visitor := g.Visitor
-		tx = db.FirstOrCreate(&g.Visitor, models.MLBTeam{TeamID: g.Visitor.TeamID})
+		tx = db.FirstOrCreate(&visitor, models.MLBTeam{TeamID: g.Visitor.TeamID})
 		if tx.Error != nil {
 			log.Print(tx.Error)
 			continue
 		}
 		g.VisitorID = visitor.ID
 
-		tx = db.Create(&g)
+		tx = db.Omit(clause.Associations).Create(&g)
 		if tx.Error != nil {
 			log.Print(tx.Error)
 			return tx.Error

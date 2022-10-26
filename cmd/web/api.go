@@ -62,6 +62,11 @@ func main() {
 	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(http.HandlerFunc(UsersDeleteZip)))
 	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
 
+	mux.HandleFunc("/v1/sports/nhl", NHLGamesHandler)
+	mux.HandleFunc("/v1/sports/mlb", MLBGamesHandler)
+	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
+	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
+
 	// Docker importers
 	mux.HandleFunc("/v1/admin/import-nhl", NHLImportHandler)
 	mux.HandleFunc("/v1/admin/import-mlb", MLBImportHandler)
