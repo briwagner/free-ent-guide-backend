@@ -16,7 +16,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -43,7 +42,7 @@ func GetNetwork(cli *client.Client) (string, error) {
 
 // ImportNHL runs the Docker container to fetch NHL game schedule
 // for a given date, and import games and teams to the DB.
-func ImportNHL(db *gorm.DB, startDate string) error {
+func ImportNHL(store models.Store, startDate string) error {
 	image := "brianwagner/python-nhlgames:1.0"
 	contName := "nhlGamesPython"
 	ctx := context.Background()
@@ -158,6 +157,7 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 	defer out.Close()
 
 	count := 0
+	db := store.DB
 
 	scanner := bufio.NewScanner(out)
 	for scanner.Scan() {
@@ -212,7 +212,7 @@ func ImportNHL(db *gorm.DB, startDate string) error {
 
 // ImportMLB runs the Docker container to fetch MLB game schedule
 // for a given date, and import games and teams to the DB.
-func ImportMLB(db *gorm.DB, startDate string) error {
+func ImportMLB(store models.Store, startDate string) error {
 	image := "brianwagner/python-mlbgames:1.0"
 	contName := "mlbGamesPython"
 	ctx := context.Background()
@@ -327,6 +327,7 @@ func ImportMLB(db *gorm.DB, startDate string) error {
 	defer out.Close()
 
 	count := 0
+	db := store.DB
 
 	scanner := bufio.NewScanner(out)
 	for scanner.Scan() {

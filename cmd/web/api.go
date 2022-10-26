@@ -68,8 +68,8 @@ func main() {
 	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
 
 	// Docker importers
-	mux.HandleFunc("/v1/admin/import-nhl", NHLImportHandler)
-	mux.HandleFunc("/v1/admin/import-mlb", MLBImportHandler)
+	mux.HandleFunc("/v1/admin/import-nhl", AuthHandler(http.HandlerFunc(NHLImportHandler)))
+	mux.HandleFunc("/v1/admin/import-mlb", AuthHandler(http.HandlerFunc(MLBImportHandler)))
 
 	// Middleware
 	mux.Use(StorageHandler)
