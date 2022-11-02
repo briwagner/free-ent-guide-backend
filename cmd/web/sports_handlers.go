@@ -9,12 +9,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// NHLGameHandler responds to GET and returns a single
-// game matching the specified GameID.
+// NHLGameHandler returns a single scheduled game by GameID,
+// and includes live scores and timing from the official api.
 func NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 
+	// Fetch game from database.
 	var g models.NHLGame
 	err := g.FindByID(vars["game_id"], DB)
 	if err != nil {
@@ -22,15 +23,25 @@ func NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	gJSON, err := json.Marshal(g)
+
+	// Fetch scores, timing from the NHL api.
+	gu, err := g.GetUpdate()
 	if err != nil {
 		log.Print(err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
+	guJSON, err := json.Marshal(gu)
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	enableCors(&w)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(gJSON))
+	w.Write([]byte(guJSON))
 }
 
 // NHLGamesHandler responds to GET and returns the
@@ -38,11 +49,10 @@ func NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 func NHLGamesHandler(w http.ResponseWriter, r *http.Request) {
 	d := r.URL.Query().Get("date")
 	if d == "" {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Must pass a date"))
 		return
 	}
-
 	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 	gs := &models.NHLGames{}
 	err := gs.LoadByDate(d, DB)
@@ -59,6 +69,7 @@ func NHLGamesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	enableCors(&w)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(gsJSON))
 }
@@ -79,7 +90,7 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	gJSON, err := json.Marshal(g)
 	if err != nil {
 		log.Print(err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -92,7 +103,7 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 func MLBGamesHandler(w http.ResponseWriter, r *http.Request) {
 	d := r.URL.Query().Get("date")
 	if d == "" {
-		w.WriteHeader(400)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Must pass a date"))
 		return
 	}

@@ -4,20 +4,11 @@ import (
 	"testing"
 
 	"free-ent-guide-backend/pkg/cred"
-
-	"github.com/go-redis/redis"
 )
 
-var cacheClient *redis.Client
 var AppStore Store
 
 func init() {
-	cacheClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:7000",
-		Password: "",
-		DB:       0,
-	})
-
 	c := cred.Cred{DB: "gorm:password@tcp(127.0.0.1:3306)/demo_gorm_test?charset=utf8mb4&parseTime=True&loc=Local"}
 	AppStore = Setup(c)
 }
