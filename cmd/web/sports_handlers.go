@@ -80,6 +80,7 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 
+	// Fetch game from database.
 	var g models.MLBGame
 	err := g.FindByID(vars["game_id"], DB)
 	if err != nil {
@@ -87,15 +88,25 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	gJSON, err := json.Marshal(g)
+
+	// Fetch scores, timing from the MLB api.
+	gu, err := g.GetUpdate()
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	guJSON, err := json.Marshal(gu)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	enableCors(&w)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(gJSON))
+	w.Write([]byte(guJSON))
 }
 
 // MLBGamesHandler responds to GET and returns the
@@ -124,6 +135,7 @@ func MLBGamesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	enableCors(&w)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(gsJSON))
 }

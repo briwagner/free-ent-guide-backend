@@ -11,7 +11,7 @@ func init() {
 	AppStore = Setup(c)
 }
 
-func TestUpdateGame(t *testing.T) {
+func TestUpdateGameNHL(t *testing.T) {
 	data := `{
 		"copyright" : "NHL and the NHL Shield are registered trademarks of the National Hockey League. NHL and NHL team marks are the property of the NHL and its teams. © NHL 2022. All Rights Reserved.",
 		"gamePk" : 2022020148,
