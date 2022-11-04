@@ -35,8 +35,14 @@ type NHLGames []NHLGame
 
 // LoadByDate fetches all games for the given date.
 func (ngs *NHLGames) LoadByDate(d string, db Store) error {
-	d = fmt.Sprintf("%s%%", d)
-	tx := db.Preload("Home").Preload("Visitor").Where("gametime LIKE ?", d).Find(ngs)
+	date, err := time.Parse("2006-01-02", d)
+	if err != nil {
+		return err
+	}
+	// Set date to noon to allow capturing anything in PM that may show as next-day with UTC.
+	dateFrom := time.Date(date.Year(), date.Month(), date.Day(), 12, 0, 0, 0, date.Location())
+	dateTo := dateFrom.Add(time.Hour * 24)
+	tx := db.Preload("Home").Preload("Visitor").Where("gametime BETWEEN ? AND ?", dateFrom.String(), dateTo.String()).Find(ngs)
 	if tx.Error != nil {
 		return tx.Error
 	}
