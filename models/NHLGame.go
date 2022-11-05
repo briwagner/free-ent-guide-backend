@@ -42,7 +42,7 @@ func (ngs *NHLGames) LoadByDate(d string, db Store) error {
 	// Set date to noon to allow capturing anything in PM that may show as next-day with UTC.
 	dateFrom := time.Date(date.Year(), date.Month(), date.Day(), 12, 0, 0, 0, date.Location())
 	dateTo := dateFrom.Add(time.Hour * 24)
-	tx := db.Preload("Home").Preload("Visitor").Where("gametime BETWEEN ? AND ?", dateFrom.String(), dateTo.String()).Find(ngs)
+	tx := db.Preload("Home").Preload("Visitor").Where("gametime BETWEEN ? AND ?", dateFrom.String(), dateTo.String()).Order("gametime").Find(ngs)
 	if tx.Error != nil {
 		return tx.Error
 	}
