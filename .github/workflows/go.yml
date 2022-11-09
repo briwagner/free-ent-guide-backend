@@ -1,16 +1,13 @@
 name: Go
 on: [push]
 jobs:
-
-  setup_container:
-    name: Build
+  build:
     runs-on: ubuntu-latest
     steps:
-
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
-      with:
-        go-version-file: './go.mod'
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version-file: './go.mod'
 
     - name: Build web binary
       run: go build -o ./bin/free-ent-guide-backend ./cmd/web
