@@ -1,5 +1,4 @@
-name: Go
-on: [push]
+on: push
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,4 +13,3 @@ jobs:
 
     - name: Build CLI binary
       run: go build -o ./bin/cli-free-ent
-
