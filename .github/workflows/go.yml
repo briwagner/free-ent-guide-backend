@@ -1,6 +1,8 @@
-on: push
+name: Build binaries
+on: [push]
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -8,8 +10,8 @@ jobs:
         with:
           go-version-file: './go.mod'
 
-    - name: Build web binary
-      run: go build -o ./bin/free-ent-guide-backend ./cmd/web
+      - name: Build web binary
+        run: go build -o ./bin/free-ent-guide-backend ./cmd/web
 
-    - name: Build CLI binary
-      run: go build -o ./bin/cli-free-ent
+      - name: Build CLI binary
+        run: go build -o ./bin/cli-free-ent
