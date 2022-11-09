@@ -23,3 +23,6 @@ jobs:
 
     - name: Build web
       run: go build -o ./bin/free-ent-guide ./cmd/web
+
+    - name: Build cli
+      run: go build -o ./bin/cli-ent-guide ./cmd/cli
