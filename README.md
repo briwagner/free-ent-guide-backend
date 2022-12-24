@@ -14,3 +14,7 @@ The Go-Guardian library allows us to register multiple methods for authenticatin
 The Go server is an efficient method for proxying requests to third-party data providers. Details about URL paths and authentication credentials for the third-party providers are not exposed to the client on the frontend, a common problem for Javascript-only applications.
 
 By integrating with database storage, we can also cache responses for reuse instead of forwarding all requests to the third-party provider.
+
+## CLI
+
+The cli component helps to manage admin tasks against the database. This process uses Docker to run a Python image that pulls data from external feeds.
