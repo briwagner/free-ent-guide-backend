@@ -19,6 +19,7 @@ type Cred struct {
 	Timezone      string `mapstructure:"timezone"`
 	TokenDuration int64  `mapstructure:"token_duration"`
 	TokenSecret   string `mapstructure:"token_secret"`
+	CorsOrigin    string `mapstructure:"cors_origin"`
 }
 
 // GetCreds copies the configuration file into the cred struct.

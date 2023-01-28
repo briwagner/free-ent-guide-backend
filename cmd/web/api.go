@@ -95,7 +95,7 @@ func enableCors(w *http.ResponseWriter) {
 
 		return
 	}
-	(*w).Header().Set("Access-Control-Allow-Origin", "http://www.free-entertainment-guide.com")
+	(*w).Header().Set("Access-Control-Allow-Origin", c.CorsOrigin)
 }
 
 func cacheStatus(w *http.ResponseWriter, status bool) {
