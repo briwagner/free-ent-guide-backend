@@ -1,8 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/pkg/cred"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -13,10 +18,19 @@ type requestTest struct {
 	code     int
 }
 
-func TestGetMovies(t *testing.T) {
-	c.GetCreds("creds", "../../")
+var AppStore models.Store
 
-	req, err := http.NewRequest("GET", "/v1/movies", nil)
+func init() {
+	c := cred.Cred{
+		Tms: os.Getenv("TMS"),
+		DB:  os.Getenv("DB"),
+	}
+	DB = models.Setup(c)
+}
+
+func TestGetMovies(t *testing.T) {
+	url := fmt.Sprintf("/v1/movies?zip=%s", "60048")
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,8 +40,16 @@ func TestGetMovies(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Handler returned wrong status. Got %v, Want %v", status, http.StatusOK)
+	resp := rr.Result()
+	sc := resp.StatusCode
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	if status := sc; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status. Got %v, Want %v. Resp: %s", status, http.StatusOK, body)
 	}
 }
 
