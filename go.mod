@@ -3,7 +3,7 @@ module free-ent-guide-backend
 go 1.18
 
 require (
-	github.com/docker/docker v20.10.20+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/gorilla/mux v1.8.0
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
