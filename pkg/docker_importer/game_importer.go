@@ -43,7 +43,7 @@ func GetNetwork(cli *client.Client) (string, error) {
 // ImportNHL runs the Docker container to fetch NHL game schedule
 // for a given date, and import games and teams to the DB.
 func ImportNHL(store models.Store, startDate string) error {
-	image := "brianwagner/python-nhlgames:1.0"
+	image := "brianwagner/python-nhlgames:1.1"
 	contName := "nhlGamesPython"
 	ctx := context.Background()
 
@@ -64,7 +64,7 @@ func ImportNHL(store models.Store, startDate string) error {
 	}
 
 	for _, v := range ctrs {
-		err = cli.ContainerStop(ctx, v.ID, nil)
+		err = cli.ContainerStop(ctx, v.ID, container.StopOptions{})
 		if err != nil {
 			log.Print(err)
 			return err
@@ -197,7 +197,7 @@ func ImportNHL(store models.Store, startDate string) error {
 	// fmt.Print(games)
 
 	// Clean up.
-	err = cli.ContainerStop(ctx, cont.ID, nil)
+	err = cli.ContainerStop(ctx, cont.ID, container.StopOptions{})
 	if err != nil {
 		log.Print(err)
 		return err
@@ -213,7 +213,7 @@ func ImportNHL(store models.Store, startDate string) error {
 // ImportMLB runs the Docker container to fetch MLB game schedule
 // for a given date, and import games and teams to the DB.
 func ImportMLB(store models.Store, startDate string) error {
-	image := "brianwagner/python-mlbgames:1.0"
+	image := "brianwagner/python-mlbgames:1.1"
 	contName := "mlbGamesPython"
 	ctx := context.Background()
 
@@ -234,7 +234,7 @@ func ImportMLB(store models.Store, startDate string) error {
 	}
 
 	for _, v := range ctrs {
-		err = cli.ContainerStop(ctx, v.ID, nil)
+		err = cli.ContainerStop(ctx, v.ID, container.StopOptions{})
 		if err != nil {
 			log.Print(err)
 			return err
@@ -368,7 +368,7 @@ func ImportMLB(store models.Store, startDate string) error {
 	// fmt.Print(games)
 
 	// Clean up.
-	err = cli.ContainerStop(ctx, cont.ID, nil)
+	err = cli.ContainerStop(ctx, cont.ID, container.StopOptions{})
 	if err != nil {
 		log.Print(err)
 		return err
