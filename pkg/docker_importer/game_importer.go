@@ -43,7 +43,7 @@ func GetNetwork(cli *client.Client) (string, error) {
 // ImportNHL runs the Docker container to fetch NHL game schedule
 // for a given date, and import games and teams to the DB.
 func ImportNHL(store models.Store, startDate string) error {
-	image := "brianwagner/python-nhlgames:1.1"
+	image := "brianwagner/python-nhlgames:1.2"
 	contName := "nhlGamesPython"
 	ctx := context.Background()
 
