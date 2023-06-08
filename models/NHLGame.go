@@ -14,14 +14,17 @@ import (
 
 type NHLGame struct {
 	gorm.Model
-	GameID      int       `json:"id" gorm:"uniqueIndex"`
-	Link        string    `json:"link"`
-	HomeID      uint      `json:"-"`
-	Home        NHLTeam   `json:"home"`
-	VisitorID   uint      `json:"-"`
-	Visitor     NHLTeam   `json:"visitor"`
-	Description string    `json:"description"`
-	Gametime    time.Time `json:"gametime"`
+	GameID       int       `json:"id" gorm:"uniqueIndex"`
+	Link         string    `json:"link"`
+	HomeID       uint      `json:"-"`
+	Home         NHLTeam   `json:"home"`
+	HomeScore    int       `json:"home_score" gorm:"home_score"`
+	VisitorID    uint      `json:"-"`
+	Visitor      NHLTeam   `json:"visitor"`
+	VisitorScore int       `json:"visitor_score" gorm:"visitor_score"`
+	Description  string    `json:"description"`
+	Gametime     time.Time `json:"gametime"`
+	Status       string    `json:"status" gorm:"status"`
 }
 
 type NHLTeam struct {
@@ -57,6 +60,25 @@ func (g *NHLGame) FindByID(id string, db Store) error {
 	}
 	if g.ID == 0 {
 		return errors.New("NHL game not found")
+	}
+	return nil
+}
+
+// UpdateScore sets the scores for a completed game.
+func (g *NHLGame) UpdateScore(db Store) error {
+	up, err := g.GetUpdate()
+	if err != nil {
+		return err
+	}
+	if up.Status != "Final" {
+		return fmt.Errorf("update failed; game not finished %d", up.ID)
+	}
+	g.HomeScore = int(up.HomeScore)
+	g.VisitorScore = int(up.VisitorScore)
+	g.Status = up.Status
+	err = db.Save(&g).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }

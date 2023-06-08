@@ -21,12 +21,12 @@ func main() {
 	DB = models.Setup(c)
 
 	if len(os.Args) <= 2 {
-		fmt.Println("Must pass command: 'nhl' or 'mlb', along with a date e.g. 2022-11-21. Or 'cache' with one of: show, stale, clear, wipe.")
+		fmt.Println("Must pass command: 'nhl', 'mlb' or 'gup', along with a date e.g. 2022-11-21. \nOr 'cache' with one of: show, stale, clear, wipe.")
 		return
 	}
 
 	cmd := os.Args[1]
-	if cmd != "nhl" && cmd != "mlb" && cmd != "cache" {
+	if cmd != "nhl" && cmd != "mlb" && cmd != "cache" && cmd != "gup" {
 		fmt.Println("Command must be 'nhl' or 'mlb' or 'cache'")
 		return
 	}
@@ -109,6 +109,39 @@ func main() {
 				return
 			}
 			log.Println("caches wiped")
+		}
+
+	case "gup":
+		date := os.Args[2]
+
+		// Check MLB games first.
+		mlbs := models.MLBGames{}
+		err := mlbs.LoadByDate(date, DB)
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		log.Printf("updating MLB games %d\n", len(mlbs))
+		for _, mlb := range mlbs {
+			err := mlb.UpdateScore(DB)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
+		// Do same for NHL.
+		nhls := models.NHLGames{}
+		err = nhls.LoadByDate(date, DB)
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		log.Printf("updating NHL games %d\n", len(nhls))
+		for _, nhl := range nhls {
+			err := nhl.UpdateScore(DB)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 

@@ -14,14 +14,17 @@ import (
 
 type MLBGame struct {
 	gorm.Model
-	GameID      int       `json:"id" gorm:"uniqueIndex"`
-	Link        string    `json:"link"`
-	HomeID      uint      `json:"-"`
-	Home        MLBTeam   `json:"home"`
-	VisitorID   uint      `json:"-"`
-	Visitor     MLBTeam   `json:"visitor"`
-	Description string    `json:"description"`
-	Gametime    time.Time `json:"gametime"`
+	GameID       int       `json:"id" gorm:"uniqueIndex"`
+	Link         string    `json:"link"`
+	HomeID       uint      `json:"-"`
+	Home         MLBTeam   `json:"home"`
+	HomeScore    int       `json:"home_score" gorm:"home_score"`
+	VisitorID    uint      `json:"-"`
+	Visitor      MLBTeam   `json:"visitor"`
+	VisitorScore int       `json:"visitor_score" gorm:"visitor_score"`
+	Description  string    `json:"description"`
+	Gametime     time.Time `json:"gametime"`
+	Status       string    `json:"status" gorm:"status"`
 }
 
 type MLBTeam struct {
@@ -57,6 +60,25 @@ func (g *MLBGame) FindByID(id string, db Store) error {
 	}
 	if g.ID == 0 {
 		return errors.New("MLB game not found")
+	}
+	return nil
+}
+
+// UpdateScore sets the scores for a completed game.
+func (g *MLBGame) UpdateScore(db Store) error {
+	up, err := g.GetUpdate()
+	if err != nil {
+		return err
+	}
+	if up.Status != "Final" {
+		return fmt.Errorf("update failed; game not finished %d", up.ID)
+	}
+	g.HomeScore = int(up.HomeScore)
+	g.VisitorScore = int(up.VisitorScore)
+	g.Status = up.Status
+	err = db.Save(&g).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -117,12 +139,12 @@ func (g *MLBGameUpdate) UnmarshalJSON(b []byte) error {
 	}
 	g.ID = id
 
-	// // Set status.
+	// Set status.
 	gd := cg["gameData"].(map[string]interface{})
 	st := gd["status"].(map[string]interface{})
 	g.Status = st["detailedState"].(string)
 
-	// // Set period.
+	// Set period.
 	ld := cg["liveData"].(map[string]interface{})
 	ls := ld["linescore"].(map[string]interface{})
 	// If not live, the currentInning prop is not found.
@@ -134,7 +156,7 @@ func (g *MLBGameUpdate) UnmarshalJSON(b []byte) error {
 		g.Inning = inning
 	}
 
-	// // Set scores.
+	// Set scores.
 	ts := ls["teams"].(map[string]interface{})
 	ht := ts["home"].(map[string]interface{})
 	if _, ok := ht["runs"]; ok {

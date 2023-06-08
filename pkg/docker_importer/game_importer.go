@@ -213,7 +213,7 @@ func ImportNHL(store models.Store, startDate string) error {
 // ImportMLB runs the Docker container to fetch MLB game schedule
 // for a given date, and import games and teams to the DB.
 func ImportMLB(store models.Store, startDate string) error {
-	image := "brianwagner/python-mlbgames:1.1"
+	image := "brianwagner/python-mlbgames:1.2"
 	contName := "mlbGamesPython"
 	ctx := context.Background()
 
