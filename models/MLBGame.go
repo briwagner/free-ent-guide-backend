@@ -14,7 +14,7 @@ import (
 
 type MLBGame struct {
 	gorm.Model
-	GameID       int       `json:"id" gorm:"uniqueIndex"`
+	GameID       int       `json:"id" gorm:"uniqueIndex:idx_gameid_gametime"`
 	Link         string    `json:"link"`
 	HomeID       uint      `json:"-"`
 	Home         MLBTeam   `json:"home"`
@@ -23,7 +23,7 @@ type MLBGame struct {
 	Visitor      MLBTeam   `json:"visitor"`
 	VisitorScore int       `json:"visitor_score" gorm:"visitor_score"`
 	Description  string    `json:"description"`
-	Gametime     time.Time `json:"gametime"`
+	Gametime     time.Time `json:"gametime" gorm:"uniqueIndex:idx_gameid_gametime"`
 	Status       string    `json:"status" gorm:"status"`
 }
 
