@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -64,10 +65,20 @@ func (g *MLBGame) FindByID(id string, db Store) error {
 	return nil
 }
 
-// UpdateScore sets the scores for a completed game.
+// Delete marks a game for deletion.
+func (g *MLBGame) Delete(db Store) error {
+	log.Printf("deleting mlb game %d", g.ID)
+	tx := db.Delete(g)
+	return tx.Error
+}
+
+// UpdateScore sets the scores for a completed game. Called from cli tool.
 func (g *MLBGame) UpdateScore(db Store) error {
 	up, err := g.GetUpdate()
 	if err != nil {
+		if errors.Is(err, ErrorGameCanceled) {
+			return g.Delete(db)
+		}
 		return err
 	}
 	if up.Status != "Final" {
@@ -84,7 +95,7 @@ func (g *MLBGame) UpdateScore(db Store) error {
 }
 
 // GetUpdate makes an api request to get game update to
-// merge with scheduled game info from the database.
+// merge with scheduled game info from the database. Called from handler.
 func (g *MLBGame) GetUpdate() (MLBGameUpdate, error) {
 	var gu MLBGameUpdate
 
@@ -92,17 +103,20 @@ func (g *MLBGame) GetUpdate() (MLBGameUpdate, error) {
 	url := fmt.Sprintf("%s/%s", base, g.Link)
 	resp, err := http.Get(url)
 	if err != nil {
+		log.Printf("error getting update: %s", err)
 		return gu, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		log.Printf("error reading update body: %s", err)
 		return gu, err
 	}
 
 	err = json.Unmarshal(body, &gu)
 	if err != nil {
+		log.Printf("error unmarshal update: %s", err)
 		return gu, err
 	}
 
@@ -122,6 +136,8 @@ type MLBGameUpdate struct {
 	HomeScore    int64
 }
 
+var ErrorGameCanceled = errors.New("game is zeroed")
+
 // UnmarshalJSON is required to extract the minimal data needed on the frontend.
 func (g *MLBGameUpdate) UnmarshalJSON(b []byte) error {
 	var cg map[string]interface{}
@@ -132,10 +148,15 @@ func (g *MLBGameUpdate) UnmarshalJSON(b []byte) error {
 	err := dec.Decode(&cg)
 	if err != nil {
 		fmt.Println("error:", err)
+		// TODO should this return?
 	}
 	id, err := cg["gamePk"].(json.Number).Int64()
 	if err != nil {
 		return err
+	}
+	// Canceled games, i.e. playoff games that aren't needed, get zero-d out.
+	if id == 0 {
+		return ErrorGameCanceled
 	}
 	g.ID = id
 

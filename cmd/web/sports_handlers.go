@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"free-ent-guide-backend/models"
 	"log"
 	"net/http"
@@ -80,6 +81,8 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	DB := r.Context().Value(models.StorageContextKey).(models.Store)
 
+	enableCors(&w)
+
 	// Fetch game from database.
 	var g models.MLBGame
 	err := g.FindByID(vars["game_id"], DB)
@@ -93,18 +96,23 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	gu, err := g.GetUpdate()
 	if err != nil {
 		log.Print(err)
+		// Special error case for canceled game that should be marked deleted in DB.
+		if errors.Is(err, models.ErrorGameCanceled) {
+			w.WriteHeader(http.StatusGone)
+			return
+		}
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	guJSON, err := json.Marshal(gu)
 	if err != nil {
-		log.Print(err)
+		log.Printf("game update failed: %s", err)
+		// why is this 500? can we just return the game?
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	enableCors(&w)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(guJSON))
 }
