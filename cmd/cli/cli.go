@@ -138,6 +138,9 @@ func main() {
 		}
 		log.Printf("updating NHL games %d\n", len(nhls))
 		for _, nhl := range nhls {
+			if nhl.Status == "Final" {
+				continue
+			}
 			err := nhl.UpdateScore(DB)
 			if err != nil {
 				log.Println(err)

@@ -64,18 +64,21 @@ func (g *NHLGame) FindByID(id string, db Store) error {
 	return nil
 }
 
-// UpdateScore sets the scores for a completed game.
+// UpdateScore updates a DB record to set the scores for a completed game.
 func (g *NHLGame) UpdateScore(db Store) error {
 	up, err := g.GetUpdate()
 	if err != nil {
 		return err
 	}
+
+	// `Final` is now `OFF`, aka official.
 	if up.Status != "Final" {
 		return fmt.Errorf("update failed; game not finished %d", up.ID)
 	}
 	g.HomeScore = int(up.HomeScore)
 	g.VisitorScore = int(up.VisitorScore)
 	g.Status = up.Status
+
 	err = db.Save(&g).Error
 	if err != nil {
 		return err
@@ -88,8 +91,8 @@ func (g *NHLGame) UpdateScore(db Store) error {
 func (g *NHLGame) GetUpdate() (NHLGameUpdate, error) {
 	var gu NHLGameUpdate
 
-	base := "http://statsapi.web.nhl.com"
-	url := fmt.Sprintf("%s/%s", base, g.Link)
+	base := "https://api-web.nhle.com/v1/gamecenter"
+	url := fmt.Sprintf("%s/%d/play-by-play", base, g.GameID)
 	resp, err := http.Get(url)
 	if err != nil {
 		return gu, err
@@ -122,6 +125,16 @@ type NHLGameUpdate struct {
 	HomeScore    int64
 }
 
+// As of 11-2023, NHL api has multiple versions of 'Final'.
+// Previously, we used 'Final' in db and as signal to front-end.
+func setGameState(st string) string {
+	switch st {
+	case "OFF", "OVER", "FINAL":
+		return "Final"
+	}
+	return st
+}
+
 // UnmarshalJSON is required to extract the minimal data needed on the frontend.
 func (g *NHLGameUpdate) UnmarshalJSON(b []byte) error {
 	var cg map[string]interface{}
@@ -131,43 +144,39 @@ func (g *NHLGameUpdate) UnmarshalJSON(b []byte) error {
 	dec.UseNumber()
 	err := dec.Decode(&cg)
 	if err != nil {
-		fmt.Println("error:", err)
+		return fmt.Errorf("error decoding: %w", err)
 	}
-	id, err := cg["gamePk"].(json.Number).Int64()
+	id, err := cg["id"].(json.Number).Int64()
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing ID: %w", err)
 	}
 	g.ID = id
 
-	// Set status.
-	gd := cg["gameData"].(map[string]interface{})
-	st := gd["status"].(map[string]interface{})
-	g.Status = st["detailedState"].(string)
+	st := cg["gameState"].(string)
+	g.Status = setGameState(st)
 
-	// Set period.
-	ld := cg["liveData"].(map[string]interface{})
-	ls := ld["linescore"].(map[string]interface{})
-	period, err := ls["currentPeriod"].(json.Number).Int64()
-	if err != nil {
-		return err
+	// Only check for live or past games, else this key is not found.
+	if g.Status == "LIVE" || g.Status == "Final" {
+		period, err := cg["period"].(json.Number).Int64()
+		if err == nil {
+			g.Period = period
+		}
 	}
-	g.Period = period
 
 	// Set scores.
-	ts := ls["teams"].(map[string]interface{})
-	ht := ts["home"].(map[string]interface{})
-	hg, err := ht["goals"].(json.Number).Int64()
+	home := cg["homeTeam"].(map[string]interface{})
+	hScore, err := home["score"].(json.Number).Int64()
 	if err != nil {
 		return err
 	}
-	g.HomeScore = hg
+	g.HomeScore = hScore
 
-	vt := ts["away"].(map[string]interface{})
-	vg, err := vt["goals"].(json.Number).Int64()
+	away := cg["awayTeam"].(map[string]interface{})
+	aScore, err := away["score"].(json.Number).Int64()
 	if err != nil {
 		return err
 	}
-	g.VisitorScore = vg
+	g.VisitorScore = aScore
 
 	return nil
 }
