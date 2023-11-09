@@ -5,6 +5,7 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/pkg/cred"
 	"free-ent-guide-backend/pkg/docker_importer"
+	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
 	"os"
 	"time"
@@ -34,7 +35,7 @@ func main() {
 	switch cmd {
 	case "nhl":
 		date := os.Args[2]
-		err := docker_importer.ImportNHL(DB, date)
+		err := nhlapi.ImportNHL(DB, date)
 		if err != nil {
 			log.Print(err)
 			return
