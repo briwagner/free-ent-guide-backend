@@ -50,11 +50,11 @@ func (gt *GameType) UnmarshalJSON(b []byte) error {
 	}
 
 	switch val {
+	case 1: //
+		gt.Type = "Pre-season"
 	case 2:
 		gt.Type = "Regular Season"
-	case 99: // what are these other values??
-		gt.Type = "Pre-season"
-	case 100:
+	case 3: // what are these other values??
 		gt.Type = "Playoff"
 	default:
 		gt.Type = "Game" // this should not happen
