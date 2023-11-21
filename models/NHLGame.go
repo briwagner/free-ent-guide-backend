@@ -34,7 +34,9 @@ type NHLTeam struct {
 	Link   string `json:"link"`
 }
 
-type NHLGames []NHLGame
+type NHLGames struct {
+	Games []NHLGame
+}
 
 // LoadByDate fetches all games for the given date.
 func (ngs *NHLGames) LoadByDate(d string, db Store) error {
@@ -49,6 +51,27 @@ func (ngs *NHLGames) LoadByDate(d string, db Store) error {
 	if tx.Error != nil {
 		return tx.Error
 	}
+	return nil
+}
+
+type RawGame struct {
+	ID       int
+	Gametime time.Time
+}
+
+// GetLatestGames loads all games on the latest date found in the DB.
+func (ngs *NHLGames) GetLatestGames(db Store) error {
+	raws := []RawGame{}
+	tx := db.Raw("SELECT id, gametime FROM nhl_games WHERE DATE(gametime) = (SELECT DATE(gametime) FROM nhl_games ORDER BY gametime DESC LIMIT 1)").Scan(&raws)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	for _, g := range raws {
+		new := NHLGame{GameID: g.ID, Gametime: g.Gametime}
+		ngs.Games = append(ngs.Games, new)
+	}
+
 	return nil
 }
 

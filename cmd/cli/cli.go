@@ -32,10 +32,39 @@ func main() {
 		return
 	}
 
+	// Date format.
+	format := "2006-01-02"
+
 	switch cmd {
 	case "nhl":
-		date := os.Args[2]
-		err := nhlapi.ImportNHL(DB, date)
+		subCo := os.Args[2]
+		if subCo == "" {
+			fmt.Println("For NHL, must pass valid date or 'last'.")
+			return
+		}
+
+		if subCo == "last" {
+			games := models.NHLGames{}
+			err := games.GetLatestGames(DB)
+			if err != nil {
+				fmt.Printf("Error getting last games: %s\n", err)
+				return
+			}
+			if len(games.Games) == 0 {
+				fmt.Println("no games found")
+				return
+			}
+			fmt.Printf("Got %d NHL games on %s\n", len(games.Games), games.Games[0].Gametime.Format(format))
+			return
+		}
+
+		// Importer
+		d, err := time.Parse(format, subCo)
+		if err != nil {
+			fmt.Printf("NHL game importer error: bad date for '%s'\n", subCo)
+			return
+		}
+		err = nhlapi.ImportNHL(DB, d.Format(format))
 		if err != nil {
 			log.Print(err)
 			return
@@ -137,8 +166,8 @@ func main() {
 			log.Print(err)
 			return
 		}
-		log.Printf("updating NHL games %d\n", len(nhls))
-		for _, nhl := range nhls {
+		log.Printf("updating NHL games %d\n", len(nhls.Games))
+		for _, nhl := range nhls.Games {
 			if nhl.Status == "Final" {
 				continue
 			}
