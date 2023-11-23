@@ -44,24 +44,23 @@ func main() {
 		}
 
 		if subCo == "last" {
-			games := models.NHLGames{}
-			err := games.GetLatestGames(DB)
+			games, err := models.GetLatestGames(DB)
 			if err != nil {
 				fmt.Printf("Error getting last games: %s\n", err)
 				return
 			}
-			if len(games.Games) == 0 {
+			if len(games) == 0 {
 				fmt.Println("no games found")
 				return
 			}
-			fmt.Printf("Got %d NHL games on %s\n", len(games.Games), games.Games[0].Gametime.Format(format))
+			fmt.Printf("Got %d NHL games on %s\n", len(games), games[0].Gametime.Format(format))
 			return
 		}
 
 		// Importer
 		d, err := time.Parse(format, subCo)
 		if err != nil {
-			fmt.Printf("NHL game importer error: bad date for '%s'\n", subCo)
+			fmt.Printf("NHL game importer error: bad date for '%s'. Did you mean 'last'?\n", subCo)
 			return
 		}
 		err = nhlapi.ImportNHL(DB, d.Format(format))
@@ -166,8 +165,8 @@ func main() {
 			log.Print(err)
 			return
 		}
-		log.Printf("updating NHL games %d\n", len(nhls.Games))
-		for _, nhl := range nhls.Games {
+		log.Printf("updating NHL games %d\n", len(nhls))
+		for _, nhl := range nhls {
 			if nhl.Status == "Final" {
 				continue
 			}
