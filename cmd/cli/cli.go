@@ -8,27 +8,36 @@ import (
 	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
 	"os"
+	"slices"
+	"strings"
 	"time"
 )
 
 var c cred.Cred
 
-// var DB *gorm.DB
 var DB models.Store
 
 func main() {
+	commands := []string{"nhl", "mlb", "gup", "cache"}
+
 	// Set-up application config.
 	c.GetCreds("creds", ".")
 	DB = models.Setup(c)
 
 	if len(os.Args) <= 2 {
-		fmt.Println("Must pass command: 'nhl', 'mlb' or 'gup', along with a date e.g. 2022-11-21. \nOr 'cache' with one of: show, stale, clear, wipe.")
+		fmt.Printf(`
+Available commands: %s.
+'nhl', 'mlb' or 'gup' along with a date e.g. 2022-11-21.
+Or 'nhl', 'mlb' with 'last'.
+Or 'cache' with one of: show, stale, clear, wipe.
+
+`, strings.Join(commands, ", "))
 		return
 	}
 
 	cmd := os.Args[1]
-	if cmd != "nhl" && cmd != "mlb" && cmd != "cache" && cmd != "gup" {
-		fmt.Println("Command must be 'nhl' or 'mlb' or 'cache'")
+	if !slices.Contains(commands, cmd) {
+		fmt.Printf("Command must be one of %s\n", strings.Join(commands, ", "))
 		return
 	}
 
@@ -77,6 +86,10 @@ func main() {
 		}
 	case "cache":
 		op := os.Args[2]
+		ops := []string{"show", "stale", "clear", "wipe"}
+		if !slices.Contains(ops, op) {
+			fmt.Printf("For 'cache', must pass one of %s\n", strings.Join(ops, ", "))
+		}
 		cs := models.Caches{}
 
 		if op == "show" {
