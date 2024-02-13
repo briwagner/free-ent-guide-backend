@@ -4,24 +4,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/models/modelstore"
 	"io"
 	"log"
 	"net/http"
 	"time"
 
-	"gorm.io/gorm/clause"
+	"github.com/go-sql-driver/mysql"
 )
 
 // GameSchedule is the payload for a single game.
 type GameSchedule struct {
-	ID       int       `json:"id"`
-	GameType GameType  `json:"gameType"` // how does this translate?
-	Gametime time.Time `json:"startTimeUTC"`
-	Home     NHLTeam   `json:"homeTeam"`
-	Away     NHLTeam   `json:"awayTeam"`
+	ID        int       `json:"id"`
+	GameType  GameType  `json:"gameType"` // how does this translate?
+	Gametime  time.Time `json:"startTimeUTC"`
+	GameState string    `json:"gameState"`
+	Home      NHLTeam   `json:"homeTeam"`
+	Away      NHLTeam   `json:"awayTeam"`
 }
 
-// GameDaySchedule is the playload for a single day, containing multiple games.
+// GameDaySchedule is the payload for a single day, containing multiple games.
 type GameDaySchedule struct {
 	Date          string         `json:"date"`
 	NumberOfGames int            `json:"numberOfGames"`
@@ -34,10 +36,15 @@ type GameWeekPayload struct {
 }
 
 type NHLTeam struct {
-	ID   int    `json:"id"`
-	Name string // any way to get this? is it needed?
-	Link string // we don't seem to use this anyway
+	ID          int    `json:"id"`          // this is the one mapped to Games
+	FranchiseID int    `json:"franchiseId"` // this can be used for querying on summary, see below.
+	Tricode     string `json:"triCode"`
+	Name        string `json:"fullName"`
+	Link        string // we don't seem to use this anyway
 }
+
+// Example to get stats for one team, using franchiseID.
+// https://api.nhle.com/stats/rest/en/team/summary?isAggregate=false&cayenneExp=franchiseId=32%20and%20gameTypeId=2%20and%20seasonId%3C=20232024%20and%20seasonId%3E=20232024
 
 type GameType struct {
 	Type string `json:"gameType"`
@@ -65,7 +72,7 @@ func (gt *GameType) UnmarshalJSON(b []byte) error {
 
 // ImportNHL is the 2023 go-native version to fetch NHL game schedule
 // for a given week, and import games and teams to the DB.
-func ImportNHL(store models.Store, startDate string) error {
+func ImportNHL(q *modelstore.Queries, startDate string) error {
 	url := "https://api-web.nhle.com/v1/schedule/" + startDate
 
 	resp, err := http.Get(url)
@@ -85,38 +92,47 @@ func ImportNHL(store models.Store, startDate string) error {
 		return err
 	}
 
-	count := 0
+	var count, countErrs int
 
 	for _, days := range payload.Days {
 		fmt.Printf("import %d NHL games for %s\n", days.NumberOfGames, days.Date)
-		for _, g := range days.Games {
+		daysGames := days.Games
 
-			game := models.NHLGame{
-				GameID:      g.ID,
-				Gametime:    g.Gametime,
-				Description: g.GameType.Type,
-			}
+		for _, g := range daysGames {
+			var game models.NHLGame
+			game.GameID = g.ID
+			game.Gametime = g.Gametime
+			game.Description = g.GameType.Type
+			game.Status = g.GameState
 
 			// Map MLB team IDs to my database IDs.
-			home := models.NHLTeam{TeamID: g.Home.ID}
-			tx := store.FirstOrCreate(&home, models.NHLTeam{TeamID: g.Home.ID})
-			if tx.Error != nil {
-				log.Print(tx.Error)
+			home := &models.NHLTeam{}
+			err := home.FindByTeamID(q, int64(g.Home.ID))
+			// TODO we don't try to create missing teams, cuz there isn't a clear API endpoint to look them up.
+			// We would want name, ID and tricode for that.
+			if err != nil {
+				countErrs++
+				log.Printf("error finding home team %d for game %d: %s", g.Home.ID, g.ID, err)
 				continue
 			}
 			game.HomeID = home.ID
 
-			away := models.NHLTeam{TeamID: g.Away.ID}
-			tx = store.FirstOrCreate(&away, models.NHLTeam{TeamID: g.Away.ID})
-			if tx.Error != nil {
-				log.Print(tx.Error)
+			away := &models.NHLTeam{}
+			err = away.FindByTeamID(q, int64(g.Away.ID))
+			if err != nil {
+				countErrs++
+				log.Printf("error finding away team %d for game %d: %s", g.Away.ID, g.ID, err)
 				continue
 			}
 			game.VisitorID = away.ID
 
-			tx = store.Omit(clause.Associations).Create(&game)
-			if tx.Error != nil {
-				log.Print(tx.Error)
+			err = game.Create(q)
+			if err != nil {
+				countErrs++
+				// Ignore duplicate entry in logs.
+				if err.(*mysql.MySQLError).Number != 1062 {
+					log.Printf("error creating game %d: %s", g.ID, err)
+				}
 				continue
 			}
 
@@ -129,7 +145,38 @@ func ImportNHL(store models.Store, startDate string) error {
 		}
 	}
 
-	log.Printf("nhl import complete, adding %d games", count)
+	log.Printf("nhl import complete, adding %d games. Errors: %d", count, countErrs)
 
 	return nil
+}
+
+type GetTeamsPayload struct {
+	Data []NHLTeam `json:"data"`
+}
+
+func GetTeams() ([]NHLTeam, error) {
+	var teams []NHLTeam
+
+	url := "https://api.nhle.com/stats/rest/en/team/summary"
+	res, err := http.Get(url)
+	if err != nil {
+		log.Printf("error fetching NHL teams: %s", err)
+		return teams, err
+	}
+
+	defer res.Body.Close()
+	var payload GetTeamsPayload
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Printf("error reading NHL teams response: %s", err)
+		return teams, err
+	}
+
+	err = json.Unmarshal(data, &payload)
+	if err != nil {
+		log.Printf("error unmarshal NHL teams: %s", err)
+		return teams, err
+	}
+
+	return teams, nil
 }

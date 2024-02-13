@@ -1,0 +1,13 @@
+version: 2
+sql:
+  - engine: "mysql"
+    queries:
+      - "caches.sql"
+      - "mlb_games.sql"
+      - "nhl_games.sql"
+      - "nhl_teams.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "modelstore"
+        out: "modelstore"

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/authenticator"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
@@ -22,11 +23,12 @@ import (
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 )
 
-var c cred.Cred
-
-// var DB *gorm.DB
-var DB models.Store
-var author authenticator.Authenticator
+var (
+	c       cred.Cred
+	DB      models.Store
+	Queries *modelstore.Queries
+	author  authenticator.Authenticator
+)
 
 func main() {
 	// Set-up application config.
@@ -34,7 +36,9 @@ func main() {
 	port := fmt.Sprintf(":%v", c.Port)
 
 	// Set-up database.
-	DB = models.Setup(c)
+	DB, Sqlc := models.Setup(c)
+	log.Printf("got DB %s", DB.Name())
+	Queries = modelstore.New(Sqlc)
 
 	// Set-up authentication.
 	author = authenticator.Authenticator{
@@ -81,6 +85,7 @@ func main() {
 func StorageHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), models.StorageContextKey, DB)
+		ctx = context.WithValue(ctx, models.SqlcStorageContextKey, Queries)
 		r = r.WithContext(ctx)
 		h.ServeHTTP(w, r)
 	})

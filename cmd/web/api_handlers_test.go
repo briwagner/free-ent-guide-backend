@@ -25,7 +25,7 @@ func init() {
 		Tms: os.Getenv("TMS"),
 		DB:  os.Getenv("DB"),
 	}
-	DB = models.Setup(c)
+	DB, _ = models.Setup(c)
 }
 
 func TestGetMovies(t *testing.T) {

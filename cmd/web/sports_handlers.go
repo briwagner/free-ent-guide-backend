@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/models/modelstore"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -14,11 +16,17 @@ import (
 // and includes live scores and timing from the official api.
 func NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
+	queries := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 
 	// Fetch game from database.
 	var g models.NHLGame
-	err := g.FindByID(vars["game_id"], DB)
+	gid, err := strconv.Atoi(vars["game_id"])
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	err = g.FindByGameID(queries, gid)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
@@ -54,9 +62,10 @@ func NHLGamesHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Must pass a date"))
 		return
 	}
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
+
+	queries := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 	gs := &models.NHLGames{}
-	err := gs.LoadByDate(d, DB)
+	err := gs.LoadByDate(queries, d)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)

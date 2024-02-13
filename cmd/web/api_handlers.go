@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/moviedb"
 	"free-ent-guide-backend/pkg/tmsapi"
 	"free-ent-guide-backend/pkg/tvmaze"
@@ -11,14 +12,13 @@ import (
 	"time"
 )
 
-// To-do: this should be passed per user.
+// TODO: this should be passed per user.
 const lineup = "USA-TX42500-X"
 
 // GetMovies handler for movies by zip.
 // Responds to /v1/movies?zip={ZIP}.
 func GetMovies(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
-	cacheKey := r.URL.String()
 
 	zip := r.URL.Query().Get("zip")
 	if zip == "" {
@@ -28,8 +28,10 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check cache for stored response.
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
-	cache, err := DB.GetCache(cacheKey)
+	Sqlc := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	cache := &models.Cache{}
+	cacheKey := r.URL.String()
+	err := cache.GetByName(cacheKey, Sqlc)
 
 	if err != nil {
 		cacheStatus(&w, false)
@@ -50,7 +52,11 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 
 		// Save to cache.
 		if tms.Status == http.StatusOK {
-			_ = DB.SetCache(cacheKey, string(tms.Response), time.Hour)
+			newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
+			err = newC.Insert(Sqlc)
+			if err != nil {
+				log.Printf("error setting cache: %v", err)
+			}
 		} else {
 			w.WriteHeader(500)
 		}
@@ -60,7 +66,7 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 
 	// Cache found.
 	cacheStatus(&w, true)
-	w.Write([]byte(cache))
+	w.Write([]byte(cache.Value))
 }
 
 // DiscoverMovies handler for coming-soon movies.
@@ -68,15 +74,18 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	date := r.URL.Query().Get("date")
+	// TODO parse this date to time (2006-01-02) and catch errors here.
 	if date == "" {
 		w.WriteHeader(400)
 		w.Write([]byte("Must pass a date"))
 		return
 	}
-	cacheKey := fmt.Sprintf("discover?date=%s", date)
+
 	// Check cache for stored response.
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
-	cache, err := DB.GetCache(cacheKey)
+	Sqlc := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	ca := &models.Cache{}
+	cacheKey := fmt.Sprintf("discover?date=%s", date)
+	err := ca.GetByName(cacheKey, Sqlc)
 
 	// No cache found.
 	if err != nil {
@@ -87,7 +96,11 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 		mdb.GetDiscover(date)
 
 		if mdb.Status == http.StatusOK {
-			_ = DB.SetCache(cacheKey, string(mdb.Response), time.Hour)
+			newC := &models.Cache{Name: cacheKey, Value: string(mdb.Response)}
+			err = newC.Insert(Sqlc)
+			if err != nil {
+				log.Printf("error setting cache: %v", err)
+			}
 		} else {
 			w.WriteHeader(500)
 		}
@@ -96,13 +109,12 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	}
 	// Cache found.
 	cacheStatus(&w, true)
-	w.Write([]byte(cache))
+	w.Write([]byte(ca.Value))
 }
 
 // GetTvMovies responds to /v1/tv-movies?date={YYYY-MM-DD}.
 func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
-	cacheKey := "tvmovies"
 	date := r.URL.Query().Get("date")
 	if date == "" {
 		w.WriteHeader(400)
@@ -111,20 +123,26 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Cache
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
-	cache, err := DB.GetCache(cacheKey)
+	Sqlc := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	cacheKey := "tvmovies"
+	ca := &models.Cache{}
+	err := ca.GetByName(cacheKey, Sqlc)
 	if err != nil {
 		cacheStatus(&w, false)
 
-		lineup := "USA-TX42500-X"
 		tms := tmsapi.TmsApi{Key: c.Tms}
 		tms.GetTvMovies(date, lineup)
 		w.WriteHeader(tms.Status)
 		w.Write(tms.Response)
-		_ = DB.SetCache(cacheKey, string(tms.Response), time.Hour)
+
+		newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
+		err = newC.Insert(Sqlc)
+		if err != nil {
+			log.Printf("error setting cache: %v", err)
+		}
 	} else {
 		cacheStatus(&w, true)
-		w.Write([]byte(cache))
+		w.Write([]byte(ca.Value))
 	}
 }
 
@@ -138,21 +156,26 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	Sqlc := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 	cacheKey := "tvsports?" + date
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
-	cache, err := DB.GetCache(cacheKey)
+	ca := &models.Cache{}
+	err := ca.GetByName(cacheKey, Sqlc)
 	if err != nil {
 		cacheStatus(&w, false)
 
-		lineup := "USA-TX42500-X"
 		tms := tmsapi.TmsApi{Key: c.Tms}
 		tms.GetTvSports(date, lineup)
 		w.WriteHeader(tms.Status)
 		w.Write(tms.Response)
-		_ = DB.SetCache(cacheKey, string(tms.Response), time.Hour)
+
+		newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
+		err = newC.Insert(Sqlc)
+		if err != nil {
+			log.Printf("error setting cache: %v", err)
+		}
 	} else {
 		cacheStatus(&w, true)
-		w.Write([]byte(cache))
+		w.Write([]byte(ca.Value))
 	}
 }
 

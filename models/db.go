@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"errors"
 	"free-ent-guide-backend/pkg/cred"
 	"time"
@@ -14,28 +15,41 @@ type Store struct {
 	*gorm.DB
 }
 
-func Setup(c cred.Cred) Store {
+type RawStore struct {
+	*sql.DB
+}
+
+func Setup(c cred.Cred) (Store, RawStore) {
+	rawdb, err := sql.Open("mysql", c.DB)
+	if err != nil {
+		panic(err)
+	}
+	rawstore := RawStore{rawdb}
+
 	db, err := gorm.Open(mysql.Open(c.DB), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
 
-	db.AutoMigrate(
-		&Cache{},
-		&User{},
-		&UserZip{},
-		&MLBGame{},
-		&MLBTeam{},
-		&NHLGame{},
-		&NHLTeam{},
-	)
+	// db.AutoMigrate(
+	// 	&Cache{},
+	// 	&User{},
+	// 	&UserZip{},
+	// 	&MLBGame{},
+	// 	&MLBTeam{},
+	// 	&NHLGame{},
+	// 	&NHLTeam{},
+	// )
 	store := Store{db}
-	return store
+	return store, rawstore
 }
 
 type StorageContextType string
 
-const StorageContextKey StorageContextType = "store"
+const (
+	StorageContextKey     StorageContextType = "store"
+	SqlcStorageContextKey StorageContextType = "sqlc"
+)
 
 // GetCache
 func (db Store) GetCache(key string) (string, error) {

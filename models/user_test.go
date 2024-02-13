@@ -10,7 +10,7 @@ var AppStore Store
 
 func init() {
 	c := cred.Cred{DB: "gorm:password@tcp(127.0.0.1:3306)/demo_gorm_test?charset=utf8mb4&parseTime=True&loc=Local"}
-	AppStore = Setup(c)
+	AppStore, _ = Setup(c)
 }
 
 func TestGetUserName(t *testing.T) {
