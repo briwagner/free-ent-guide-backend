@@ -1,16 +1,13 @@
 package nhlapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"free-ent-guide-backend/models"
-	"free-ent-guide-backend/models/modelstore"
 	"io"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 // GameSchedule is the payload for a single game.
@@ -63,6 +60,8 @@ func (gt *GameType) UnmarshalJSON(b []byte) error {
 		gt.Type = "Regular Season"
 	case 3: // what are these other values??
 		gt.Type = "Playoff"
+	case 4:
+		gt.Type = "All-Star Game"
 	default:
 		gt.Type = "Game" // this should not happen
 	}
@@ -72,82 +71,27 @@ func (gt *GameType) UnmarshalJSON(b []byte) error {
 
 // ImportNHL is the 2023 go-native version to fetch NHL game schedule
 // for a given week, and import games and teams to the DB.
-func ImportNHL(q *modelstore.Queries, startDate string) error {
+func ImportNHL(startDate string) (*GameWeekPayload, error) {
 	url := "https://api-web.nhle.com/v1/schedule/" + startDate
+	payload := &GameWeekPayload{}
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return payload, err
 	}
 
 	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return payload, err
 	}
 
-	payload := &GameWeekPayload{}
 	err = json.Unmarshal(data, payload)
 	if err != nil {
-		return err
+		return payload, err
 	}
 
-	var count, countErrs int
-
-	for _, days := range payload.Days {
-		fmt.Printf("import %d NHL games for %s\n", days.NumberOfGames, days.Date)
-		daysGames := days.Games
-
-		for _, g := range daysGames {
-			var game models.NHLGame
-			game.GameID = g.ID
-			game.Gametime = g.Gametime
-			game.Description = g.GameType.Type
-			game.Status = g.GameState
-
-			// Map MLB team IDs to my database IDs.
-			home := &models.NHLTeam{}
-			err := home.FindByTeamID(q, int64(g.Home.ID))
-			// TODO we don't try to create missing teams, cuz there isn't a clear API endpoint to look them up.
-			// We would want name, ID and tricode for that.
-			if err != nil {
-				countErrs++
-				log.Printf("error finding home team %d for game %d: %s", g.Home.ID, g.ID, err)
-				continue
-			}
-			game.HomeID = home.ID
-
-			away := &models.NHLTeam{}
-			err = away.FindByTeamID(q, int64(g.Away.ID))
-			if err != nil {
-				countErrs++
-				log.Printf("error finding away team %d for game %d: %s", g.Away.ID, g.ID, err)
-				continue
-			}
-			game.VisitorID = away.ID
-
-			err = game.Create(q)
-			if err != nil {
-				countErrs++
-				// Ignore duplicate entry in logs.
-				if err.(*mysql.MySQLError).Number != 1062 {
-					log.Printf("error creating game %d: %s", g.ID, err)
-				}
-				continue
-			}
-
-			// fmt.Printf("got game %v\n", game.GameID)
-			// fmt.Printf("home ID %d | %d\n", game.HomeID, g.Home.ID)
-			// fmt.Printf("away ID %d | %d\n", game.VisitorID, g.Away.ID)
-			// fmt.Printf("gametime %v\n\n", game.Gametime)
-
-			count++
-		}
-	}
-
-	log.Printf("nhl import complete, adding %d games. Errors: %d", count, countErrs)
-
-	return nil
+	return payload, nil
 }
 
 type GetTeamsPayload struct {
@@ -179,4 +123,97 @@ func GetTeams() ([]NHLTeam, error) {
 	}
 
 	return teams, nil
+}
+
+// GetUpdate makes an api request to get game update to
+// merge with scheduled game info from the database.
+func GetUpdate(gameID int) (NHLGameUpdate, error) {
+	var gu NHLGameUpdate
+
+	base := "https://api-web.nhle.com/v1/gamecenter"
+	url := fmt.Sprintf("%s/%d/play-by-play", base, gameID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return gu, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return gu, err
+	}
+
+	err = json.Unmarshal(body, &gu)
+	if err != nil {
+		return gu, err
+	}
+
+	return gu, nil
+}
+
+// NHLGameUpdate wraps info on a scheduled game, live status (if applicable)
+// and scores.
+type NHLGameUpdate struct {
+	ID           int64
+	Status       string
+	Period       int64
+	VisitorScore int64
+	HomeScore    int64
+}
+
+// As of 11-2023, NHL api has multiple versions of 'Final'.
+// For complete games, it returns "OFF".
+// But, from past usage, we set 'Final' in db and send as signal to front-end.
+func setGameState(st string) string {
+	switch st {
+	case "OFF", "OVER", "FINAL":
+		return "Final"
+	}
+	return st
+}
+
+// UnmarshalJSON is required to extract the minimal data needed on the frontend.
+func (g *NHLGameUpdate) UnmarshalJSON(b []byte) error {
+	var cg map[string]interface{}
+
+	// Get ID.
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.UseNumber()
+	err := dec.Decode(&cg)
+	if err != nil {
+		return fmt.Errorf("error decoding: %w", err)
+	}
+	id, err := cg["id"].(json.Number).Int64()
+	if err != nil {
+		return fmt.Errorf("error parsing ID: %w", err)
+	}
+	g.ID = id
+
+	st := cg["gameState"].(string)
+	g.Status = setGameState(st)
+
+	// Only check for live or past games, else this key is not found.
+	if g.Status == "LIVE" || g.Status == "Final" {
+		period, err := cg["period"].(json.Number).Int64()
+		if err == nil {
+			g.Period = period
+		}
+	}
+
+	// Set scores.
+	home := cg["homeTeam"].(map[string]interface{})
+	hScore, err := home["score"].(json.Number).Int64()
+	if err != nil {
+		return err
+	}
+	g.HomeScore = hScore
+
+	away := cg["awayTeam"].(map[string]interface{})
+	aScore, err := away["score"].(json.Number).Int64()
+	if err != nil {
+		return err
+	}
+	g.VisitorScore = aScore
+
+	return nil
 }

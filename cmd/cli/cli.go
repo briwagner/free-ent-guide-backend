@@ -82,7 +82,7 @@ Or 'cache' with one of: show, stale, clear, wipe.
 			fmt.Printf("NHL game importer error: bad date for '%s'. Did you mean 'last'?\n", subCo)
 			return
 		}
-		err = nhlapi.ImportNHL(Querier, d.Format(format))
+		err = models.ImportNHL(Querier, d.Format(format))
 		if err != nil {
 			log.Print(err)
 			return

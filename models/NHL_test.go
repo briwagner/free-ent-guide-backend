@@ -1,9 +1,7 @@
 package models_test
 
 import (
-	"encoding/json"
 	"free-ent-guide-backend/models"
-	"os"
 	"testing"
 	"time"
 
@@ -63,31 +61,4 @@ func TestDB_NHLGame(t *testing.T) {
 	err = ngs.LoadByDate(Queries, time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC).Format("2006-01-02"))
 	require.NoError(t, err)
 	assert.Len(t, ngs, 26)
-}
-
-func TestMarshal_NHLGameUpdate(t *testing.T) {
-	nhlgame, err := os.ReadFile("testdata/nhlgame_new.json")
-	require.NoError(t, err)
-
-	gu := models.NHLGameUpdate{}
-	err = json.Unmarshal(nhlgame, &gu)
-	if err != nil {
-		panic(err)
-	}
-
-	if gu.ID != 2022020148 {
-		t.Errorf("Game ID. Got %d, want %d", gu.ID, 2022020148)
-	}
-	if gu.Status != "In Progress" {
-		t.Errorf("Game status. Got %s, want %s", gu.Status, "Live")
-	}
-	if gu.Period != 2 {
-		t.Errorf("Game period. Got %d, want %d", gu.Period, 2)
-	}
-	if gu.HomeScore != 1 {
-		t.Errorf("Home score. Got %d, want %d", gu.HomeScore, 1)
-	}
-	if gu.VisitorScore != 2 {
-		t.Errorf("Visitor score. Got %d, want %d", gu.VisitorScore, 2)
-	}
 }

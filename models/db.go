@@ -2,13 +2,10 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"free-ent-guide-backend/pkg/cred"
-	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type Store struct {
@@ -50,35 +47,3 @@ const (
 	StorageContextKey     StorageContextType = "store"
 	SqlcStorageContextKey StorageContextType = "sqlc"
 )
-
-// GetCache
-func (db Store) GetCache(key string) (string, error) {
-	c := Cache{}
-	tx := db.First(&c, "name = ? AND expires > ?", key, time.Now())
-	if tx.Error != nil {
-		return "", tx.Error
-	}
-	if time.Now().After(c.Expires) {
-		// Avoid deleting record, as gorm does soft delete,
-		// and we force upsert behavior when setting cache.
-		return "", errors.New("cache expired")
-	}
-	return c.Value, nil
-}
-
-// SetCache
-func (db Store) SetCache(key string, val string, t time.Duration) error {
-	c := Cache{
-		Name:    key,
-		Value:   val,
-		Expires: time.Now().Add(t),
-	}
-	// Force upsert behavior.
-	tx := db.Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).Create(&c)
-	if tx.Error != nil {
-		return tx.Error
-	}
-	return nil
-}

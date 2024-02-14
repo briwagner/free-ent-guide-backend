@@ -2,26 +2,12 @@ package nhlapi
 
 import (
 	"encoding/json"
-	"free-ent-guide-backend/models"
-	"free-ent-guide-backend/models/modelstore"
-	"free-ent-guide-backend/pkg/cred"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var (
-	Queries *modelstore.Queries
-)
-
-func init() {
-	c := cred.Cred{DB: "ent_user:ent_password@tcp(127.0.0.1:3306)/ent_guide_test?charset=utf8mb4&parseTime=True&loc=Local"}
-	_, st := models.Setup(c)
-
-	Queries = modelstore.New(st)
-}
 
 func TestUnmarshal_Schedule(t *testing.T) {
 	data, err := os.ReadFile("testdata/schedule.json")
@@ -56,4 +42,21 @@ func TestUnmarshal_Teams(t *testing.T) {
 	assert.Equal(t, "ATL", payload.Data[0].Tricode, "team tricode is mapped")
 	assert.Equal(t, 35, payload.Data[0].FranchiseID, "team franchiseID is mapped")
 	assert.Equal(t, 11, payload.Data[0].ID, "team ID is mapped")
+}
+
+func TestMarshal_NHLGameUpdate(t *testing.T) {
+	nhlgame, err := os.ReadFile("testdata/nhlgame_update.json")
+	require.NoError(t, err)
+
+	gu := NHLGameUpdate{}
+	err = json.Unmarshal(nhlgame, &gu)
+	if err != nil {
+		panic(err)
+	}
+
+	assert.Equal(t, 2023020672, int(gu.ID))
+	assert.Equal(t, "Final", gu.Status)
+	assert.Equal(t, 3, int(gu.Period))
+	assert.Equal(t, 3, int(gu.HomeScore))
+	assert.Equal(t, 0, int(gu.VisitorScore))
 }

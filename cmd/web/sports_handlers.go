@@ -5,6 +5,7 @@ import (
 	"errors"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
+	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,7 +35,7 @@ func NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch scores, timing from the NHL api.
-	gu, err := g.GetUpdate()
+	gu, err := nhlapi.GetUpdate(g.GameID)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
