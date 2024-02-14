@@ -163,7 +163,7 @@ type NHLGameUpdate struct {
 
 // As of 11-2023, NHL api has multiple versions of 'Final'.
 // For complete games, it returns "OFF".
-// But, from past usage, we set 'Final' in db and send as signal to front-end.
+// We set a custom value of 'Final' and send as signal to front-end.
 func setGameState(st string) string {
 	switch st {
 	case "OFF", "OVER", "FINAL":

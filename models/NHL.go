@@ -65,20 +65,40 @@ func (nt *NHLTeam) FromDB(team modelstore.NhlTeam) {
 	nt.Tricode = team.Tricode.String
 }
 
+// This is sent back to frontend.
+type NHLGameUpdate struct {
+	GameID       int     `json:"ID"`
+	Game         NHLGame `json:"Game"`
+	Status       string  `json:"Status"`
+	Period       int     `json:"Period"`
+	HomeScore    int     `json:"HomeScore"`
+	VisitorScore int     `json:"VisitorScore"`
+}
+
+func (ngu *NHLGameUpdate) FromGame(ng NHLGame) {
+	ngu.GameID = ng.GameID
+	ngu.Game = ng
+	ngu.Status = ng.Status
+	ngu.Period = ng.Period
+	ngu.HomeScore = ng.HomeScore
+	ngu.VisitorScore = ng.VisitorScore
+}
+
 type NHLGame struct {
 	ID           uint
 	GameID       int       `json:"id"`
 	Gametime     time.Time `json:"gametime"`
 	Description  string    `json:"description"`
 	Status       string    `json:"status"`
-	Link         string    `json:"link"`
+	Period       int       `json:"period,omitempty"`
+	Link         string    `json:"link,omitempty"`
 	HomeID       uint      `json:"-"`
 	Home         *NHLTeam  `json:"home"`
 	HomeScore    int       `json:"home_score"`
 	VisitorID    uint      `json:"-"`
 	Visitor      *NHLTeam  `json:"visitor"`
 	VisitorScore int       `json:"visitor_score"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 }
 
 func (ng *NHLGame) Create(q *modelstore.Queries) error {
@@ -129,6 +149,7 @@ func (g *NHLGame) FindByGameID(q *modelstore.Queries, id int) error {
 	return nil
 }
 
+// UpdateScorev2 saves to the DB.
 func (g *NHLGame) UpdateScorev2(q *modelstore.Queries) error {
 	if g.GameID == 0 {
 		return errors.New("invalid game ID")

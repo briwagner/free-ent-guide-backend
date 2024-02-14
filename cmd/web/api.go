@@ -37,6 +37,7 @@ func main() {
 
 	// Set-up database.
 	DB, Sqlc := models.Setup(c)
+	// TODO remove this log line
 	log.Printf("got DB %s", DB.Name())
 	Queries = modelstore.New(Sqlc)
 

@@ -42,7 +42,15 @@ func NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guJSON, err := json.Marshal(gu)
+	// TODO streamline this so we don't need a custom struct to return?
+	g.HomeScore = int(gu.HomeScore)
+	g.VisitorScore = int(gu.VisitorScore)
+	g.Period = int(gu.Period)
+	g.Status = gu.Status
+	ngu := &models.NHLGameUpdate{}
+	ngu.FromGame(g)
+
+	ret, err := json.Marshal(ngu)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -51,7 +59,7 @@ func NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 
 	enableCors(&w)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(guJSON))
+	w.Write([]byte(ret))
 }
 
 // NHLGamesHandler responds to GET and returns the
