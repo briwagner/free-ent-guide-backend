@@ -9,25 +9,23 @@ CREATE TABLE IF NOT EXISTS caches (
 
 CREATE TABLE IF NOT EXISTS mlb_teams (
   id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  created_at datetime,
   updated_at datetime,
-  team_id BIGINT,
+  team_id BIGINT NOT NULL,
   name VARCHAR(256),
   link VARCHAR(256),
   UNIQUE(team_id)
 );
 
 CREATE TABLE IF NOT EXISTS mlb_games (
-  id BIGINT  NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  created_at datetime,
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   updated_at datetime,
   gametime datetime,
-  game_id BIGINT,
+  game_id BIGINT NOT NULL,
   description text,
   status text,
   link text,
-  home_id BIGINT,
-  visitor_id BIGINT,
+  home_id BIGINT NOT NULL,
+  visitor_id BIGINT NOT NULL,
   home_score BIGINT,
   visitor_score BIGINT,
   UNIQUE `idx_gameid_gametime` (`game_id`, `gametime`),
@@ -47,7 +45,7 @@ CREATE TABLE IF NOT EXISTS nhl_teams (
 );
 
 CREATE TABLE IF NOT EXISTS nhl_games (
-  id BIGINT  NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   updated_at datetime,
   gametime datetime,
   game_id BIGINT,

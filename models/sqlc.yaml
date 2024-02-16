@@ -4,6 +4,7 @@ sql:
     queries:
       - "caches.sql"
       - "mlb_games.sql"
+      - "mlb_teams.sql"
       - "nhl_games.sql"
       - "nhl_teams.sql"
     schema: "schema.sql"

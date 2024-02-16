@@ -10,72 +10,112 @@ import (
 	"database/sql"
 )
 
+const mLBCreateGame = `-- name: MLBCreateGame :execlastid
+INSERT INTO mlb_games
+  (gametime, game_id, description, status, link, home_id, visitor_id, home_score, visitor_score, updated_at)
+  VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`
+
+type MLBCreateGameParams struct {
+	Gametime     sql.NullTime
+	GameID       int64
+	Description  sql.NullString
+	Status       sql.NullString
+	Link         sql.NullString
+	HomeID       int64
+	VisitorID    int64
+	HomeScore    sql.NullInt64
+	VisitorScore sql.NullInt64
+	UpdatedAt    sql.NullTime
+}
+
+func (q *Queries) MLBCreateGame(ctx context.Context, arg MLBCreateGameParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, mLBCreateGame,
+		arg.Gametime,
+		arg.GameID,
+		arg.Description,
+		arg.Status,
+		arg.Link,
+		arg.HomeID,
+		arg.VisitorID,
+		arg.HomeScore,
+		arg.VisitorScore,
+		arg.UpdatedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
+}
+
+const mLBDeleteGames = `-- name: MLBDeleteGames :exec
+DELETE FROM mlb_games
+`
+
+func (q *Queries) MLBDeleteGames(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, mLBDeleteGames)
+	return err
+}
+
 const mLBFindGameByID = `-- name: MLBFindGameByID :one
-SELECT mlb_games.id, mlb_games.created_at, mlb_games.updated_at, gametime, game_id, description, status, mlb_games.link, home_id, visitor_id, home_score, visitor_score, mlbt.id, mlbt.created_at, mlbt.updated_at, team_id, name, mlbt.link FROM mlb_games
-  INNER JOIN mlb_teams mlbt ON (
-    (mlb_games.home_id = mlbt.id)
-    OR
-    (mlb_games.visitor_id = mlbt.id)
-  )
-WHERE mlb_games.id = ? LIMIT 1
+SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.home_score, mg.visitor_score,
+  ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+  at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+  FROM mlb_games AS mg
+  INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
+  INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
+  WHERE game_id = ?
 `
 
 type MLBFindGameByIDRow struct {
 	ID           int64
-	CreatedAt    sql.NullTime
-	UpdatedAt    sql.NullTime
+	GameID       int64
 	Gametime     sql.NullTime
-	GameID       sql.NullInt64
 	Description  sql.NullString
 	Status       sql.NullString
 	Link         sql.NullString
-	HomeID       sql.NullInt64
-	VisitorID    sql.NullInt64
 	HomeScore    sql.NullInt64
 	VisitorScore sql.NullInt64
-	ID_2         int64
-	CreatedAt_2  sql.NullTime
-	UpdatedAt_2  sql.NullTime
-	TeamID       sql.NullInt64
-	Name         sql.NullString
-	Link_2       sql.NullString
+	Homeid       int64
+	Hometeamid   int64
+	Homename     sql.NullString
+	Awayid       int64
+	Awayteamid   int64
+	Awayname     sql.NullString
 }
 
-func (q *Queries) MLBFindGameByID(ctx context.Context, id int64) (MLBFindGameByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, mLBFindGameByID, id)
+func (q *Queries) MLBFindGameByID(ctx context.Context, gameID int64) (MLBFindGameByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, mLBFindGameByID, gameID)
 	var i MLBFindGameByIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Gametime,
 		&i.GameID,
+		&i.Gametime,
 		&i.Description,
 		&i.Status,
 		&i.Link,
-		&i.HomeID,
-		&i.VisitorID,
 		&i.HomeScore,
 		&i.VisitorScore,
-		&i.ID_2,
-		&i.CreatedAt_2,
-		&i.UpdatedAt_2,
-		&i.TeamID,
-		&i.Name,
-		&i.Link_2,
+		&i.Homeid,
+		&i.Hometeamid,
+		&i.Homename,
+		&i.Awayid,
+		&i.Awayteamid,
+		&i.Awayname,
 	)
 	return i, err
 }
 
 const mLBLoadGamesByDate = `-- name: MLBLoadGamesByDate :many
-SELECT mlb_games.id, mlb_games.created_at, mlb_games.updated_at, gametime, game_id, description, status, mlb_games.link, home_id, visitor_id, home_score, visitor_score, mlbt.id, mlbt.created_at, mlbt.updated_at, team_id, name, mlbt.link FROM mlb_games
-  INNER JOIN mlb_teams mlbt ON (
-    (mlb_games.home_id = mlbt.id)
-    OR
-    (mlb_games.visitor_id = mlbt.id)
-  )
-WHERE mlb_games.gametime BETWEEN ? AND ?
-ORDER BY mlb_games.gametime
+SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.home_score, mg.visitor_score,
+  ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+  at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+  FROM mlb_games AS mg
+  INNER JOIN mlb_teams AS ht ON (ng.home_id = ht.id)
+  INNER JOIN mlb_teams AS at ON (ng.visitor_id = at.id)
+  WHERE mg.gametime BETWEEN ? AND ?
+  ORDER BY mg.gametime
 `
 
 type MLBLoadGamesByDateParams struct {
@@ -85,23 +125,18 @@ type MLBLoadGamesByDateParams struct {
 
 type MLBLoadGamesByDateRow struct {
 	ID           int64
-	CreatedAt    sql.NullTime
-	UpdatedAt    sql.NullTime
+	GameID       int64
 	Gametime     sql.NullTime
-	GameID       sql.NullInt64
 	Description  sql.NullString
 	Status       sql.NullString
-	Link         sql.NullString
-	HomeID       sql.NullInt64
-	VisitorID    sql.NullInt64
 	HomeScore    sql.NullInt64
 	VisitorScore sql.NullInt64
-	ID_2         int64
-	CreatedAt_2  sql.NullTime
-	UpdatedAt_2  sql.NullTime
-	TeamID       sql.NullInt64
-	Name         sql.NullString
-	Link_2       sql.NullString
+	Homeid       int64
+	Hometeamid   int64
+	Homename     sql.NullString
+	Awayid       int64
+	Awayteamid   int64
+	Awayname     sql.NullString
 }
 
 func (q *Queries) MLBLoadGamesByDate(ctx context.Context, arg MLBLoadGamesByDateParams) ([]MLBLoadGamesByDateRow, error) {
@@ -115,23 +150,18 @@ func (q *Queries) MLBLoadGamesByDate(ctx context.Context, arg MLBLoadGamesByDate
 		var i MLBLoadGamesByDateRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Gametime,
 			&i.GameID,
+			&i.Gametime,
 			&i.Description,
 			&i.Status,
-			&i.Link,
-			&i.HomeID,
-			&i.VisitorID,
 			&i.HomeScore,
 			&i.VisitorScore,
-			&i.ID_2,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
-			&i.TeamID,
-			&i.Name,
-			&i.Link_2,
+			&i.Homeid,
+			&i.Hometeamid,
+			&i.Homename,
+			&i.Awayid,
+			&i.Awayteamid,
+			&i.Awayname,
 		); err != nil {
 			return nil, err
 		}

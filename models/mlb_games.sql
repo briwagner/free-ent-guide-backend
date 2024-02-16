@@ -1,18 +1,27 @@
+-- name: MLBCreateGame :execlastid
+INSERT INTO mlb_games
+  (gametime, game_id, description, status, link, home_id, visitor_id, home_score, visitor_score, updated_at)
+  VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
 -- name: MLBFindGameByID :one
-SELECT * FROM mlb_games
-  INNER JOIN mlb_teams mlbt ON (
-    (mlb_games.home_id = mlbt.id)
-    OR
-    (mlb_games.visitor_id = mlbt.id)
-  )
-WHERE mlb_games.id = ? LIMIT 1;
+SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.home_score, mg.visitor_score,
+  ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+  at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+  FROM mlb_games AS mg
+  INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
+  INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
+  WHERE game_id = ?;
 
 -- name: MLBLoadGamesByDate :many
-SELECT * FROM mlb_games
-  INNER JOIN mlb_teams mlbt ON (
-    (mlb_games.home_id = mlbt.id)
-    OR
-    (mlb_games.visitor_id = mlbt.id)
-  )
-WHERE mlb_games.gametime BETWEEN ? AND ?
-ORDER BY mlb_games.gametime;
+SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.home_score, mg.visitor_score,
+  ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+  at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+  FROM mlb_games AS mg
+  INNER JOIN mlb_teams AS ht ON (ng.home_id = ht.id)
+  INNER JOIN mlb_teams AS at ON (ng.visitor_id = at.id)
+  WHERE mg.gametime BETWEEN ? AND ?
+  ORDER BY mg.gametime;
+
+-- name: MLBDeleteGames :exec
+DELETE FROM mlb_games;

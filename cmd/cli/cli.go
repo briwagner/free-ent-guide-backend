@@ -6,7 +6,6 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/cred"
-	"free-ent-guide-backend/pkg/docker_importer"
 	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
 	"os"
@@ -26,7 +25,7 @@ func main() {
 
 	// Set-up application config.
 	c.GetCreds("creds", ".")
-	DB, sqlc := models.Setup(c)
+	_, sqlc := models.Setup(c)
 	Querier = modelstore.New(sqlc)
 
 	if len(os.Args) <= 2 {
@@ -88,10 +87,15 @@ Or 'cache' with one of: show, stale, clear, wipe.
 			return
 		}
 	case "mlb":
-		date := os.Args[2]
-		err := docker_importer.ImportMLB(DB, date)
+		dateStr := os.Args[2]
+		d, err := time.Parse(format, dateStr)
 		if err != nil {
-			log.Print(err)
+			log.Printf("MLB game importer error: bad date for %s: %s\n", dateStr, err)
+			return
+		}
+		err = models.ImportMLB(Querier, d)
+		if err != nil {
+			log.Printf("MLB importer error: %s\n", err)
 			return
 		}
 	case "cache":

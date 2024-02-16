@@ -1,0 +1,2497 @@
+{
+  "copyright": "Copyright 2024 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+  "dates": [
+    {
+      "date": "2023-09-12",
+      "events": [],
+      "games": [
+        {
+          "calendarEventID": "14-716628-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716628/content"
+          },
+          "dayNight": "day",
+          "description": "Makeup of 9/11 PPD",
+          "doubleHeader": "S",
+          "gameDate": "2023-09-12T17:35:00Z",
+          "gamedayType": "P",
+          "gameGuid": "f121d917-475c-4db4-afb9-523334fe6fe4",
+          "gameNumber": 1,
+          "gamePk": 716628,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 145,
+          "isTie": false,
+          "link": "/api/v1.1/game/716628/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "rescheduledFrom": "2023-09-11T23:10:00Z",
+          "rescheduledFromDate": "2023-09-11",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 1,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 72,
+                "pct": ".500",
+                "wins": 72
+              },
+              "score": 3,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 147,
+                "link": "/api/v1/teams/147",
+                "name": "New York Yankees"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".507",
+                "wins": 73
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 111,
+                "link": "/api/v1/teams/111",
+                "name": "Boston Red Sox"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 3,
+            "link": "/api/v1/venues/3",
+            "name": "Fenway Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716612-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716612/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "S",
+          "gameDate": "2023-09-12T23:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "124ac9b2-2756-45d0-954c-105555a1f093",
+          "gameNumber": 2,
+          "gamePk": 716612,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 145,
+          "isTie": false,
+          "link": "/api/v1.1/game/716612/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 72,
+                "pct": ".503",
+                "wins": 73
+              },
+              "score": 4,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 147,
+                "link": "/api/v1/teams/147",
+                "name": "New York Yankees"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 72,
+                "pct": ".503",
+                "wins": 73
+              },
+              "score": 1,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 111,
+                "link": "/api/v1/teams/111",
+                "name": "Boston Red Sox"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 3,
+            "link": "/api/v1/venues/3",
+            "name": "Fenway Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716611-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716611/content"
+          },
+          "dayNight": "day",
+          "doubleHeader": "Y",
+          "gameDate": "2023-09-12T20:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "a3f4fe34-f8e3-49f0-a211-702587e85357",
+          "gameNumber": 1,
+          "gamePk": 716611,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716611/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 1,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 101,
+                "pct": ".303",
+                "wins": 44
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 118,
+                "link": "/api/v1/teams/118",
+                "name": "Kansas City Royals"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 88,
+                "pct": ".389",
+                "wins": 56
+              },
+              "score": 6,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 145,
+                "link": "/api/v1/teams/145",
+                "name": "Chicago White Sox"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 4,
+            "link": "/api/v1/venues/4",
+            "name": "Guaranteed Rate Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716631-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716631/content"
+          },
+          "dayNight": "day",
+          "description": "Makeup of 9/11 PPD",
+          "doubleHeader": "Y",
+          "gameDate": "2023-09-12T20:45:00Z",
+          "gamedayType": "P",
+          "gameGuid": "68a79bb3-f160-4e95-9398-31e494df1aca",
+          "gameNumber": 2,
+          "gamePk": 716631,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716631/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "rescheduledFrom": "2023-09-11T23:40:00Z",
+          "rescheduledFromDate": "2023-09-11",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": true,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 101,
+                "pct": ".308",
+                "wins": 45
+              },
+              "score": 11,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 118,
+                "link": "/api/v1/teams/118",
+                "name": "Kansas City Royals"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 89,
+                "pct": ".386",
+                "wins": 56
+              },
+              "score": 10,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 145,
+                "link": "/api/v1/teams/145",
+                "name": "Chicago White Sox"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 4,
+            "link": "/api/v1/venues/4",
+            "name": "Guaranteed Rate Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716620-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716620/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T22:35:00Z",
+          "gamedayType": "P",
+          "gameGuid": "1967471c-b1ce-4556-8032-64e0e9f4a851",
+          "gameNumber": 1,
+          "gamePk": 716620,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716620/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 80,
+                "pct": ".448",
+                "wins": 65
+              },
+              "score": 1,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 120,
+                "link": "/api/v1/teams/120",
+                "name": "Washington Nationals"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".462",
+                "wins": 67
+              },
+              "score": 5,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 134,
+                "link": "/api/v1/teams/134",
+                "name": "Pittsburgh Pirates"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 31,
+            "link": "/api/v1/venues/31",
+            "name": "PNC Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716621-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716621/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T22:35:00Z",
+          "gamedayType": "P",
+          "gameGuid": "8558d706-f8d4-46b8-b0b0-ac0543f4cafb",
+          "gameNumber": 1,
+          "gamePk": 716621,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716621/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 81,
+                "pct": ".441",
+                "wins": 64
+              },
+              "score": 5,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 138,
+                "link": "/api/v1/teams/138",
+                "name": "St. Louis Cardinals"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 53,
+                "pct": ".632",
+                "wins": 91
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 110,
+                "link": "/api/v1/teams/110",
+                "name": "Baltimore Orioles"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2,
+            "link": "/api/v1/venues/2",
+            "name": "Oriole Park at Camden Yards"
+          }
+        },
+        {
+          "calendarEventID": "14-716617-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716617/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T22:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "82a24960-2004-4461-bf2e-6ad2fb5100fd",
+          "gameNumber": 1,
+          "gamePk": 716617,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716617/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 1,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".514",
+                "wins": 75
+              },
+              "score": 6,
+              "seriesNumber": 46,
+              "splitSquad": false,
+              "team": {
+                "id": 113,
+                "link": "/api/v1/teams/113",
+                "name": "Cincinnati Reds"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".458",
+                "wins": 66
+              },
+              "score": 5,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 116,
+                "link": "/api/v1/teams/116",
+                "name": "Detroit Tigers"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2394,
+            "link": "/api/v1/venues/2394",
+            "name": "Comerica Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716618-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716618/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T22:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "03d1857c-ee98-4f3c-bc96-93915c965099",
+          "gameNumber": 1,
+          "gamePk": 716618,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716618/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 50,
+                "pct": ".655",
+                "wins": 95
+              },
+              "score": 7,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 144,
+                "link": "/api/v1/teams/144",
+                "name": "Atlanta Braves"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 66,
+                "pct": ".545",
+                "wins": 79
+              },
+              "score": 6,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 143,
+                "link": "/api/v1/teams/143",
+                "name": "Philadelphia Phillies"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2681,
+            "link": "/api/v1/venues/2681",
+            "name": "Citizens Bank Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716616-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716616/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T23:07:00Z",
+          "gamedayType": "P",
+          "gameGuid": "ca595f27-03ba-454a-aa20-c786b36181bf",
+          "gameNumber": 1,
+          "gamePk": 716616,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716616/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 64,
+                "pct": ".556",
+                "wins": 80
+              },
+              "score": 6,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 140,
+                "link": "/api/v1/teams/140",
+                "name": "Texas Rangers"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 65,
+                "pct": ".552",
+                "wins": 80
+              },
+              "score": 3,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 141,
+                "link": "/api/v1/teams/141",
+                "name": "Toronto Blue Jays"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 14,
+            "link": "/api/v1/venues/14",
+            "name": "Rogers Centre"
+          }
+        },
+        {
+          "calendarEventID": "14-716615-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716615/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T23:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "593fc07c-d4e1-4bc7-b008-cb04d0eb62d5",
+          "gameNumber": 1,
+          "gamePk": 716615,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716615/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 70,
+                "pct": ".521",
+                "wins": 76
+              },
+              "score": 4,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 109,
+                "link": "/api/v1/teams/109",
+                "name": "Arizona Diamondbacks"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".458",
+                "wins": 66
+              },
+              "score": 7,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 121,
+                "link": "/api/v1/teams/121",
+                "name": "New York Mets"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 3289,
+            "link": "/api/v1/venues/3289",
+            "name": "Citi Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716613-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716613/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T23:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "015f7649-c108-4ac6-8550-c73892963b3b",
+          "gameNumber": 1,
+          "gamePk": 716613,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716613/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 57,
+                "pct": ".610",
+                "wins": 89
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 139,
+                "link": "/api/v1/teams/139",
+                "name": "Tampa Bay Rays"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 69,
+                "pct": ".524",
+                "wins": 76
+              },
+              "score": 3,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 142,
+                "link": "/api/v1/teams/142",
+                "name": "Minnesota Twins"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 3312,
+            "link": "/api/v1/venues/3312",
+            "name": "Target Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716610-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716610/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-12T23:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "32c15e8d-d5bf-4790-9095-ae2f9ff4028d",
+          "gameNumber": 1,
+          "gamePk": 716610,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716610/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".510",
+                "wins": 74
+              },
+              "score": 1,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 146,
+                "link": "/api/v1/teams/146",
+                "name": "Miami Marlins"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 63,
+                "pct": ".563",
+                "wins": 81
+              },
+              "score": 3,
+              "seriesNumber": 46,
+              "splitSquad": false,
+              "team": {
+                "id": 158,
+                "link": "/api/v1/teams/158",
+                "name": "Milwaukee Brewers"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 32,
+            "link": "/api/v1/venues/32",
+            "name": "American Family Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716614-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716614/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T00:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "d0a14cdf-66f9-439f-9ebe-9dd34c760944",
+          "gameNumber": 1,
+          "gamePk": 716614,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716614/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 99,
+                "pct": ".317",
+                "wins": 46
+              },
+              "score": 6,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 133,
+                "link": "/api/v1/teams/133",
+                "name": "Oakland Athletics"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 64,
+                "pct": ".562",
+                "wins": 82
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 117,
+                "link": "/api/v1/teams/117",
+                "name": "Houston Astros"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2392,
+            "link": "/api/v1/venues/2392",
+            "name": "Minute Maid Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716609-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716609/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T00:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "fe26f9a7-2d4d-42c8-b637-5415578d26bf",
+          "gameNumber": 1,
+          "gamePk": 716609,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716609/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 68,
+                "pct": ".534",
+                "wins": 78
+              },
+              "score": 4,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 112,
+                "link": "/api/v1/teams/112",
+                "name": "Chicago Cubs"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 92,
+                "pct": ".361",
+                "wins": 52
+              },
+              "score": 6,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 115,
+                "link": "/api/v1/teams/115",
+                "name": "Colorado Rockies"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 19,
+            "link": "/api/v1/venues/19",
+            "name": "Coors Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716606-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716606/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T01:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "4645ff3e-a208-4701-9f25-d1635bd23ac3",
+          "gameNumber": 1,
+          "gamePk": 716606,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716606/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".466",
+                "wins": 68
+              },
+              "score": 0,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 108,
+                "link": "/api/v1/teams/108",
+                "name": "Los Angeles Angels"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 65,
+                "pct": ".552",
+                "wins": 80
+              },
+              "score": 8,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 136,
+                "link": "/api/v1/teams/136",
+                "name": "Seattle Mariners"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 680,
+            "link": "/api/v1/venues/680",
+            "name": "T-Mobile Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716619-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716619/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T01:45:00Z",
+          "gamedayType": "P",
+          "gameGuid": "f7c6973b-a5f7-4ad8-8113-8f6cc2802796",
+          "gameNumber": 1,
+          "gamePk": 716619,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716619/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 77,
+                "pct": ".473",
+                "wins": 69
+              },
+              "score": 3,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 114,
+                "link": "/api/v1/teams/114",
+                "name": "Cleveland Guardians"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".510",
+                "wins": 74
+              },
+              "score": 1,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 137,
+                "link": "/api/v1/teams/137",
+                "name": "San Francisco Giants"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2395,
+            "link": "/api/v1/venues/2395",
+            "name": "Oracle Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716608-2023-09-12",
+          "content": {
+            "link": "/api/v1/game/716608/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T02:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "1cd22d76-460b-49cd-9c50-63e8121d1189",
+          "gameNumber": 1,
+          "gamePk": 716608,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716608/feed/live",
+          "officialDate": "2023-09-12",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".466",
+                "wins": 68
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 135,
+                "link": "/api/v1/teams/135",
+                "name": "San Diego Padres"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 56,
+                "pct": ".611",
+                "wins": 88
+              },
+              "score": 11,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 119,
+                "link": "/api/v1/teams/119",
+                "name": "Los Angeles Dodgers"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 22,
+            "link": "/api/v1/venues/22",
+            "name": "Dodger Stadium"
+          }
+        }
+      ],
+      "totalEvents": 0,
+      "totalGames": 17,
+      "totalGamesInProgress": 0,
+      "totalItems": 17
+    },
+    {
+      "date": "2023-09-13",
+      "events": [],
+      "games": [
+        {
+          "calendarEventID": "14-716607-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716607/content"
+          },
+          "dayNight": "day",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T17:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "e3aa9bcb-22ff-41d3-8fe2-e786d25f9d7a",
+          "gameNumber": 1,
+          "gamePk": 716607,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716607/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 57,
+                "pct": ".612",
+                "wins": 90
+              },
+              "score": 5,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 139,
+                "link": "/api/v1/teams/139",
+                "name": "Tampa Bay Rays"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 70,
+                "pct": ".521",
+                "wins": 76
+              },
+              "score": 4,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 142,
+                "link": "/api/v1/teams/142",
+                "name": "Minnesota Twins"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 3312,
+            "link": "/api/v1/venues/3312",
+            "name": "Target Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716599-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716599/content"
+          },
+          "dayNight": "day",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T19:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "bf9359df-4f35-4592-aa41-020cd870e43c",
+          "gameNumber": 1,
+          "gamePk": 716599,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716599/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 69,
+                "pct": ".531",
+                "wins": 78
+              },
+              "score": 3,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 112,
+                "link": "/api/v1/teams/112",
+                "name": "Chicago Cubs"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 92,
+                "pct": ".366",
+                "wins": 53
+              },
+              "score": 7,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 115,
+                "link": "/api/v1/teams/115",
+                "name": "Colorado Rockies"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 19,
+            "link": "/api/v1/venues/19",
+            "name": "Coors Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716605-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716605/content"
+          },
+          "dayNight": "day",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T19:45:00Z",
+          "gamedayType": "P",
+          "gameGuid": "104e7a1b-348b-4b7c-9758-1549552aa664",
+          "gameNumber": 1,
+          "gamePk": 716605,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716605/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".469",
+                "wins": 69
+              },
+              "score": 5,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 114,
+                "link": "/api/v1/teams/114",
+                "name": "Cleveland Guardians"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".514",
+                "wins": 75
+              },
+              "score": 6,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 137,
+                "link": "/api/v1/teams/137",
+                "name": "San Francisco Giants"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2395,
+            "link": "/api/v1/venues/2395",
+            "name": "Oracle Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716602-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716602/content"
+          },
+          "dayNight": "day",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T20:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "a83bb83d-9143-40fa-9837-01169831a3d6",
+          "gameNumber": 1,
+          "gamePk": 716602,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716602/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 79,
+                "pct": ".463",
+                "wins": 68
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 108,
+                "link": "/api/v1/teams/108",
+                "name": "Los Angeles Angels"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 65,
+                "pct": ".555",
+                "wins": 81
+              },
+              "score": 3,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 136,
+                "link": "/api/v1/teams/136",
+                "name": "Seattle Mariners"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 680,
+            "link": "/api/v1/venues/680",
+            "name": "T-Mobile Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716600-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716600/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T22:35:00Z",
+          "gamedayType": "P",
+          "gameGuid": "5599b3a5-4713-4dff-99f9-69a84cb014e3",
+          "gameNumber": 1,
+          "gamePk": 716600,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716600/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 81,
+                "pct": ".445",
+                "wins": 65
+              },
+              "score": 6,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 120,
+                "link": "/api/v1/teams/120",
+                "name": "Washington Nationals"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".466",
+                "wins": 68
+              },
+              "score": 7,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 134,
+                "link": "/api/v1/teams/134",
+                "name": "Pittsburgh Pirates"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 31,
+            "link": "/api/v1/venues/31",
+            "name": "PNC Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716604-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716604/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T22:35:00Z",
+          "gamedayType": "P",
+          "gameGuid": "7c14e173-1dee-4926-9d9a-e168530ff277",
+          "gameNumber": 1,
+          "gamePk": 716604,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716604/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 81,
+                "pct": ".445",
+                "wins": 65
+              },
+              "score": 1,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 138,
+                "link": "/api/v1/teams/138",
+                "name": "St. Louis Cardinals"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 54,
+                "pct": ".628",
+                "wins": 91
+              },
+              "score": 0,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 110,
+                "link": "/api/v1/teams/110",
+                "name": "Baltimore Orioles"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2,
+            "link": "/api/v1/venues/2",
+            "name": "Oriole Park at Camden Yards"
+          }
+        },
+        {
+          "calendarEventID": "14-716601-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716601/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T22:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "a7effbfa-ea54-4423-8cf3-1bb9e485f092",
+          "gameNumber": 1,
+          "gamePk": 716601,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716601/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 2,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".517",
+                "wins": 76
+              },
+              "score": 4,
+              "seriesNumber": 46,
+              "splitSquad": false,
+              "team": {
+                "id": 113,
+                "link": "/api/v1/teams/113",
+                "name": "Cincinnati Reds"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 79,
+                "pct": ".455",
+                "wins": 66
+              },
+              "score": 3,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 116,
+                "link": "/api/v1/teams/116",
+                "name": "Detroit Tigers"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2394,
+            "link": "/api/v1/venues/2394",
+            "name": "Comerica Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716603-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716603/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T22:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "4aadeb6b-7825-4915-840b-2a3075471bdb",
+          "gameNumber": 1,
+          "gamePk": 716603,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716603/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 4,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 50,
+                "pct": ".658",
+                "wins": 96
+              },
+              "score": 4,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 144,
+                "link": "/api/v1/teams/144",
+                "name": "Atlanta Braves"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 67,
+                "pct": ".541",
+                "wins": 79
+              },
+              "score": 1,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 143,
+                "link": "/api/v1/teams/143",
+                "name": "Philadelphia Phillies"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2681,
+            "link": "/api/v1/venues/2681",
+            "name": "Citizens Bank Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716594-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716594/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T23:07:00Z",
+          "gamedayType": "P",
+          "gameGuid": "e37fac3d-ef63-47a2-b137-5112566c241c",
+          "gameNumber": 1,
+          "gamePk": 716594,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716594/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 64,
+                "pct": ".559",
+                "wins": 81
+              },
+              "score": 10,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 140,
+                "link": "/api/v1/teams/140",
+                "name": "Texas Rangers"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 66,
+                "pct": ".548",
+                "wins": 80
+              },
+              "score": 0,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 141,
+                "link": "/api/v1/teams/141",
+                "name": "Toronto Blue Jays"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 14,
+            "link": "/api/v1/venues/14",
+            "name": "Rogers Centre"
+          }
+        },
+        {
+          "calendarEventID": "14-716595-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716595/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T23:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "1a7fce63-41a6-47df-b19a-0c0c95924a7d",
+          "gameNumber": 1,
+          "gamePk": 716595,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716595/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".517",
+                "wins": 76
+              },
+              "score": 1,
+              "seriesNumber": 48,
+              "splitSquad": false,
+              "team": {
+                "id": 109,
+                "link": "/api/v1/teams/109",
+                "name": "Arizona Diamondbacks"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".462",
+                "wins": 67
+              },
+              "score": 7,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 121,
+                "link": "/api/v1/teams/121",
+                "name": "New York Mets"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 3289,
+            "link": "/api/v1/venues/3289",
+            "name": "Citi Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716596-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716596/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T23:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "2bf29017-407d-4380-bdb8-68c96df7da52",
+          "gameNumber": 1,
+          "gamePk": 716596,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716596/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 100,
+                "pct": ".315",
+                "wins": 46
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 133,
+                "link": "/api/v1/teams/133",
+                "name": "Oakland Athletics"
+              }
+            },
+            "home": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 64,
+                "pct": ".565",
+                "wins": 83
+              },
+              "score": 6,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 117,
+                "link": "/api/v1/teams/117",
+                "name": "Houston Astros"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 2392,
+            "link": "/api/v1/venues/2392",
+            "name": "Minute Maid Park"
+          }
+        },
+        {
+          "calendarEventID": "14-716598-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716598/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T23:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "fb29d10d-6efa-43aa-83a9-bb3a0593d2a2",
+          "gameNumber": 1,
+          "gamePk": 716598,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716598/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 101,
+                "pct": ".313",
+                "wins": 46
+              },
+              "score": 7,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 118,
+                "link": "/api/v1/teams/118",
+                "name": "Kansas City Royals"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 90,
+                "pct": ".384",
+                "wins": 56
+              },
+              "score": 1,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 145,
+                "link": "/api/v1/teams/145",
+                "name": "Chicago White Sox"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 4,
+            "link": "/api/v1/venues/4",
+            "name": "Guaranteed Rate Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716592-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716592/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T23:40:00Z",
+          "gamedayType": "P",
+          "gameGuid": "f1f8b032-2843-4e40-9ecb-495d786ae18f",
+          "gameNumber": 1,
+          "gamePk": 716592,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716592/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".514",
+                "wins": 75
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 146,
+                "link": "/api/v1/teams/146",
+                "name": "Miami Marlins"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 64,
+                "pct": ".559",
+                "wins": 81
+              },
+              "score": 0,
+              "seriesNumber": 46,
+              "splitSquad": false,
+              "team": {
+                "id": 158,
+                "link": "/api/v1/teams/158",
+                "name": "Milwaukee Brewers"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 32,
+            "link": "/api/v1/venues/32",
+            "name": "American Family Field"
+          }
+        },
+        {
+          "calendarEventID": "14-716589-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716589/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-14T02:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "b9a109d9-b596-4890-a2b9-078cb2447cd3",
+          "gameNumber": 1,
+          "gamePk": 716589,
+          "gamesInSeries": 3,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 120,
+          "isTie": false,
+          "link": "/api/v1.1/game/716589/feed/live",
+          "officialDate": "2023-09-13",
+          "publicFacing": true,
+          "recordSource": "S",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "F",
+            "detailedState": "Final",
+            "startTimeTBD": false,
+            "statusCode": "F"
+          },
+          "teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 78,
+                "pct": ".469",
+                "wins": 69
+              },
+              "score": 6,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 135,
+                "link": "/api/v1/teams/135",
+                "name": "San Diego Padres"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 57,
+                "pct": ".607",
+                "wins": 88
+              },
+              "score": 1,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 119,
+                "link": "/api/v1/teams/119",
+                "name": "Los Angeles Dodgers"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 22,
+            "link": "/api/v1/venues/22",
+            "name": "Dodger Stadium"
+          }
+        },
+        {
+          "calendarEventID": "14-716597-2023-09-13",
+          "content": {
+            "link": "/api/v1/game/716597/content"
+          },
+          "dayNight": "night",
+          "doubleHeader": "N",
+          "gameDate": "2023-09-13T23:10:00Z",
+          "gamedayType": "P",
+          "gameGuid": "7296d76a-ac49-4e85-962f-bf1d83e9d360",
+          "gameNumber": 1,
+          "gamePk": 716597,
+          "gamesInSeries": 4,
+          "gameType": "R",
+          "ifNecessary": "N",
+          "ifNecessaryDescription": "Normal Game",
+          "inningBreakLength": 145,
+          "link": "/api/v1.1/game/716597/feed/live",
+          "officialDate": "2023-09-14",
+          "publicFacing": true,
+          "recordSource": "S",
+          "rescheduleDate": "2023-09-14T17:35:00Z",
+          "rescheduleGameDate": "2023-09-14",
+          "reverseHomeAwayStatus": false,
+          "scheduledInnings": 9,
+          "season": "2023",
+          "seasonDisplay": "2023",
+          "seriesDescription": "Regular Season",
+          "seriesGameNumber": 3,
+          "status": {
+            "abstractGameCode": "F",
+            "abstractGameState": "Final",
+            "codedGameState": "D",
+            "detailedState": "Postponed",
+            "reason": "Rain",
+            "startTimeTBD": false,
+            "statusCode": "DR"
+          },
+          "teams": {
+            "away": {
+              "leagueRecord": {
+                "losses": 73,
+                "pct": ".500",
+                "wins": 73
+              },
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 147,
+                "link": "/api/v1/teams/147",
+                "name": "New York Yankees"
+              }
+            },
+            "home": {
+              "leagueRecord": {
+                "losses": 72,
+                "pct": ".507",
+                "wins": 74
+              },
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 111,
+                "link": "/api/v1/teams/111",
+                "name": "Boston Red Sox"
+              }
+            }
+          },
+          "tiebreaker": "N",
+          "venue": {
+            "id": 3,
+            "link": "/api/v1/venues/3",
+            "name": "Fenway Park"
+          }
+        }
+      ],
+      "totalEvents": 0,
+      "totalGames": 15,
+      "totalGamesInProgress": 0,
+      "totalItems": 15
+    }
+  ],
+  "totalEvents": 0,
+  "totalGames": 32,
+  "totalGamesInProgress": 0,
+  "totalItems": 32
+}

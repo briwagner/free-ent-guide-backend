@@ -97,13 +97,20 @@ func NHLGamesHandler(w http.ResponseWriter, r *http.Request) {
 // game matching the specified GameID.
 func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
+	q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 
 	enableCors(&w)
 
 	// Fetch game from database.
-	var g models.MLBGame
-	err := g.FindByID(vars["game_id"], DB)
+	g := models.MLBGame{}
+	gameID, err := strconv.Atoi(vars["game_id"])
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	err = g.FindByGameID(q, gameID)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
@@ -111,7 +118,7 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch scores, timing from the MLB api.
-	gu, err := g.GetUpdate()
+	g.GetUpdate()
 	if err != nil {
 		log.Print(err)
 		// Special error case for canceled game that should be marked deleted in DB.
@@ -123,16 +130,16 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guJSON, err := json.Marshal(gu)
+	gJSON, err := json.Marshal(g)
 	if err != nil {
 		log.Printf("game update failed: %s", err)
-		// why is this 500? can we just return the game?
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
+	// TODO we are returning the Game, not a GameUpdate anymore.
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(guJSON))
+	w.Write([]byte(gJSON))
 }
 
 // MLBGamesHandler responds to GET and returns the

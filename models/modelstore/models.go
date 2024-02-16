@@ -18,24 +18,22 @@ type Cach struct {
 
 type MlbGame struct {
 	ID           int64
-	CreatedAt    sql.NullTime
 	UpdatedAt    sql.NullTime
 	Gametime     sql.NullTime
-	GameID       sql.NullInt64
+	GameID       int64
 	Description  sql.NullString
 	Status       sql.NullString
 	Link         sql.NullString
-	HomeID       sql.NullInt64
-	VisitorID    sql.NullInt64
+	HomeID       int64
+	VisitorID    int64
 	HomeScore    sql.NullInt64
 	VisitorScore sql.NullInt64
 }
 
 type MlbTeam struct {
 	ID        int64
-	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime
-	TeamID    sql.NullInt64
+	TeamID    int64
 	Name      sql.NullString
 	Link      sql.NullString
 }
