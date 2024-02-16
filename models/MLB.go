@@ -144,18 +144,48 @@ func (mt *MLBTeam) FindByTeamID(q *modelstore.Queries, team_id int) error {
 type MLBGames []MLBGame
 
 // LoadByDate fetches all games for the given date.
-func (mgs *MLBGames) LoadByDate(d string, db Store) error {
+func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
 	date, err := time.Parse("2006-01-02", d)
 	if err != nil {
-		return err
+		return fmt.Errorf("mlb error parsing date: %w", err)
 	}
 	// Set date to noon to allow capturing anything in PM that may show as next-day with UTC.
 	dateFrom := time.Date(date.Year(), date.Month(), date.Day(), 12, 0, 0, 0, date.Location())
 	dateTo := dateFrom.Add(time.Hour * 24)
-	tx := db.Preload("Home").Preload("Visitor").Where("gametime BETWEEN ? AND ?", dateFrom.String(), dateTo.String()).Order("gametime").Find(mgs)
-	if tx.Error != nil {
-		return tx.Error
+
+	rows, err := q.MLBLoadGamesByDate(context.Background(), modelstore.MLBLoadGamesByDateParams{
+		FromGametime: sql.NullTime{Time: dateFrom, Valid: true},
+		ToGametime:   sql.NullTime{Time: dateTo, Valid: true},
+	})
+	if err != nil {
+		return fmt.Errorf("error fetching MLB games: %w", err)
 	}
+
+	for _, row := range rows {
+		*mgs = append(*mgs, MLBGame{
+			ID:          uint(row.ID),
+			GameID:      int(row.GameID),
+			Gametime:    row.Gametime.Time,
+			Description: row.Description.String,
+			Status:      row.Status.String,
+			Link:        row.Link.String,
+			HomeID:      uint(row.Homeid),
+			Home: MLBTeam{
+				ID:     uint(row.Homeid),
+				Name:   row.Homename.String,
+				TeamID: int(row.Hometeamid),
+			},
+			VisitorID: uint(row.Awayid),
+			Visitor: MLBTeam{
+				ID:     uint(row.Awayid),
+				Name:   row.Awayname.String,
+				TeamID: int(row.Awayteamid),
+			},
+			HomeScore:    int(row.HomeScore.Int64),
+			VisitorScore: int(row.VisitorScore.Int64),
+		})
+	}
+
 	return nil
 }
 

@@ -108,12 +108,12 @@ func (q *Queries) MLBFindGameByID(ctx context.Context, gameID int64) (MLBFindGam
 }
 
 const mLBLoadGamesByDate = `-- name: MLBLoadGamesByDate :many
-SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.home_score, mg.visitor_score,
+SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.home_score, mg.visitor_score,
   ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
   at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
   FROM mlb_games AS mg
-  INNER JOIN mlb_teams AS ht ON (ng.home_id = ht.id)
-  INNER JOIN mlb_teams AS at ON (ng.visitor_id = at.id)
+  INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
+  INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
   WHERE mg.gametime BETWEEN ? AND ?
   ORDER BY mg.gametime
 `
@@ -129,6 +129,7 @@ type MLBLoadGamesByDateRow struct {
 	Gametime     sql.NullTime
 	Description  sql.NullString
 	Status       sql.NullString
+	Link         sql.NullString
 	HomeScore    sql.NullInt64
 	VisitorScore sql.NullInt64
 	Homeid       int64
@@ -154,6 +155,7 @@ func (q *Queries) MLBLoadGamesByDate(ctx context.Context, arg MLBLoadGamesByDate
 			&i.Gametime,
 			&i.Description,
 			&i.Status,
+			&i.Link,
 			&i.HomeScore,
 			&i.VisitorScore,
 			&i.Homeid,

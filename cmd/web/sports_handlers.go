@@ -152,9 +152,9 @@ func MLBGamesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
+	q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 	gs := &models.MLBGames{}
-	err := gs.LoadByDate(d, DB)
+	err := gs.LoadByDate(q, d)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
