@@ -6,6 +6,7 @@ package modelstore
 
 import (
 	"database/sql"
+	"encoding/json"
 )
 
 type Cach struct {
@@ -60,4 +61,15 @@ type NhlTeam struct {
 	Tricode     sql.NullString
 	Name        sql.NullString
 	Link        sql.NullString
+}
+
+type User struct {
+	ID           int64
+	Email        string
+	PasswordHash string
+	ResetCode    sql.NullString
+	Data         json.RawMessage
+	CreatedAt    sql.NullTime
+	UpdatedAt    sql.NullTime
+	Status       sql.NullBool
 }

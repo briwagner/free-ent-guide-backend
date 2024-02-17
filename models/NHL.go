@@ -244,8 +244,8 @@ func (ngs *NHLGames) LoadByDate(q *modelstore.Queries, datestr string) error {
 	return nil
 }
 
-// GetLatestGames loads all games on the latest date found in the DB.
-func GetLatestGames(q *modelstore.Queries) (NHLGames, error) {
+// NHLGetLatestGames loads all games on the latest date found in the DB.
+func NHLGetLatestGames(q *modelstore.Queries) (NHLGames, error) {
 	var games []NHLGame
 
 	rows, err := q.NHLLatestGames(context.Background())
@@ -254,7 +254,7 @@ func GetLatestGames(q *modelstore.Queries) (NHLGames, error) {
 	}
 
 	for _, row := range rows {
-		new := NHLGame{GameID: int(row.ID), Gametime: row.Gametime.Time}
+		new := NHLGame{ID: uint(row.ID), Gametime: row.Gametime.Time}
 		games = append(games, new)
 	}
 

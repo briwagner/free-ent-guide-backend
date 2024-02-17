@@ -1,140 +1,77 @@
-package models
+package models_test
 
 import (
+	"context"
+	"encoding/json"
+	"free-ent-guide-backend/models"
 	"testing"
 
-	"free-ent-guide-backend/pkg/cred"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var AppStore Store
+func TestUser_DB(t *testing.T) {
+	wipeUsers(t)
 
-func init() {
-	c := cred.Cred{DB: "gorm:password@tcp(127.0.0.1:3306)/demo_gorm_test?charset=utf8mb4&parseTime=True&loc=Local"}
-	AppStore, _ = Setup(c)
+	email := "johndoe@email.com"
+	pw := "password123"
+	u := &models.User{Email: email, Password: pw}
+	err := u.Create(Queries)
+	require.NoError(t, err)
+	assert.NotEqual(t, 0, u.ID)
+	err = u.AddZip(Queries, int64(33161))
+	require.NoError(t, err)
+	err = u.AddZip(Queries, int64(20002))
+	require.NoError(t, err)
+
+	u2 := &models.User{Email: email}
+	err = u2.FindByEmail(Queries)
+	require.NoError(t, err)
+	assert.NotEqual(t, 0, u2.ID)
+	assert.Equal(t, email, u2.Email)
+	assert.False(t, u2.CreatedAt.IsZero())
+	assert.NotEmpty(t, u2.Data.Zips)
+	assert.Len(t, u2.Data.Zips, 2)
+
+	u3 := models.User{Email: email}
+	ok := u3.CheckPasswordHash(Queries, pw)
+	assert.True(t, ok)
+
+	ok = u3.CheckPasswordHash(Queries, "bad password")
+	assert.False(t, ok)
+
+	err = u3.GetZips(Queries)
+	require.NoError(t, err)
+	assert.NotEmpty(t, u2.Data.Zips)
+	assert.Equal(t, int64(33161), u2.Data.Zips[0])
+
+	err = u3.ClearZips(Queries)
+	require.NoError(t, err)
+	assert.Empty(t, u3.Data.Zips)
+
+	err = u3.AddZip(Queries, int64(90210))
+	require.NoError(t, err)
+	err = u3.AddZip(Queries, int64(92060))
+	require.NoError(t, err)
+	assert.Len(t, u3.Data.Zips, 2)
+
+	err = u3.DeleteZip(Queries, int64(90210))
+	require.NoError(t, err)
+	assert.Len(t, u3.Data.Zips, 1)
+
+	err = u3.DeleteZip(Queries, int64(12345))
+	assert.Error(t, err)
 }
 
-func TestGetUserName(t *testing.T) {
-	n := "johnDoe"
-	u := User{Name: n}
-	got := u.GetUserName()
-	if n != got {
-		t.Errorf("Got %s, want %s", got, n)
-	}
+func TestUserData(t *testing.T) {
+	data := []byte(`{"zips": [33161, 20002]}`)
+	ud := models.UserData{}
+	err := json.Unmarshal(data, &ud)
+	require.NoError(t, err)
+	assert.Len(t, ud.Zips, 2)
 }
 
-func TestCreate(t *testing.T) {
-	u := User{Name: "johnDoe", Password: "password", Zips: []UserZip{}}
-	err := u.Create(AppStore)
-	if err != nil {
-		t.Errorf("User not created %s", err.Error())
-	}
-
-	u2 := User{Name: "Faye Dunnaway", Password: "fdlk09835j", Zips: []UserZip{{Zip: "33161"}}}
-	err = u2.Create(AppStore)
-	if err != nil {
-		t.Errorf("User2 not created %s", err.Error())
-	}
-
-	if len(u2.Zips) != 1 {
-		t.Errorf("New user should have one zip. Has %d", len(u2.Zips))
-	}
-
-	// @todo: drop records? drop tables?
-}
-
-func TestLoadUserByName(t *testing.T) {
-	u := User{Name: "johnDoe", Password: "password", Zips: []UserZip{}}
-	err := u.Create(AppStore)
-	if err != nil {
-		t.Errorf("User not created %s", err.Error())
-	}
-
-	u2 := User{Name: "johnDoe"}
-	err = u2.LoadByName(AppStore)
-	if err != nil {
-		t.Errorf("User2 not created %s", err.Error())
-	}
-
-	if u2.ID == 0 {
-		t.Errorf("Failed to load user by name")
-	}
-}
-
-func TestCheckPasswordHash(t *testing.T) {
-	u := User{Name: "johnDoe", Password: "password"}
-	u.Create(AppStore)
-	p := "password"
-	check := u.CheckPasswordHash(AppStore, p)
-	if !check {
-		t.Errorf("User password check failed using: %s.", p)
-	}
-
-	p = "passw0rd"
-	check2 := u.CheckPasswordHash(AppStore, p)
-	if check2 {
-		t.Errorf("User password check should fail using: %s", p)
-	}
-
-	// @todo: cleanup records.
-}
-
-func TestZip(t *testing.T) {
-	u := User{Name: "johnDoe", Password: "password", Zips: []UserZip{{Zip: "33161"}}}
-	err := u.Create(AppStore)
-	if err != nil {
-		panic(err)
-	}
-
-	z := "11223"
-	u.AddZip(AppStore, z)
-	u.GetZips(AppStore)
-
-	u2 := User{}
-	AppStore.Preload("Zips").Find(&u2, u.ID)
-	if len(u2.Zips) != 2 {
-		t.Errorf("Failed to add user zips. Has %d, want %d", len(u2.Zips), 2)
-	}
-
-	ok, _ := u2.HasZip(AppStore, z)
-	if !ok {
-		t.Errorf("HasZip failed to find zip %s", z)
-	}
-
-	z2 := "32211"
-	ok2, _ := u2.HasZip(AppStore, z2)
-	if ok2 {
-		t.Errorf("HasZip found zip that shouldn't be %s", z2)
-	}
-}
-
-func TestDeleteZip(t *testing.T) {
-	u := User{Name: "johnDoe", Password: "password", Zips: []UserZip{{Zip: "33161"}, {Zip: "20002"}}}
-	err := u.Create(AppStore)
-	if err != nil {
-		panic(err)
-	}
-
-	if len(u.Zips) != 2 {
-		t.Errorf("Failed to add save user with zips.")
-		return
-	}
-
-	zd := "20002"
-	u.DeleteZip(AppStore, zd)
-	if len(u.Zips) != 1 {
-		t.Errorf("Failed to delete zip. User has %d, want 1", len(u.Zips))
-	}
-	if u.Zips[0].Zip == zd {
-		t.Error("DeleteZip failed to remove correct zip")
-	}
-}
-
-func TestClearZips(t *testing.T) {
-	u := User{Name: "johnDoe", Password: "password", Zips: []UserZip{{Zip: "33161"}, {Zip: "20002"}}}
-	u.Create(AppStore)
-
-	u.ClearZips(AppStore)
-	if len(u.Zips) != 0 {
-		t.Errorf("User zips not cleared. Has %d zip", len(u.Zips))
-	}
+func wipeUsers(t *testing.T) {
+	err := Queries.UsersDelete(context.Background())
+	require.NoError(t, err)
 }

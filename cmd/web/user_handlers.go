@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/models/modelstore"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/shaj13/go-guardian/v2/auth"
 )
@@ -17,9 +19,10 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(ContextUserKey)
 
 	// Load user to get ID and add to token.
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
-	u := models.User{Name: fmt.Sprintf("%v", username)}
-	err := u.LoadByName(DB)
+	q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	u := &models.User{Email: fmt.Sprintf("%v", username)}
+	err := u.FindByEmail(q)
+
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(500)
@@ -28,7 +31,7 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 
 	// @todo: add named scopes.
 
-	jwtToken := author.IssueJWT(u.Name, fmt.Sprintf("%d", u.ID))
+	jwtToken := author.IssueJWT(u.Email, fmt.Sprintf("%d", u.ID))
 	// Does not throw error, only empty string, if it fails.
 	if jwtToken == "" {
 		log.Printf("Failed to generate JWT for %s", username)
@@ -123,15 +126,16 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
-	user := &models.User{Name: formData.Username, Password: formData.Password}
-	err = user.Create(DB)
+	q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	user := &models.User{Email: formData.Username, Password: formData.Password}
+	err = user.Create(q)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf("Error creating user. %v", err)))
 		return
 	}
 
+	// TODO return ID?
 	w.WriteHeader(204)
 }
 
@@ -159,9 +163,9 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		DB := r.Context().Value(models.StorageContextKey).(models.Store)
-		user := &models.User{Name: username}
-		err := user.GetZips(DB)
+		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+		user := &models.User{Email: username}
+		err := user.GetZips(q)
 		if err != nil {
 			w.WriteHeader(404)
 			w.Write([]byte("Not found"))
@@ -211,9 +215,10 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		DB := r.Context().Value(models.StorageContextKey).(models.Store)
-		user := &models.User{Name: username}
-		err := user.AddZip(DB, qZip)
+		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+		user := &models.User{Email: username}
+		newZip, err := strconv.ParseInt(qZip, 10, 64)
+		err = user.AddZip(q, newZip)
 		if err != nil {
 			log.Printf("Storage error %s", err.Error())
 			w.WriteHeader(500)
@@ -264,9 +269,10 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		DB := r.Context().Value(models.StorageContextKey).(models.Store)
-		user := &models.User{Name: username}
-		err := user.DeleteZip(DB, qZip)
+		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+		user := &models.User{Email: username}
+		delZip, err := strconv.ParseInt(qZip, 10, 64)
+		err = user.DeleteZip(q, delZip)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Error deleting data."))
@@ -304,9 +310,9 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		DB := r.Context().Value(models.StorageContextKey).(models.Store)
-		user := &models.User{Name: username}
-		err := user.ClearZips(DB)
+		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+		user := &models.User{Email: username}
+		err := user.ClearZips(q)
 		if err != nil {
 			w.Write([]byte("Error removing from storage."))
 			return

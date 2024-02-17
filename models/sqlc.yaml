@@ -7,6 +7,7 @@ sql:
       - "mlb_teams.sql"
       - "nhl_games.sql"
       - "nhl_teams.sql"
+      - "users.sql"
     schema: "schema.sql"
     gen:
       go:

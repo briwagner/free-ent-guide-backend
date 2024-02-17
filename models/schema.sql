@@ -60,3 +60,15 @@ CREATE TABLE IF NOT EXISTS nhl_games (
   FOREIGN KEY (home_id) REFERENCES nhl_teams(id),
   FOREIGN KEY (visitor_id) REFERENCES nhl_teams(id)
 );
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(256) NOT NULL,
+  password_hash text NOT NULL,
+  reset_code text,
+  data JSON,
+  created_at datetime,
+  updated_at datetime,
+  status BOOL DEFAULT 1,
+  UNIQUE(email)
+);

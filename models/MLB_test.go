@@ -63,6 +63,17 @@ func TestGameUpdate(t *testing.T) {
 	assert.NotEqual(t, 0, g.ID)
 }
 
+func TestGamesByDate(t *testing.T) {
+	g := &models.MLBGames{}
+	err := g.LoadByDate(Queries, "2024-02-02")
+	require.NoError(t, err)
+	assert.NotEmpty(t, *g)
+	for _, v := range *g {
+		assert.NotNil(t, v.ID)
+		assert.NotNil(t, v.GameID)
+	}
+}
+
 func mlbWipe(t *testing.T) {
 	err := Queries.MLBDeleteGames(context.Background())
 	require.NoError(t, err)

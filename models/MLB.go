@@ -280,6 +280,22 @@ func ImportMLB(q *modelstore.Queries, startDate time.Time) error {
 	return nil
 }
 
+// MLBGetLatestGames loads all games on the latest date found in the DB.
+func MLBGetLatestGames(q *modelstore.Queries) (MLBGames, error) {
+	var games []MLBGame
+	rows, err := q.MLBLatestGames(context.Background())
+	if err != nil {
+		return games, err
+	}
+
+	for _, row := range rows {
+		new := MLBGame{ID: uint(row.ID), Gametime: row.Gametime.Time}
+		games = append(games, new)
+	}
+
+	return games, nil
+}
+
 // Use in Game update cycle, when checking playoff games that are not needed. The ID will be
 // zero-d out, so we should delete the game.
 var ErrorGameCanceled = errors.New("game is zeroed")

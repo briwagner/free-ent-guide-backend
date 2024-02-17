@@ -36,9 +36,7 @@ func main() {
 	port := fmt.Sprintf(":%v", c.Port)
 
 	// Set-up database.
-	DB, Sqlc := models.Setup(c)
-	// TODO remove this log line
-	log.Printf("got DB %s", DB.Name())
+	_, Sqlc := models.Setup(c)
 	Queries = modelstore.New(Sqlc)
 
 	// Set-up authentication.
@@ -72,8 +70,8 @@ func main() {
 	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
 	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
 
-	// Docker importers
-	mux.HandleFunc("/v1/admin/add-games", AuthHandler(http.HandlerFunc(GamesImporter)))
+	// Docker importers: DEPRECATED
+	// mux.HandleFunc("/v1/admin/add-games", AuthHandler(http.HandlerFunc(GamesImporter)))
 
 	// Middleware
 	mux.Use(StorageHandler)
@@ -119,14 +117,14 @@ var cacheObj libcache.Cache
 
 // Validate user with basic auth.
 func validateUser(ctx context.Context, r *http.Request, username, password string) (auth.Info, error) {
-	u := &models.User{Name: username, Password: password}
-	err := u.LoadByName(DB)
+	u := &models.User{Email: username, Password: password}
+	err := u.FindByEmail(Queries)
 	if err != nil {
 		log.Print(err)
 		return nil, fmt.Errorf("failed to load user")
 	}
-	if u.CheckPasswordHash(DB, password) {
-		return auth.NewDefaultUser(u.Name, fmt.Sprintf("%d", u.ID), nil, nil), nil
+	if u.CheckPasswordHash(Queries, password) {
+		return auth.NewDefaultUser(u.Email, fmt.Sprintf("%d", u.ID), nil, nil), nil
 	}
 
 	return nil, fmt.Errorf("invalid credentials")

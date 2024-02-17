@@ -107,6 +107,45 @@ func (q *Queries) MLBFindGameByID(ctx context.Context, gameID int64) (MLBFindGam
 	return i, err
 }
 
+const mLBLatestGames = `-- name: MLBLatestGames :many
+SELECT id, gametime
+  FROM mlb_games
+  WHERE DATE(gametime) = (
+    SELECT DATE(gametime)
+    FROM mlb_games
+    ORDER BY gametime
+    DESC LIMIT 1
+  )
+`
+
+type MLBLatestGamesRow struct {
+	ID       int64
+	Gametime sql.NullTime
+}
+
+func (q *Queries) MLBLatestGames(ctx context.Context) ([]MLBLatestGamesRow, error) {
+	rows, err := q.db.QueryContext(ctx, mLBLatestGames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MLBLatestGamesRow
+	for rows.Next() {
+		var i MLBLatestGamesRow
+		if err := rows.Scan(&i.ID, &i.Gametime); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const mLBLoadGamesByDate = `-- name: MLBLoadGamesByDate :many
 SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.home_score, mg.visitor_score,
   ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
@@ -176,4 +215,27 @@ func (q *Queries) MLBLoadGamesByDate(ctx context.Context, arg MLBLoadGamesByDate
 		return nil, err
 	}
 	return items, nil
+}
+
+const mLBUpdateScore = `-- name: MLBUpdateScore :exec
+UPDATE mlb_games
+  SET home_score = ?, visitor_score = ?, status = ?
+  WHERE game_id = ?
+`
+
+type MLBUpdateScoreParams struct {
+	HomeScore    sql.NullInt64
+	VisitorScore sql.NullInt64
+	Status       sql.NullString
+	GameID       int64
+}
+
+func (q *Queries) MLBUpdateScore(ctx context.Context, arg MLBUpdateScoreParams) error {
+	_, err := q.db.ExecContext(ctx, mLBUpdateScore,
+		arg.HomeScore,
+		arg.VisitorScore,
+		arg.Status,
+		arg.GameID,
+	)
+	return err
 }

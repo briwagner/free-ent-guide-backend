@@ -37,3 +37,6 @@ SELECT id, gametime
     ORDER BY gametime
     DESC LIMIT 1
   );
+
+-- name: NHLDeleteGames :exec
+DELETE FROM nhl_games;

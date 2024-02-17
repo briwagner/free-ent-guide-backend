@@ -49,6 +49,15 @@ func (q *Queries) NHLCreateGame(ctx context.Context, arg NHLCreateGameParams) (i
 	return result.LastInsertId()
 }
 
+const nHLDeleteGames = `-- name: NHLDeleteGames :exec
+DELETE FROM nhl_games
+`
+
+func (q *Queries) NHLDeleteGames(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, nHLDeleteGames)
+	return err
+}
+
 const nHLFindGameByID = `-- name: NHLFindGameByID :one
 SELECT ng.id, ng.game_id, ng.gametime, ng.description, ng.status, ng.home_score, ng.visitor_score,
   ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
