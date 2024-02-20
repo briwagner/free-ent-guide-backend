@@ -1,0 +1,477 @@
+{
+  "data": [
+    {
+      "franchiseId": 35,
+      "fullName": "Atlanta Thrashers",
+      "id": 11,
+      "leagueId": 133,
+      "rawTricode": "ATL",
+      "triCode": "ATL"
+    },
+    {
+      "franchiseId": 26,
+      "fullName": "Hartford Whalers",
+      "id": 34,
+      "leagueId": 133,
+      "rawTricode": "HFD",
+      "triCode": "HFD"
+    },
+    {
+      "franchiseId": 15,
+      "fullName": "Minnesota North Stars",
+      "id": 31,
+      "leagueId": 133,
+      "rawTricode": "MNS",
+      "triCode": "MNS"
+    },
+    {
+      "franchiseId": 27,
+      "fullName": "Quebec Nordiques",
+      "id": 32,
+      "leagueId": 133,
+      "rawTricode": "QUE",
+      "triCode": "QUE"
+    },
+    {
+      "franchiseId": 28,
+      "fullName": "Winnipeg Jets (1979)",
+      "id": 33,
+      "leagueId": 133,
+      "rawTricode": "WIN",
+      "triCode": "WIN"
+    },
+    {
+      "franchiseId": 23,
+      "fullName": "Colorado Rockies",
+      "id": 35,
+      "leagueId": 133,
+      "rawTricode": "CLR",
+      "triCode": "CLR"
+    },
+    {
+      "franchiseId": 3,
+      "fullName": "Ottawa Senators (1917)",
+      "id": 36,
+      "leagueId": 133,
+      "rawTricode": "SEN",
+      "triCode": "SEN"
+    },
+    {
+      "franchiseId": 4,
+      "fullName": "Hamilton Tigers",
+      "id": 37,
+      "leagueId": 133,
+      "rawTricode": "HAM",
+      "triCode": "HAM"
+    },
+    {
+      "franchiseId": 9,
+      "fullName": "Pittsburgh Pirates",
+      "id": 38,
+      "leagueId": 133,
+      "rawTricode": "PIR",
+      "triCode": "PIR"
+    },
+    {
+      "franchiseId": 9,
+      "fullName": "Philadelphia Quakers",
+      "id": 39,
+      "leagueId": 133,
+      "rawTricode": "QUA",
+      "triCode": "QUA"
+    },
+    {
+      "franchiseId": 12,
+      "fullName": "Detroit Cougars",
+      "id": 40,
+      "leagueId": 133,
+      "rawTricode": "DCG",
+      "triCode": "DCG"
+    },
+    {
+      "franchiseId": 2,
+      "fullName": "Montreal Wanderers",
+      "id": 41,
+      "leagueId": 133,
+      "rawTricode": "MWN",
+      "triCode": "MWN"
+    },
+    {
+      "franchiseId": 4,
+      "fullName": "Quebec Bulldogs",
+      "id": 42,
+      "leagueId": 133,
+      "rawTricode": "QBD",
+      "triCode": "QBD"
+    },
+    {
+      "franchiseId": 7,
+      "fullName": "Montreal Maroons",
+      "id": 43,
+      "leagueId": 133,
+      "rawTricode": "MMR",
+      "triCode": "MMR"
+    },
+    {
+      "franchiseId": 8,
+      "fullName": "New York Americans",
+      "id": 44,
+      "leagueId": 133,
+      "rawTricode": "NYA",
+      "triCode": "NYA"
+    },
+    {
+      "franchiseId": 3,
+      "fullName": "St. Louis Eagles",
+      "id": 45,
+      "leagueId": 133,
+      "rawTricode": "SLE",
+      "triCode": "SLE"
+    },
+    {
+      "franchiseId": 13,
+      "fullName": "Oakland Seals",
+      "id": 46,
+      "leagueId": 133,
+      "rawTricode": "OAK",
+      "triCode": "OAK"
+    },
+    {
+      "franchiseId": 21,
+      "fullName": "Atlanta Flames",
+      "id": 47,
+      "leagueId": 133,
+      "rawTricode": "AFM",
+      "triCode": "AFM"
+    },
+    {
+      "franchiseId": 23,
+      "fullName": "Kansas City Scouts",
+      "id": 48,
+      "leagueId": 133,
+      "rawTricode": "KCS",
+      "triCode": "KCS"
+    },
+    {
+      "franchiseId": 13,
+      "fullName": "Cleveland Barons",
+      "id": 49,
+      "leagueId": 133,
+      "rawTricode": "CLE",
+      "triCode": "CLE"
+    },
+    {
+      "franchiseId": 12,
+      "fullName": "Detroit Falcons",
+      "id": 50,
+      "leagueId": 133,
+      "rawTricode": "DFL",
+      "triCode": "DFL"
+    },
+    {
+      "franchiseId": 8,
+      "fullName": "Brooklyn Americans",
+      "id": 51,
+      "leagueId": 133,
+      "rawTricode": "BRK",
+      "triCode": "BRK"
+    },
+    {
+      "franchiseId": 23,
+      "fullName": "New Jersey Devils",
+      "id": 1,
+      "leagueId": 133,
+      "rawTricode": "NJD",
+      "triCode": "NJD"
+    },
+    {
+      "franchiseId": 13,
+      "fullName": "California Golden Seals",
+      "id": 56,
+      "leagueId": 133,
+      "rawTricode": "CGS",
+      "triCode": "CGS"
+    },
+    {
+      "franchiseId": 5,
+      "fullName": "Toronto Arenas",
+      "id": 57,
+      "leagueId": 133,
+      "rawTricode": "TAN",
+      "triCode": "TAN"
+    },
+    {
+      "franchiseId": 5,
+      "fullName": "Toronto St. Patricks",
+      "id": 58,
+      "leagueId": 133,
+      "rawTricode": "TSP",
+      "triCode": "TSP"
+    },
+    {
+      "franchiseId": null,
+      "fullName": "NHL",
+      "id": 99,
+      "leagueId": 133,
+      "rawTricode": "NHL",
+      "triCode": "NHL"
+    },
+    {
+      "franchiseId": 12,
+      "fullName": "Detroit Red Wings",
+      "id": 17,
+      "leagueId": 133,
+      "rawTricode": "DET",
+      "triCode": "DET"
+    },
+    {
+      "franchiseId": 6,
+      "fullName": "Boston Bruins",
+      "id": 6,
+      "leagueId": 133,
+      "rawTricode": "BOS",
+      "triCode": "BOS"
+    },
+    {
+      "franchiseId": 35,
+      "fullName": "Winnipeg Jets",
+      "id": 52,
+      "leagueId": 133,
+      "rawTricode": "WPG",
+      "triCode": "WPG"
+    },
+    {
+      "franchiseId": 29,
+      "fullName": "San Jose Sharks",
+      "id": 28,
+      "leagueId": 133,
+      "rawTricode": "SJS",
+      "triCode": "SJS"
+    },
+    {
+      "franchiseId": 17,
+      "fullName": "Pittsburgh Penguins",
+      "id": 5,
+      "leagueId": 133,
+      "rawTricode": "PIT",
+      "triCode": "PIT"
+    },
+    {
+      "franchiseId": 31,
+      "fullName": "Tampa Bay Lightning",
+      "id": 14,
+      "leagueId": 133,
+      "rawTricode": "TBL",
+      "triCode": "TBL"
+    },
+    {
+      "franchiseId": 16,
+      "fullName": "Philadelphia Flyers",
+      "id": 4,
+      "leagueId": 133,
+      "rawTricode": "PHI",
+      "triCode": "PHI"
+    },
+    {
+      "franchiseId": 5,
+      "fullName": "Toronto Maple Leafs",
+      "id": 10,
+      "leagueId": 133,
+      "rawTricode": "TOR",
+      "triCode": "TOR"
+    },
+    {
+      "franchiseId": 19,
+      "fullName": "Buffalo Sabres",
+      "id": 7,
+      "leagueId": 133,
+      "rawTricode": "BUF",
+      "triCode": "BUF"
+    },
+    {
+      "franchiseId": 26,
+      "fullName": "Carolina Hurricanes",
+      "id": 12,
+      "leagueId": 133,
+      "rawTricode": "CAR",
+      "triCode": "CAR"
+    },
+    {
+      "franchiseId": 28,
+      "fullName": "Arizona Coyotes",
+      "id": 53,
+      "leagueId": 133,
+      "rawTricode": "ARI",
+      "triCode": "ARI"
+    },
+    {
+      "franchiseId": 21,
+      "fullName": "Calgary Flames",
+      "id": 20,
+      "leagueId": 133,
+      "rawTricode": "CGY",
+      "triCode": "CGY"
+    },
+    {
+      "franchiseId": 1,
+      "fullName": "Montréal Canadiens",
+      "id": 8,
+      "leagueId": 133,
+      "rawTricode": "MTL",
+      "triCode": "MTL"
+    },
+    {
+      "franchiseId": 24,
+      "fullName": "Washington Capitals",
+      "id": 15,
+      "leagueId": 133,
+      "rawTricode": "WSH",
+      "triCode": "WSH"
+    },
+    {
+      "franchiseId": 20,
+      "fullName": "Vancouver Canucks",
+      "id": 23,
+      "leagueId": 133,
+      "rawTricode": "VAN",
+      "triCode": "VAN"
+    },
+    {
+      "franchiseId": 27,
+      "fullName": "Colorado Avalanche",
+      "id": 21,
+      "leagueId": 133,
+      "rawTricode": "COL",
+      "triCode": "COL"
+    },
+    {
+      "franchiseId": 34,
+      "fullName": "Nashville Predators",
+      "id": 18,
+      "leagueId": 133,
+      "rawTricode": "NSH",
+      "triCode": "NSH"
+    },
+    {
+      "franchiseId": 32,
+      "fullName": "Anaheim Ducks",
+      "id": 24,
+      "leagueId": 133,
+      "rawTricode": "ANA",
+      "triCode": "ANA"
+    },
+    {
+      "franchiseId": 38,
+      "fullName": "Vegas Golden Knights",
+      "id": 54,
+      "leagueId": 133,
+      "rawTricode": "VGK",
+      "triCode": "VGK"
+    },
+    {
+      "franchiseId": 39,
+      "fullName": "Seattle Kraken",
+      "id": 55,
+      "leagueId": 133,
+      "rawTricode": "SEA",
+      "triCode": "SEA"
+    },
+    {
+      "franchiseId": 15,
+      "fullName": "Dallas Stars",
+      "id": 25,
+      "leagueId": 133,
+      "rawTricode": "DAL",
+      "triCode": "DAL"
+    },
+    {
+      "franchiseId": 28,
+      "fullName": "Phoenix Coyotes",
+      "id": 27,
+      "leagueId": 133,
+      "rawTricode": "PHX",
+      "triCode": "PHX"
+    },
+    {
+      "franchiseId": 11,
+      "fullName": "Chicago Blackhawks",
+      "id": 16,
+      "leagueId": 133,
+      "rawTricode": "CHI",
+      "triCode": "CHI"
+    },
+    {
+      "franchiseId": 10,
+      "fullName": "New York Rangers",
+      "id": 3,
+      "leagueId": 133,
+      "rawTricode": "NYR",
+      "triCode": "NYR"
+    },
+    {
+      "franchiseId": 36,
+      "fullName": "Columbus Blue Jackets",
+      "id": 29,
+      "leagueId": 133,
+      "rawTricode": "CBJ",
+      "triCode": "CBJ"
+    },
+    {
+      "franchiseId": 33,
+      "fullName": "Florida Panthers",
+      "id": 13,
+      "leagueId": 133,
+      "rawTricode": "FLA",
+      "triCode": "FLA"
+    },
+    {
+      "franchiseId": 25,
+      "fullName": "Edmonton Oilers",
+      "id": 22,
+      "leagueId": 133,
+      "rawTricode": "EDM",
+      "triCode": "EDM"
+    },
+    {
+      "franchiseId": 37,
+      "fullName": "Minnesota Wild",
+      "id": 30,
+      "leagueId": 133,
+      "rawTricode": "MIN",
+      "triCode": "MIN"
+    },
+    {
+      "franchiseId": 18,
+      "fullName": "St. Louis Blues",
+      "id": 19,
+      "leagueId": 133,
+      "rawTricode": "STL",
+      "triCode": "STL"
+    },
+    {
+      "franchiseId": 30,
+      "fullName": "Ottawa Senators",
+      "id": 9,
+      "leagueId": 133,
+      "rawTricode": "OTT",
+      "triCode": "OTT"
+    },
+    {
+      "franchiseId": 22,
+      "fullName": "New York Islanders",
+      "id": 2,
+      "leagueId": 133,
+      "rawTricode": "NYI",
+      "triCode": "NYI"
+    },
+    {
+      "franchiseId": 14,
+      "fullName": "Los Angeles Kings",
+      "id": 26,
+      "leagueId": 133,
+      "rawTricode": "LAK",
+      "triCode": "LAK"
+    }
+  ],
+  "total": 59
+}
