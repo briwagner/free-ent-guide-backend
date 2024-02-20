@@ -31,5 +31,10 @@ UPDATE users
   SET data = JSON_SET(data, '$.zips', CAST(? AS JSON))
   WHERE email = ?;
 
+-- name: UserClearZips :exec
+UPDATE users
+  SET data = JSON_SET(data, '$.zips', JSON_ARRAY())
+  WHERE email = ?;
+
 -- name: UsersDelete :exec
 DELETE FROM users;

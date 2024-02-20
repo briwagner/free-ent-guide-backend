@@ -12,7 +12,6 @@ import (
 
 var (
 	c       cred.Cred
-	DB      models.Store
 	Querier *modelstore.Queries
 
 	format = "2006-01-02"
@@ -23,7 +22,7 @@ func main() {
 
 	// Set-up application config.
 	c.GetCreds("creds", ".")
-	_, sqlc := models.Setup(c)
+	sqlc := models.Setup(c)
 	Querier = modelstore.New(sqlc)
 
 	if len(os.Args) <= 2 {

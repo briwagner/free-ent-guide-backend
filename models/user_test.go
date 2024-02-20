@@ -71,6 +71,18 @@ func TestUserData(t *testing.T) {
 	assert.Len(t, ud.Zips, 2)
 }
 
+func TestUser_Marshal(t *testing.T) {
+	u := models.User{
+		ID:    45,
+		Email: "tester@email.com",
+		Data:  models.UserData{Zips: []int64{20002, 33161}},
+	}
+
+	data, err := json.Marshal(u)
+	require.NoError(t, err)
+	assert.Equal(t, `{"ID":45,"email":"tester@email.com","zipcodes":[20002,33161]}`, string(data))
+}
+
 func wipeUsers(t *testing.T) {
 	err := Queries.UsersDelete(context.Background())
 	require.NoError(t, err)

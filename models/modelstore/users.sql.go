@@ -53,6 +53,17 @@ func (q *Queries) UserCheckPassword(ctx context.Context, email string) (UserChec
 	return i, err
 }
 
+const userClearZips = `-- name: UserClearZips :exec
+UPDATE users
+  SET data = JSON_SET(data, '$.zips', JSON_ARRAY())
+  WHERE email = ?
+`
+
+func (q *Queries) UserClearZips(ctx context.Context, email string) error {
+	_, err := q.db.ExecContext(ctx, userClearZips, email)
+	return err
+}
+
 const userCreate = `-- name: UserCreate :execlastid
 INSERT INTO users
   (email, password_hash, data, created_at)

@@ -25,7 +25,6 @@ import (
 
 var (
 	c       cred.Cred
-	DB      models.Store
 	Queries *modelstore.Queries
 	author  authenticator.Authenticator
 )
@@ -36,7 +35,7 @@ func main() {
 	port := fmt.Sprintf(":%v", c.Port)
 
 	// Set-up database.
-	_, Sqlc := models.Setup(c)
+	Sqlc := models.Setup(c)
 	Queries = modelstore.New(Sqlc)
 
 	// Set-up authentication.
@@ -83,8 +82,7 @@ func main() {
 // Middleware to add Storage ref to context.
 func StorageHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), models.StorageContextKey, DB)
-		ctx = context.WithValue(ctx, models.SqlcStorageContextKey, Queries)
+		ctx := context.WithValue(r.Context(), models.SqlcStorageContextKey, Queries)
 		r = r.WithContext(ctx)
 		h.ServeHTTP(w, r)
 	})

@@ -2,12 +2,9 @@ package main
 
 import (
 	"fmt"
-	"free-ent-guide-backend/models"
-	"free-ent-guide-backend/pkg/cred"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 )
@@ -16,16 +13,6 @@ type requestTest struct {
 	url      string
 	expected string
 	code     int
-}
-
-var AppStore models.Store
-
-func init() {
-	c := cred.Cred{
-		Tms: os.Getenv("TMS"),
-		DB:  os.Getenv("DB"),
-	}
-	DB, _ = models.Setup(c)
 }
 
 func TestGetMovies(t *testing.T) {

@@ -17,7 +17,7 @@ var (
 
 func init() {
 	c := cred.Cred{DB: "ent_user:ent_password@tcp(127.0.0.1:3306)/ent_guide_test?charset=utf8mb4&parseTime=True&loc=Local"}
-	_, st := models.Setup(c)
+	st := models.Setup(c)
 
 	Queries = modelstore.New(st)
 

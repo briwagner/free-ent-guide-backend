@@ -189,18 +189,6 @@ func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
 	return nil
 }
 
-// FindByID searches for a game by Game ID.
-func (g *MLBGame) FindByID(id string, db Store) error {
-	tx := db.Preload("Home").Preload("Visitor").Where("game_id = ?", id).Find(g)
-	if tx.Error != nil {
-		return tx.Error
-	}
-	if g.ID == 0 {
-		return errors.New("MLB game not found")
-	}
-	return nil
-}
-
 // ImportMLB calls to MLB api and saves new games to the DB.
 func ImportMLB(q *modelstore.Queries, startDate time.Time) error {
 	gameweek, err := mlbapi.ImportDates(startDate)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/docker_importer"
 	"log"
 	"net/http"
@@ -27,16 +28,16 @@ func GamesImporter(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		DB := r.Context().Value(models.StorageContextKey).(models.Store)
+		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 
-		err := docker_importer.ImportNHL(DB, d)
+		err := docker_importer.ImportNHL(q, d)
 		if err != nil {
 			log.Print(err)
 			http.Error(w, "importer failed", 500)
 			return
 		}
 
-		err = docker_importer.ImportMLB(DB, d)
+		err = docker_importer.ImportMLB(q, d)
 		if err != nil {
 			log.Print(err)
 			http.Error(w, "importer failed", 500)
@@ -56,9 +57,9 @@ func NHLImportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
+	q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 
-	err := docker_importer.ImportNHL(DB, d)
+	err := docker_importer.ImportNHL(q, d)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "importer failed", 500)
@@ -76,9 +77,9 @@ func MLBImportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	DB := r.Context().Value(models.StorageContextKey).(models.Store)
+	q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 
-	err := docker_importer.ImportMLB(DB, d)
+	err := docker_importer.ImportMLB(q, d)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "importer failed", 500)

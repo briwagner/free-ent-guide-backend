@@ -218,12 +218,22 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 		user := &models.User{Email: username}
 		newZip, err := strconv.ParseInt(qZip, 10, 64)
+		if err != nil {
+			log.Printf("error parsing zip %s", err)
+			w.WriteHeader(500)
+			return
+		}
 		err = user.AddZip(q, newZip)
 		if err != nil {
 			log.Printf("Storage error %s", err.Error())
 			w.WriteHeader(500)
-			w.Write([]byte("Error storing zip."))
 			return
+		}
+
+		err = user.GetZips(q)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
 		}
 
 		userJSON, err := json.Marshal(user)
@@ -272,6 +282,11 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 		user := &models.User{Email: username}
 		delZip, err := strconv.ParseInt(qZip, 10, 64)
+		if err != nil {
+			log.Printf("error parsing zip %s", err)
+			w.WriteHeader(500)
+			return
+		}
 		err = user.DeleteZip(q, delZip)
 		if err != nil {
 			w.WriteHeader(500)

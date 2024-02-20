@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/models/modelstore"
 	"log"
 
 	"github.com/docker/docker/api/types"
@@ -16,7 +17,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"gorm.io/gorm/clause"
 )
 
 // GetNetwork finds the proper network to attach to the container.
@@ -42,7 +42,7 @@ func GetNetwork(cli *client.Client) (string, error) {
 
 // ImportNHL runs the Docker container to fetch NHL game schedule
 // for a given date, and import games and teams to the DB.
-func ImportNHL(store models.Store, startDate string) error {
+func ImportNHL(q *modelstore.Queries, startDate string) error {
 	image := "brianwagner/python-nhlgames:1.2"
 	contName := "nhlGamesPython"
 	ctx := context.Background()
@@ -157,7 +157,6 @@ func ImportNHL(store models.Store, startDate string) error {
 	defer out.Close()
 
 	count := 0
-	db := store.DB
 
 	scanner := bufio.NewScanner(out)
 	for scanner.Scan() {
@@ -169,25 +168,27 @@ func ImportNHL(store models.Store, startDate string) error {
 		}
 
 		home := g.Home
-		tx := db.FirstOrCreate(&home, models.NHLTeam{TeamID: g.Home.TeamID})
-		if tx.Error != nil {
-			log.Print(tx.Error)
+		ht := &models.NHLTeam{TeamID: g.Home.TeamID}
+		err = ht.Create(q)
+		if err != nil {
+			log.Print(err)
 			continue
 		}
 		g.HomeID = home.ID
 
 		visitor := g.Visitor
-		tx = db.FirstOrCreate(&visitor, models.NHLTeam{TeamID: g.Visitor.TeamID})
-		if tx.Error != nil {
-			log.Print(tx.Error)
+		vt := &models.NHLTeam{TeamID: g.Visitor.TeamID}
+		err = vt.Create(q)
+		if err != nil {
+			log.Print(err)
 			continue
 		}
 		g.VisitorID = visitor.ID
 
-		tx = db.Omit(clause.Associations).Create(&g)
-		if tx.Error != nil {
-			log.Print(tx.Error)
-			return tx.Error
+		err = g.Create(q)
+		if err != nil {
+			log.Print(err)
+			return err
 		}
 		count++
 	}
@@ -212,7 +213,7 @@ func ImportNHL(store models.Store, startDate string) error {
 
 // ImportMLB runs the Docker container to fetch MLB game schedule
 // for a given date, and import games and teams to the DB.
-func ImportMLB(store models.Store, startDate string) error {
+func ImportMLB(q *modelstore.Queries, startDate string) error {
 	image := "brianwagner/python-mlbgames:1.2"
 	contName := "mlbGamesPython"
 	ctx := context.Background()
@@ -327,7 +328,6 @@ func ImportMLB(store models.Store, startDate string) error {
 	defer out.Close()
 
 	count := 0
-	db := store.DB
 
 	scanner := bufio.NewScanner(out)
 	for scanner.Scan() {
@@ -340,25 +340,27 @@ func ImportMLB(store models.Store, startDate string) error {
 		// games = append(games, g)
 
 		home := g.Home
-		tx := db.FirstOrCreate(&home, models.MLBTeam{TeamID: g.Home.TeamID})
-		if tx.Error != nil {
-			log.Print(tx.Error)
+		ht := &models.MLBTeam{TeamID: g.Home.TeamID}
+		err = ht.Create(q)
+		if err != nil {
+			log.Print(err)
 			continue
 		}
 		g.HomeID = home.ID
 
 		visitor := g.Visitor
-		tx = db.FirstOrCreate(&visitor, models.MLBTeam{TeamID: g.Visitor.TeamID})
-		if tx.Error != nil {
-			log.Print(tx.Error)
+		vt := &models.MLBTeam{TeamID: g.Visitor.TeamID}
+		err = vt.Create(q)
+		if err != nil {
+			log.Print(err)
 			continue
 		}
 		g.VisitorID = visitor.ID
 
-		tx = db.Omit(clause.Associations).Create(&g)
-		if tx.Error != nil {
-			log.Print(tx.Error)
-			return tx.Error
+		err = g.Create(q)
+		if err != nil {
+			log.Print(err)
+			return err
 		}
 		count++
 	}

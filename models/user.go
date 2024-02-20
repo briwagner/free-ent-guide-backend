@@ -20,12 +20,26 @@ type User struct {
 	ID           int    `json:"id"`
 	Email        string `json:"username,omitempty"`
 	Data         UserData
-	ResetCode    string    `json:"reset_code"`
+	ResetCode    string    `json:"-"`
 	Password     string    `json:"-"`
 	PasswordHash string    `json:"-"`
-	CreatedAt    time.Time `json:"created_at"`
+	CreatedAt    time.Time `json:"-"`
 	UpdatedAt    time.Time `json:"updated_at"`
-	Status       bool      `json:"status"`
+	Status       bool      `json:"-"`
+}
+
+func (u User) MarshalJSON() ([]byte, error) {
+	vals := make(map[string]interface{})
+	vals["ID"] = u.ID
+
+	if len(u.Data.Zips) != 0 {
+		// Frontend expects this prop key.
+		vals["zipcodes"] = u.Data.Zips
+	}
+
+	vals["email"] = u.Email
+
+	return json.Marshal(vals)
 }
 
 type UserData struct {
@@ -46,8 +60,6 @@ func (ud *UserData) UnmarshalJSON(data []byte) error {
 		fmt.Println("no zips")
 		return nil
 	}
-	fmt.Println("got zips")
-	fmt.Println(rawZips)
 	zips := rawZips.([]interface{})
 	if len(zips) != 0 {
 		userZips := make([]int64, len(zips))
@@ -233,6 +245,7 @@ func (u *User) DeleteZip(q *modelstore.Queries, zip int64) error {
 		return fmt.Errorf("zip not found: %d", zip)
 	}
 
+	ctx := context.Background()
 	var newZips []int64
 	for _, z := range u.Data.Zips {
 		if z != zip {
@@ -244,10 +257,14 @@ func (u *User) DeleteZip(q *modelstore.Queries, zip int64) error {
 	if err != nil {
 		return fmt.Errorf("error marshalling user zips: %w", err)
 	}
-	err = q.UserSetZips(context.Background(), modelstore.UserSetZipsParams{
-		Column1: data,
-		Email:   u.Email,
-	})
+	if len(newZips) == 0 {
+		err = q.UserClearZips(ctx, u.Email)
+	} else {
+		err = q.UserSetZips(ctx, modelstore.UserSetZipsParams{
+			Column1: data,
+			Email:   u.Email,
+		})
+	}
 
 	if err != nil {
 		return err
@@ -263,11 +280,7 @@ func (u *User) ClearZips(q *modelstore.Queries) error {
 		return errors.New("invalid user email")
 	}
 
-	err := q.UserSetZips(context.Background(), modelstore.UserSetZipsParams{
-		Column1: []byte("[]"),
-		Email:   u.Email,
-	})
-
+	err := q.UserClearZips(context.Background(), u.Email)
 	if err != nil {
 		return err
 	}
