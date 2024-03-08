@@ -194,9 +194,10 @@ func (g *NHLGameUpdate) UnmarshalJSON(b []byte) error {
 
 	// Only check for live or past games, else this key is not found.
 	if g.Status == "LIVE" || g.Status == "Final" {
-		period, err := cg["period"].(json.Number).Int64()
+		periodDesc := cg["periodDescriptor"].(map[string]interface{})
+		per, err := periodDesc["number"].(json.Number).Int64()
 		if err == nil {
-			g.Period = period
+			g.Period = per
 		}
 	}
 
