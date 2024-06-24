@@ -13,3 +13,7 @@ sql:
       go:
         package: "modelstore"
         out: "modelstore"
+overrides:
+  go:
+    rename:
+      cach: Caches

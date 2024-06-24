@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 )
 
-type Cach struct {
+type Caches struct {
 	ID        int64
 	Name      sql.NullString
 	Value     sql.NullString

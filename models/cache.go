@@ -63,7 +63,7 @@ func (c *Cache) GetByName(name string, db *modelstore.Queries) error {
 }
 
 // FromDB converts a sqlc model to our Cache model.
-func (c *Cache) FromDB(ms modelstore.Cach) {
+func (c *Cache) FromDB(ms modelstore.Caches) {
 	c.ID = ms.ID
 	c.Name = ms.Name.String
 	c.Value = ms.Value.String

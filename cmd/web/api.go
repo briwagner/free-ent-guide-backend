@@ -68,6 +68,7 @@ func main() {
 	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
 	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
 	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
+	mux.HandleFunc("/v1/sports/nhl/latest", NHLGamesLatest)
 
 	// Docker importers: DEPRECATED
 	// mux.HandleFunc("/v1/admin/add-games", AuthHandler(http.HandlerFunc(GamesImporter)))

@@ -27,15 +27,15 @@ const getCacheAll = `-- name: GetCacheAll :many
 SELECT id, name, value, updated_at, expires FROM caches
 `
 
-func (q *Queries) GetCacheAll(ctx context.Context) ([]Cach, error) {
+func (q *Queries) GetCacheAll(ctx context.Context) ([]Caches, error) {
 	rows, err := q.db.QueryContext(ctx, getCacheAll)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Cach
+	var items []Caches
 	for rows.Next() {
-		var i Cach
+		var i Caches
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -61,9 +61,9 @@ SELECT id, name, value, updated_at, expires FROM caches
 WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) GetCacheByID(ctx context.Context, id int64) (Cach, error) {
+func (q *Queries) GetCacheByID(ctx context.Context, id int64) (Caches, error) {
 	row := q.db.QueryRowContext(ctx, getCacheByID, id)
-	var i Cach
+	var i Caches
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -79,9 +79,9 @@ SELECT id, name, value, updated_at, expires FROM caches
 WHERE name = ? LIMIT 1
 `
 
-func (q *Queries) GetCacheByName(ctx context.Context, name sql.NullString) (Cach, error) {
+func (q *Queries) GetCacheByName(ctx context.Context, name sql.NullString) (Caches, error) {
 	row := q.db.QueryRowContext(ctx, getCacheByName, name)
-	var i Cach
+	var i Caches
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -97,15 +97,15 @@ SELECT id, name, value, updated_at, expires FROM caches
 WHERE expires < ?
 `
 
-func (q *Queries) GetCacheStale(ctx context.Context, expires sql.NullTime) ([]Cach, error) {
+func (q *Queries) GetCacheStale(ctx context.Context, expires sql.NullTime) ([]Caches, error) {
 	rows, err := q.db.QueryContext(ctx, getCacheStale, expires)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Cach
+	var items []Caches
 	for rows.Next() {
-		var i Cach
+		var i Caches
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,

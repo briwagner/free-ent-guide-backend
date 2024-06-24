@@ -81,7 +81,42 @@ func NHLGamesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(*gs) == 0 {
+		enableCors(&w)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	gsJSON, err := json.Marshal(gs)
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	enableCors(&w)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(gsJSON))
+}
+
+func NHLGamesLatest(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	gs, err := models.NHLGetLatestGames(queries)
+	if err != nil || len(gs) == 0 {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var games models.NHLGames
+	err = games.LoadByDate(queries, gs[0].Gametime.Format("2006-01-02"))
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	gsJSON, err := json.Marshal(games)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
