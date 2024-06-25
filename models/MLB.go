@@ -72,6 +72,39 @@ func (mg *MLBGame) FindByGameID(q *modelstore.Queries, gameID int) error {
 	return nil
 }
 
+// UpdateScore pulls update from MLB api.
+func (mg *MLBGame) UpdateScore(q *modelstore.Queries) error {
+	up, err := mlbapi.GetGameUpdate(mg.Link)
+	if err != nil {
+		return err
+	}
+
+	if up.Status != "Final" {
+		log.Printf("game not finished: %d, %s\n", up.GamePK, up.Status)
+		return nil
+	}
+
+	mg.Status = up.Status
+	mg.HomeScore = up.HomeScore
+	mg.VisitorScore = up.VisitorScore
+	mg.UpdatedAt = time.Now()
+
+	return mg.UpdateScoreV2(q)
+}
+
+func (mg *MLBGame) UpdateScoreV2(q *modelstore.Queries) error {
+	if mg.GameID == 0 {
+		return errors.New("invalid game ID")
+	}
+
+	return q.MLBUpdateScore(context.Background(), modelstore.MLBUpdateScoreParams{
+		HomeScore:    sql.NullInt64{Valid: true, Int64: int64(mg.HomeScore)},
+		VisitorScore: sql.NullInt64{Valid: true, Int64: int64(mg.VisitorScore)},
+		Status:       sql.NullString{Valid: true, String: mg.Status},
+		GameID:       int64(mg.GameID),
+	})
+}
+
 func (mg *MLBGame) FromDB(row modelstore.MLBFindGameByIDRow) {
 	mg.ID = uint(row.ID)
 	mg.GameID = int(row.GameID)
