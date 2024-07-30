@@ -11,7 +11,7 @@ SELECT id, email, password_hash, status
   LIMIT 1;
 
 -- name: UserFindByEmail :one
-SELECT id, email, JSON_EXTRACT(data, '$.zips') AS zips, created_at, status
+SELECT id, email, data, created_at, status
   FROM users
   WHERE email = ?
   LIMIT 1;
@@ -38,3 +38,23 @@ UPDATE users
 
 -- name: UsersDelete :exec
 DELETE FROM users;
+
+-- name: UserExtractShows :one
+SELECT JSON_EXTRACT(data, '$.shows')
+  FROM users
+  WHERE email = ?;
+
+-- name: UserAppendShow :exec
+UPDATE users
+  SET data = JSON_ARRAY_APPEND(data, '$.shows', ?)
+  WHERE email = ?;
+
+-- name: UserSetShows :exec
+UPDATE users
+  SET data = JSON_SET(data, '$.shows', CAST(? AS JSON))
+  WHERE email = ?;
+
+-- name: UserClearShows :exec
+UPDATE users
+  SET data = JSON_SET(data, '$.shows', JSON_ARRAY())
+  WHERE email = ?;

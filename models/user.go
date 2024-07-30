@@ -1,7 +1,6 @@
 package models
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -12,10 +11,22 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/exp/slices"
 )
 
-// User model.
+type UserData struct {
+	Zips  []int64 `json:"zips"`
+	Shows []int64 `json:"shows"`
+}
+
+// NewUserData creates a new struct with field slices prepared.
+// Important for creating users with proper JSON keys to use with database operations.
+func NewUserData() UserData {
+	return UserData{
+		Zips:  make([]int64, 0),
+		Shows: make([]int64, 0),
+	}
+}
+
 type User struct {
 	ID           int    `json:"id"`
 	Email        string `json:"username,omitempty"`
@@ -36,44 +47,14 @@ func (u User) MarshalJSON() ([]byte, error) {
 		// Frontend expects this prop key.
 		vals["zipcodes"] = u.Data.Zips
 	}
+	if len(u.Data.Shows) != 0 {
+		// Frontend expects this prop key.
+		vals["shows"] = u.Data.Shows
+	}
 
 	vals["email"] = u.Email
 
 	return json.Marshal(vals)
-}
-
-type UserData struct {
-	Zips []int64 `json:"zips"`
-}
-
-func (ud *UserData) UnmarshalJSON(data []byte) error {
-	var vals map[string]interface{}
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.UseNumber()
-	err := dec.Decode(&vals)
-	if err != nil {
-		return err
-	}
-
-	rawZips, ok := vals["zips"]
-	if !ok {
-		fmt.Println("no zips")
-		return nil
-	}
-	zips := rawZips.([]interface{})
-	if len(zips) != 0 {
-		userZips := make([]int64, len(zips))
-		for i, z := range zips {
-			jn, err := z.(json.Number).Int64()
-			if err != nil {
-				log.Printf("error parsing zips %s", err)
-				continue
-			}
-			userZips[i] = jn
-		}
-		ud.Zips = userZips
-	}
-	return nil
 }
 
 // Create generates a new user in storage.
@@ -91,12 +72,16 @@ func (u *User) Create(q *modelstore.Queries) error {
 	if u.CreatedAt.IsZero() {
 		u.CreatedAt = time.Now()
 	}
-	data := `{"zips":[]}` // if we don't set this now, we can't append cuz it doesn't exist.
+	// We need to init with `key => [empty slices]` to allow JSON database operations later.
+	userdata, err := json.Marshal(NewUserData())
+	if err != nil {
+		return fmt.Errorf("error marshaling empty userdata %s", err)
+	}
 
 	id, err := q.UserCreate(context.Background(), modelstore.UserCreateParams{
 		Email:        u.Email,
 		PasswordHash: ph,
-		Data:         []byte(data),
+		Data:         userdata,
 		CreatedAt:    sql.NullTime{Time: u.CreatedAt, Valid: true},
 	})
 
@@ -122,18 +107,12 @@ func (u *User) FindByEmail(q *modelstore.Queries) error {
 	u.Email = row.Email
 	u.Status = row.Status.Bool
 
-	if row.Zips != nil {
-		data, ok := row.Zips.([]byte)
-		if ok {
-			var zips []int64
-			err := json.Unmarshal(data, &zips)
-			if err != nil {
-				log.Println(err)
-				return err
-			}
-			u.Data = UserData{Zips: zips}
-		}
+	userData := NewUserData()
+	err = json.Unmarshal(row.Data, &userData)
+	if err != nil {
+		return fmt.Errorf("error parsing user data: %s", err)
 	}
+	u.Data = userData
 
 	return nil
 }
@@ -177,114 +156,15 @@ func (u *User) CheckPasswordHash(q *modelstore.Queries, p string) bool {
 	return err2 == nil
 }
 
-// GetZips looks up the user's zip codes in storage.
-func (u *User) GetZips(q *modelstore.Queries) error {
+// LoadData populates zips, shows, etc. on User.
+func (u *User) LoadData(q *modelstore.Queries) error {
 	if u.Email == "" {
-		return errors.New("invalid user email")
+		return errors.New("user email not set")
 	}
-
-	res, err := q.UserExtractZips(context.Background(), u.Email)
+	err := u.FindByEmail(q)
 	if err != nil {
-		log.Printf("error extracting zips %s", err)
-		return err
+		return fmt.Errorf("error user find by email: %s", err)
 	}
 
-	data, ok := res.([]byte)
-	if ok {
-		var zips []int64
-		err := json.Unmarshal(data, &zips)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-		u.Data = UserData{Zips: zips}
-	}
-
-	return nil
-}
-
-// AddZip adds an entry to user's zip codes in storage.
-func (u *User) AddZip(q *modelstore.Queries, newZip int64) error {
-	if u.Email == "" {
-		return errors.New("invalid user email")
-	}
-
-	// TODO validate that it's an int with six digits.
-
-	// TODO this does not check if zip exists.
-	err := q.UserAppendZip(context.Background(), modelstore.UserAppendZipParams{
-		JSONARRAYAPPEND: newZip,
-		Email:           u.Email,
-	})
-	if err != nil {
-		return fmt.Errorf("error adding zip %w", err)
-	}
-
-	u.Data.Zips = append(u.Data.Zips, newZip)
-	return err
-}
-
-// DeleteZip removes a user's zip code from storage.
-func (u *User) DeleteZip(q *modelstore.Queries, zip int64) error {
-	if u.Email == "" {
-		return errors.New("invalid user email")
-	}
-
-	if len(u.Data.Zips) == 0 {
-		err := u.GetZips(q)
-		if err != nil {
-			return err
-		}
-
-		if len(u.Data.Zips) == 0 {
-			return errors.New("no zips stored")
-		}
-	}
-
-	if !slices.Contains(u.Data.Zips, zip) {
-		return fmt.Errorf("zip not found: %d", zip)
-	}
-
-	ctx := context.Background()
-	var newZips []int64
-	for _, z := range u.Data.Zips {
-		if z != zip {
-			newZips = append(newZips, z)
-		}
-	}
-
-	data, err := json.Marshal(newZips)
-	if err != nil {
-		return fmt.Errorf("error marshalling user zips: %w", err)
-	}
-	if len(newZips) == 0 {
-		err = q.UserClearZips(ctx, u.Email)
-	} else {
-		err = q.UserSetZips(ctx, modelstore.UserSetZipsParams{
-			Column1: data,
-			Email:   u.Email,
-		})
-	}
-
-	if err != nil {
-		return err
-	}
-
-	u.Data.Zips = newZips
-	return nil
-}
-
-// ClearZips removes all user zip codes from storage.
-func (u *User) ClearZips(q *modelstore.Queries) error {
-	if u.Email == "" {
-		return errors.New("invalid user email")
-	}
-
-	err := q.UserClearZips(context.Background(), u.Email)
-	if err != nil {
-		return err
-	}
-
-	u.Data.Zips = []int64{}
 	return nil
 }

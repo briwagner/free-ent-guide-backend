@@ -1,7 +1,8 @@
 package tvmaze
 
 import (
-	"io/ioutil"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 )
@@ -17,9 +18,21 @@ const base = "http://api.tvmaze.com/"
 // GetSearch makes the api call to find a show by title.
 func (t *TvMaze) GetSearch(title string) {
 	url := base + "search/shows"
-	params := make(map[string]string)
+	params := make(map[string]string, 0)
 	params["q"] = title
 	// Todo: should this be returned or pointer is good enough?
+	_ = t.fetch(url, params)
+}
+
+func (t *TvMaze) GetShow(showID int64) {
+	url := fmt.Sprintf("%sshows/%d", base, showID)
+	params := make(map[string]string, 0)
+	_ = t.fetch(url, params)
+}
+
+func (t *TvMaze) GetEpisode(id int64) {
+	url := fmt.Sprintf("%sepisodes/%d", base, id)
+	params := make(map[string]string, 0)
 	_ = t.fetch(url, params)
 }
 
@@ -45,9 +58,8 @@ func (t *TvMaze) fetch(url string, params map[string]string) error {
 		return doErr
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Status = 500
 		t.Response = []byte("Cannot parse body.")

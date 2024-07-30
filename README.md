@@ -18,3 +18,10 @@ By integrating with database storage, we can also cache responses for reuse inst
 ## CLI
 
 The cli component helps to manage admin tasks against the database. This process uses Docker to run a Python image that pulls data from external feeds.
+
+## Sqlc
+
+cd models
+sqlc generate
+
+Is there a better way to run this?

@@ -9,7 +9,10 @@ import (
 	"free-ent-guide-backend/pkg/tvmaze"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 // TODO: this should be passed per user.
@@ -164,7 +167,7 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 		cacheStatus(&w, false)
 
 		tms := tmsapi.TmsApi{Key: c.Tms}
-		tms.GetTvSports(date, lineup)
+		tms.GetTvSports(date, lineup) // todo this should return a possible error. else we store no data.
 		w.WriteHeader(tms.Status)
 		w.Write(tms.Response)
 
@@ -194,4 +197,80 @@ func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(tmz.Status)
 	w.Write(tmz.Response)
+}
+
+// GetTvShow responds to /v1/tv-show/{show_id}.
+func GetTvShow(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	vars := mux.Vars(r)
+	tvm := tvmaze.TvMaze{}
+	showID, err := strconv.Atoi(vars["show_id"])
+	if err != nil {
+		log.Printf("error reading show id: %s", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	// Check cache.
+	Sqlc := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	cacheKey := fmt.Sprintf("tvshow=%d", showID)
+	ca := &models.Cache{}
+	err = ca.GetByName(cacheKey, Sqlc)
+
+	if err != nil {
+		cacheStatus(&w, false)
+		tvm.GetShow(int64(showID))
+
+		w.WriteHeader(tvm.Status)
+		w.Write(tvm.Response)
+
+		newC := &models.Cache{Name: cacheKey, Value: string(tvm.Response)}
+		err = newC.Insert(Sqlc)
+		if err != nil {
+			log.Printf("error setting cache: %v", err)
+		}
+		return
+	}
+
+	cacheStatus(&w, true)
+	w.Write([]byte(ca.Value))
+}
+
+// GetTvEpisode responds to /v1/tv-show/episode/{id}.
+func GetTvEpisode(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	vars := mux.Vars(r)
+	tvm := tvmaze.TvMaze{}
+	episodeID, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		log.Printf("error reading episode id: %s", err)
+		w.WriteHeader(400)
+		return
+	}
+
+	// Check cache.
+	Sqlc := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	cacheKey := fmt.Sprintf("tvepisode=%d", episodeID)
+	ca := &models.Cache{}
+	err = ca.GetByName(cacheKey, Sqlc)
+
+	if err != nil {
+		cacheStatus(&w, false)
+		tvm.GetEpisode(int64(episodeID))
+
+		w.WriteHeader(tvm.Status)
+		w.Write(tvm.Response)
+
+		newC := &models.Cache{Name: cacheKey, Value: string(tvm.Response)}
+		err = newC.Insert(Sqlc)
+		if err != nil {
+			log.Printf("error setting cache: %v", err)
+		}
+		return
+	}
+
+	cacheStatus(&w, true)
+	w.Write([]byte(ca.Value))
 }

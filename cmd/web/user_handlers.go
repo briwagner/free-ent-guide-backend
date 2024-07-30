@@ -51,16 +51,11 @@ type UserTokenData struct {
 // UsersRevokeToken revokes the token.
 // Responds to /v1/users/token
 func UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	if r.Method == "OPTIONS" {
-		enableCors(&w)
-		// TODO: above is not enough for preflight options. Add below to default action?
-		(w).Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		w.WriteHeader(200)
 		return
 	}
-
-	enableCors(&w)
 
 	decoder := json.NewDecoder(r.Body)
 	var formData UserTokenData
@@ -93,16 +88,11 @@ type UserCreateData struct {
 // UsersCreate adds a user to storage.
 // Responds to /v1/users/create
 func UsersCreate(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	if r.Method == "OPTIONS" {
-		enableCors(&w)
-		// TODO: above is not enough for preflight options. Add below to default action?
-		(w).Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		w.WriteHeader(200)
 		return
 	}
-
-	enableCors(&w)
 
 	decoder := json.NewDecoder(r.Body)
 	var formData UserCreateData
@@ -135,25 +125,18 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO return ID?
 	w.WriteHeader(204)
 }
 
-// UsersGetZip returns the stored zip-codes for a user.
+// UsersGetData returns the stored zip-codes for a user.
 // Responds to /v1/users/get-zip?username={name}
-func UsersGetZip(w http.ResponseWriter, r *http.Request) {
+func UsersGetData(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
-		enableCors(&w)
-		// TODO: above is not enough for preflight options. Add below to default action?
-		(w).Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		w.WriteHeader(200)
 		return
 	case "GET":
-		enableCors(&w)
-
 		// Infer user from authentication.
 		uname := r.Context().Value(ContextUserKey)
 		username := fmt.Sprintf("%v", uname)
@@ -165,21 +148,18 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 
 		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
 		user := &models.User{Email: username}
-		err := user.GetZips(q)
+		err := user.LoadData(q)
 		if err != nil {
 			w.WriteHeader(404)
 			w.Write([]byte("Not found"))
 			return
 		}
 
-		userJSON, err := json.Marshal(user)
+		err = json.NewEncoder(w).Encode(user)
 		if err != nil {
-			w.WriteHeader(500)
-			w.Write([]byte("JSON error"))
-			return
+			log.Println(err)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(userJSON))
+		return
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only GET requests are accepted."))
@@ -189,17 +169,12 @@ func UsersGetZip(w http.ResponseWriter, r *http.Request) {
 // UsersAddZip creates or appends a zip code to user in storage.
 // Responds to /v1/users/add-zip?username={name}&zip={zipcode}
 func UsersAddZip(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
-		enableCors(&w)
-		// TODO: above is not enough for preflight options. Add below to default action?
-		(w).Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		w.WriteHeader(200)
 		return
 	case "POST":
-		enableCors(&w)
-
 		// Infer user from authentication.
 		uname := r.Context().Value(ContextUserKey)
 		username := fmt.Sprintf("%v", uname)
@@ -236,14 +211,11 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 		}
 
-		userJSON, err := json.Marshal(user)
+		err = json.NewEncoder(w).Encode(user)
 		if err != nil {
-			w.WriteHeader(500)
-			w.Write([]byte("JSON error"))
-			return
+			log.Println(err)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(userJSON))
+		return
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only POST requests are accepted."))
@@ -253,17 +225,12 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 // UsersDeleteZip removes a zip-code from a users list.
 // Responds to /v1/users/delete-zip?username={name}&zip={zipcode}
 func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
-		enableCors(&w)
-		// TODO: above is not enough for preflight options. Add below to default action?
-		(w).Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-		(w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		w.WriteHeader(200)
 		return
 	case "POST":
-		enableCors(&w)
-
 		// Infer user from authentication.
 		uname := r.Context().Value(ContextUserKey)
 		username := fmt.Sprintf("%v", uname)
@@ -294,15 +261,11 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		userJSON, err := json.Marshal(user)
+		err = json.NewEncoder(w).Encode(user)
 		if err != nil {
-			log.Print("Error marshaling user zips; UsersDeleteZip")
-			w.WriteHeader(200)
-			return
+			log.Println(err)
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(userJSON))
+		return
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only POST requests are accepted."))
@@ -312,9 +275,9 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 // UsersClearZip removes all stored zip-codes.
 // Responds to /v1/users/clear-zip?username={name}
 func UsersClearZip(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	switch r.Method {
 	case "POST":
-		enableCors(&w)
 
 		// Infer user from authentication.
 		uname := r.Context().Value(ContextUserKey)
@@ -333,6 +296,64 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Write([]byte("ok"))
+	default:
+		w.WriteHeader(405)
+		w.Write([]byte("Only POST requests are accepted."))
+	}
+}
+
+// TV SHOWS
+
+// UsersAddShow creates or appends to user's stored shows.
+// Responds to /v1/users/add-show?username={name}&show={show_id}
+func UsersAddShow(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	switch r.Method {
+	case "OPTIONS":
+		w.WriteHeader(200)
+		return
+	case "POST":
+		// Infer user from authentication.
+		uname := r.Context().Value(ContextUserKey)
+		username := fmt.Sprintf("%v", uname) // what is the point of this??
+		if username == "" {
+			w.WriteHeader(404)
+			w.Write([]byte("User not found"))
+			return
+		}
+		qShow := r.URL.Query().Get("show")
+		if qShow == "" {
+			w.WriteHeader(406)
+			w.Write([]byte("Must pass a show ID"))
+			return
+		}
+
+		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+		user := &models.User{Email: username}
+		newShow, err := strconv.ParseInt(qShow, 10, 64)
+		if err != nil {
+			log.Printf("error parsing show %s", err)
+			w.WriteHeader(500)
+			return
+		}
+		err = user.AddShow(q, newShow)
+		if err != nil {
+			log.Printf("Storage error %s", err.Error())
+			w.WriteHeader(500)
+			return
+		}
+
+		err = user.LoadData(q)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+		}
+
+		err = json.NewEncoder(w).Encode(user)
+		if err != nil {
+			log.Println(err)
+		}
+		return
 	default:
 		w.WriteHeader(405)
 		w.Write([]byte("Only POST requests are accepted."))

@@ -53,16 +53,19 @@ func main() {
 	mux.HandleFunc("/v1/tv-movies", GetTvMovies).Methods("GET")
 	mux.HandleFunc("/v1/tv-sports", GetTvSports).Methods("GET")
 	mux.HandleFunc("/v1/tv-search", GetTvSearch).Methods("GET")
+	mux.HandleFunc("/v1/tv-show/{show_id}", GetTvShow).Methods("GET")
+	mux.HandleFunc("/v1/tv-show/episode/{id}", GetTvEpisode).Methods("GET")
 
 	mux.HandleFunc("/v1/users/create", UsersCreate)
 	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken)))
 	mux.HandleFunc("/v1/users/revoke", UsersRevokeToken)
 
 	// mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
-	mux.HandleFunc("/v1/users/get-zip", AuthHandler(http.HandlerFunc(UsersGetZip)))
+	mux.HandleFunc("/v1/users/get-data", AuthHandler(http.HandlerFunc(UsersGetData)))
 	mux.HandleFunc("/v1/users/add-zip", AuthHandler(http.HandlerFunc(UsersAddZip)))
 	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(http.HandlerFunc(UsersDeleteZip)))
 	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
+	mux.HandleFunc("/v1/users/add-show", AuthHandler(http.HandlerFunc(UsersAddShow)))
 
 	mux.HandleFunc("/v1/sports/nhl/games", NHLGamesHandler)
 	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
@@ -90,13 +93,15 @@ func StorageHandler(h http.Handler) http.Handler {
 }
 
 func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Content-Type", "application/json")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
 	if c.Env != "prod" {
 		(*w).Header().Set("Access-Control-Allow-Origin", "*")
-		(*w).Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
 		return
 	}
+
 	(*w).Header().Set("Access-Control-Allow-Origin", c.CorsOrigin)
 }
 

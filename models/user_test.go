@@ -19,9 +19,15 @@ func TestUser_DB(t *testing.T) {
 	err := u.Create(Queries)
 	require.NoError(t, err)
 	assert.NotEqual(t, 0, u.ID)
+
 	err = u.AddZip(Queries, int64(33161))
 	require.NoError(t, err)
 	err = u.AddZip(Queries, int64(20002))
+	require.NoError(t, err)
+
+	err = u.AddShow(Queries, int64(14275))
+	require.NoError(t, err)
+	err = u.AddShow(Queries, int64(47582))
 	require.NoError(t, err)
 
 	u2 := &models.User{Email: email}
@@ -32,6 +38,8 @@ func TestUser_DB(t *testing.T) {
 	assert.False(t, u2.CreatedAt.IsZero())
 	assert.NotEmpty(t, u2.Data.Zips)
 	assert.Len(t, u2.Data.Zips, 2)
+	assert.NotEmpty(t, u2.Data.Shows)
+	assert.Len(t, u2.Data.Shows, 2)
 
 	u3 := models.User{Email: email}
 	ok := u3.CheckPasswordHash(Queries, pw)
@@ -58,29 +66,34 @@ func TestUser_DB(t *testing.T) {
 	err = u3.DeleteZip(Queries, int64(90210))
 	require.NoError(t, err)
 	assert.Len(t, u3.Data.Zips, 1)
+	err = u3.DeleteShow(Queries, int64(14275))
+	require.NoError(t, err)
+	assert.Len(t, u3.Data.Shows, 1)
 
 	err = u3.DeleteZip(Queries, int64(12345))
 	assert.Error(t, err)
 }
 
 func TestUserData(t *testing.T) {
-	data := []byte(`{"zips": [33161, 20002]}`)
+	data := []byte(`{"zips":[33161, 20002],"shows":[33161]}`)
 	ud := models.UserData{}
 	err := json.Unmarshal(data, &ud)
 	require.NoError(t, err)
 	assert.Len(t, ud.Zips, 2)
+
+	assert.Len(t, ud.Shows, 1)
 }
 
 func TestUser_Marshal(t *testing.T) {
 	u := models.User{
 		ID:    45,
 		Email: "tester@email.com",
-		Data:  models.UserData{Zips: []int64{20002, 33161}},
+		Data:  models.UserData{Zips: []int64{20002, 33161}, Shows: []int64{44562}},
 	}
 
 	data, err := json.Marshal(u)
 	require.NoError(t, err)
-	assert.Equal(t, `{"ID":45,"email":"tester@email.com","zipcodes":[20002,33161]}`, string(data))
+	assert.Equal(t, `{"ID":45,"email":"tester@email.com","shows":[44562],"zipcodes":[20002,33161]}`, string(data))
 }
 
 func wipeUsers(t *testing.T) {

@@ -11,6 +11,22 @@ import (
 	"encoding/json"
 )
 
+const userAppendShow = `-- name: UserAppendShow :exec
+UPDATE users
+  SET data = JSON_ARRAY_APPEND(data, '$.shows', ?)
+  WHERE email = ?
+`
+
+type UserAppendShowParams struct {
+	JSONARRAYAPPEND interface{}
+	Email           string
+}
+
+func (q *Queries) UserAppendShow(ctx context.Context, arg UserAppendShowParams) error {
+	_, err := q.db.ExecContext(ctx, userAppendShow, arg.JSONARRAYAPPEND, arg.Email)
+	return err
+}
+
 const userAppendZip = `-- name: UserAppendZip :exec
 UPDATE users
   SET data = JSON_ARRAY_APPEND(data, '$.zips', ?)
@@ -53,6 +69,17 @@ func (q *Queries) UserCheckPassword(ctx context.Context, email string) (UserChec
 	return i, err
 }
 
+const userClearShows = `-- name: UserClearShows :exec
+UPDATE users
+  SET data = JSON_SET(data, '$.shows', JSON_ARRAY())
+  WHERE email = ?
+`
+
+func (q *Queries) UserClearShows(ctx context.Context, email string) error {
+	_, err := q.db.ExecContext(ctx, userClearShows, email)
+	return err
+}
+
 const userClearZips = `-- name: UserClearZips :exec
 UPDATE users
   SET data = JSON_SET(data, '$.zips', JSON_ARRAY())
@@ -91,6 +118,19 @@ func (q *Queries) UserCreate(ctx context.Context, arg UserCreateParams) (int64, 
 	return result.LastInsertId()
 }
 
+const userExtractShows = `-- name: UserExtractShows :one
+SELECT JSON_EXTRACT(data, '$.shows')
+  FROM users
+  WHERE email = ?
+`
+
+func (q *Queries) UserExtractShows(ctx context.Context, email string) (interface{}, error) {
+	row := q.db.QueryRowContext(ctx, userExtractShows, email)
+	var json_extract interface{}
+	err := row.Scan(&json_extract)
+	return json_extract, err
+}
+
 const userExtractZips = `-- name: UserExtractZips :one
 SELECT JSON_EXTRACT(data, '$.zips')
   FROM users
@@ -105,7 +145,7 @@ func (q *Queries) UserExtractZips(ctx context.Context, email string) (interface{
 }
 
 const userFindByEmail = `-- name: UserFindByEmail :one
-SELECT id, email, JSON_EXTRACT(data, '$.zips') AS zips, created_at, status
+SELECT id, email, data, created_at, status
   FROM users
   WHERE email = ?
   LIMIT 1
@@ -114,7 +154,7 @@ SELECT id, email, JSON_EXTRACT(data, '$.zips') AS zips, created_at, status
 type UserFindByEmailRow struct {
 	ID        int64
 	Email     string
-	Zips      interface{}
+	Data      json.RawMessage
 	CreatedAt sql.NullTime
 	Status    sql.NullBool
 }
@@ -125,11 +165,27 @@ func (q *Queries) UserFindByEmail(ctx context.Context, email string) (UserFindBy
 	err := row.Scan(
 		&i.ID,
 		&i.Email,
-		&i.Zips,
+		&i.Data,
 		&i.CreatedAt,
 		&i.Status,
 	)
 	return i, err
+}
+
+const userSetShows = `-- name: UserSetShows :exec
+UPDATE users
+  SET data = JSON_SET(data, '$.shows', CAST(? AS JSON))
+  WHERE email = ?
+`
+
+type UserSetShowsParams struct {
+	Column1 json.RawMessage
+	Email   string
+}
+
+func (q *Queries) UserSetShows(ctx context.Context, arg UserSetShowsParams) error {
+	_, err := q.db.ExecContext(ctx, userSetShows, arg.Column1, arg.Email)
+	return err
 }
 
 const userSetZips = `-- name: UserSetZips :exec
