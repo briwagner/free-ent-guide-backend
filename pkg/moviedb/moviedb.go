@@ -159,6 +159,7 @@ type MovieRelease struct {
 	Poster           string      `json:"poster_path"`
 	Video            bool        `json:"video"`
 	OriginalLanguage string      `json:"original_language"`
+	Popularity       float64     `json:"popularity"`
 }
 
 func SortByDate(rel []MovieRelease) {
@@ -172,7 +173,8 @@ func FilterReleases(d time.Time, rel []MovieRelease) []MovieRelease {
 
 	limit := d.Add(time.Hour * 24 * 30)
 	for _, r := range rel {
-		if r.ReleaseDate.Time.Before(limit) && r.OriginalLanguage == "en" && !r.Video && r.Poster != "" {
+		// This list is really big. How to control?
+		if r.ReleaseDate.Time.Before(limit) && r.Popularity > float64(50) {
 			filtered = append(filtered, r)
 		}
 	}
