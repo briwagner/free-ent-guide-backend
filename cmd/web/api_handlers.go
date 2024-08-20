@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
-	"free-ent-guide-backend/pkg/moviedb"
 	"free-ent-guide-backend/pkg/tmsapi"
 	"free-ent-guide-backend/pkg/tvmaze"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -77,42 +77,21 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	date := r.URL.Query().Get("date")
-	// TODO parse this date to time (2006-01-02) and catch errors here.
-	if date == "" {
+	_, err := time.Parse("2006-01-02", date)
+	if date == "" || err != nil {
 		w.WriteHeader(400)
 		w.Write([]byte("Must pass a date"))
 		return
 	}
 
-	// Check cache for stored response.
-	Sqlc := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
-	ca := &models.Cache{}
-	cacheKey := fmt.Sprintf("discover?date=%s", date)
-	err := ca.GetByName(cacheKey, Sqlc)
-
-	// No cache found.
+	data, err := os.ReadFile("./public/discover.json")
 	if err != nil {
-		cacheStatus(&w, false)
-
-		// Pass credential with struct.
-		mdb := moviedb.MovieDb{Key: c.Moviedb}
-		mdb.GetDiscover(date)
-
-		if mdb.Status == http.StatusOK {
-			newC := &models.Cache{Name: cacheKey, Value: string(mdb.Response)}
-			err = newC.Insert(Sqlc)
-			if err != nil {
-				log.Printf("error setting cache: %v", err)
-			}
-		} else {
-			w.WriteHeader(500)
-		}
-		w.Write(mdb.Response)
+		log.Println(err)
+		w.WriteHeader(500)
 		return
 	}
-	// Cache found.
-	cacheStatus(&w, true)
-	w.Write([]byte(ca.Value))
+
+	w.Write(data)
 }
 
 // GetTvMovies responds to /v1/tv-movies?date={YYYY-MM-DD}.

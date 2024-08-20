@@ -2,9 +2,14 @@ package moviedb
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"errors"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"slices"
+	"strconv"
+	"time"
 )
 
 const base = "https://api.themoviedb.org/3/"
@@ -31,8 +36,50 @@ func (m *MovieDb) GetTrending() {
 	_ = m.fetch(url, p)
 }
 
+func (m *MovieDb) GetDiscoverPaged(date string) ([]MovieRelease, error) {
+	var mr []MovieRelease
+	p := 1
+	totalP := 2
+
+	for p <= totalP {
+		m.GetDiscover(date, strconv.Itoa(p))
+		if m.Status != 200 {
+			return mr, fmt.Errorf("error getting discover results; status %d", m.Status)
+		}
+
+		var results DiscoverResults
+		err := json.Unmarshal(m.Response, &results)
+		if err != nil {
+			return mr, err
+		}
+
+		if p != results.Page {
+			return mr, fmt.Errorf("wrong page, asked for %d, got %d", p, results.Page)
+		}
+
+		if results.Page == 0 || results.TotalPages == 0 {
+			return mr, errors.New("something wrong. No page")
+		}
+
+		// Update values
+		p++
+		totalP = results.TotalPages
+		mr = append(mr, results.Results...)
+	}
+
+	ti, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return mr, err
+	}
+
+	filtered := FilterReleases(ti, mr)
+	SortByDate(filtered)
+
+	return filtered, nil
+}
+
 // GetDiscover retrieves the coming movie listings.
-func (m *MovieDb) GetDiscover(date string) {
+func (m *MovieDb) GetDiscover(date string, p string) {
 	url := base + "discover/movie"
 	// from discoverMoviesReq(), must include date and other filters
 	// in query param
@@ -40,6 +87,7 @@ func (m *MovieDb) GetDiscover(date string) {
 		"api_key":                  m.Key,
 		"primary_release_date.gte": date,
 		"adult":                    "false",
+		"page":                     p,
 		// todo: language filter was added because Asian
 		// languages cannot be entered into DB as utf-8.
 		// Try to convert text before pushing to DB?
@@ -89,7 +137,7 @@ func (m *MovieDb) fetch(url string, params map[string]string) error {
 		return doErr
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	if err != nil {
@@ -101,4 +149,57 @@ func (m *MovieDb) fetch(url string, params map[string]string) error {
 	m.Status = resp.StatusCode
 	m.Response = body
 	return nil
+}
+
+type MovieRelease struct {
+	ID               int         `json:"id"`
+	Title            string      `json:"title"`
+	ReleaseDate      ReleaseDate `json:"release_date"`
+	Description      string      `json:"overview"`
+	Poster           string      `json:"poster_path"`
+	Video            bool        `json:"video"`
+	OriginalLanguage string      `json:"original_language"`
+}
+
+func SortByDate(rel []MovieRelease) {
+	slices.SortFunc(rel, func(a, b MovieRelease) int {
+		return a.ReleaseDate.Time.Compare(b.ReleaseDate.Time)
+	})
+}
+
+func FilterReleases(d time.Time, rel []MovieRelease) []MovieRelease {
+	var filtered []MovieRelease
+
+	limit := d.Add(time.Hour * 24 * 30)
+	for _, r := range rel {
+		if r.ReleaseDate.Time.Before(limit) && r.OriginalLanguage == "en" && !r.Video && r.Poster != "" {
+			filtered = append(filtered, r)
+		}
+	}
+
+	return filtered
+}
+
+type DiscoverResults struct {
+	Page         int            `json:"page"`
+	Results      []MovieRelease `json:"results"`
+	TotalPages   int            `json:"total_pages"`
+	TotalResults int            `json:"total_results"`
+}
+
+type ReleaseDate struct {
+	time.Time
+}
+
+func (rd *ReleaseDate) UnmarshalJSON(b []byte) error {
+	date, err := time.Parse(`"2006-01-02"`, string(b))
+	if err != nil {
+		return err
+	}
+	rd.Time = date
+	return nil
+}
+
+func (rd ReleaseDate) String() string {
+	return rd.Time.Format("Jan. 2, 2006")
 }

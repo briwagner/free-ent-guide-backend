@@ -18,7 +18,7 @@ var (
 )
 
 func main() {
-	commands := []string{"nhl", "mlb", "gup", "cache"}
+	commands := []string{"nhl", "mlb", "gup", "cache", "discover"}
 
 	// Set-up application config.
 	c.GetCreds("creds", ".")
@@ -51,5 +51,8 @@ Or 'cache' with one of: show, stale, clear, wipe.
 		handleCache(Querier, os.Args)
 	case "gup":
 		handleGameUpdates(Querier, os.Args)
+	case "discover":
+		handleDiscoverMovies(c, os.Args)
 	}
+
 }
