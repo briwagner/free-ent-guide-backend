@@ -1,6 +1,7 @@
 package cred
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/viper"
@@ -36,4 +37,8 @@ func (c *Cred) GetCreds(fname string, fpath string) {
 	if err != nil {
 		log.Fatalf("No credentials %v", err)
 	}
+}
+
+func (c *Cred) GetPort() string {
+	return fmt.Sprintf(":%d", c.Port)
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"expvar"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
@@ -24,15 +25,15 @@ import (
 )
 
 var (
-	c       cred.Cred
-	Queries *modelstore.Queries
-	author  authenticator.Authenticator
+	c        cred.Cred
+	Queries  *modelstore.Queries
+	author   authenticator.Authenticator
+	counters *expvar.Map
 )
 
 func main() {
 	// Set-up application config.
 	c.GetCreds("creds", ".")
-	port := fmt.Sprintf(":%v", c.Port)
 
 	// Set-up database.
 	Sqlc := models.Setup(c)
@@ -73,14 +74,17 @@ func main() {
 	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
 	mux.HandleFunc("/v1/sports/nhl/latest", NHLGamesLatest)
 
-	// Docker importers: DEPRECATED
-	// mux.HandleFunc("/v1/admin/add-games", AuthHandler(http.HandlerFunc(GamesImporter)))
+	// Metrics
+	mux.Handle("/debug/vars", http.DefaultServeMux)
+	counters = expvar.NewMap("counters")
+	counters.Set("cache_hit", new(expvar.Int))
+	counters.Set("cache_miss", new(expvar.Int))
 
 	// Middleware
 	mux.Use(StorageHandler)
 
-	fmt.Printf("ENT API is live. Listening on port %v ...\n", port)
-	http.ListenAndServe(port, mux)
+	fmt.Printf("ENT API is live. Listening on port %v ...\n", c.GetPort())
+	http.ListenAndServe(c.GetPort(), mux)
 }
 
 // Middleware to add Storage ref to context.
@@ -108,10 +112,10 @@ func enableCors(w *http.ResponseWriter) {
 func cacheStatus(w *http.ResponseWriter, status bool) {
 	if status {
 		(*w).Header().Set("Cache", "HIT")
-		fmt.Println("Cache HIT")
+		counters.Add("cache_hit", 1)
 	} else {
 		(*w).Header().Set("Cache", "MISS")
-		fmt.Println("Cache MISS")
+		counters.Add("cache_miss", 1)
 	}
 }
 

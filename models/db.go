@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"free-ent-guide-backend/pkg/cred"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type RawStore struct {
