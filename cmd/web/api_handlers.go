@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
@@ -14,6 +15,15 @@ import (
 
 	"github.com/gorilla/mux"
 )
+
+// Middleware to add Storage ref to context.
+func StorageHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), models.SqlcStorageContextKey, Queries)
+		r = r.WithContext(ctx)
+		h.ServeHTTP(w, r)
+	})
+}
 
 // TODO: this should be passed per user.
 const lineup = "USA-TX42500-X"

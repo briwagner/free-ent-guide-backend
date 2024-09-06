@@ -9,6 +9,8 @@ import (
 	"free-ent-guide-backend/pkg/authenticator"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
+	"os"
+	"os/signal"
 
 	"net/http"
 	"time"
@@ -32,6 +34,7 @@ var (
 )
 
 func main() {
+	var app App
 	// Set-up application config.
 	c.GetCreds("creds", ".")
 
@@ -46,7 +49,7 @@ func main() {
 		Duration: c.TokenDuration,
 	}
 	author.AttachSecret(c.TokenSecret)
-	setupGoGuardian()
+	app.setupGoGuardian()
 
 	mux := mux.NewRouter()
 	mux.HandleFunc("/v1/movies", GetMovies).Methods("GET")
@@ -58,15 +61,15 @@ func main() {
 	mux.HandleFunc("/v1/tv-show/episode/{id}", GetTvEpisode).Methods("GET")
 
 	mux.HandleFunc("/v1/users/create", UsersCreate)
-	mux.HandleFunc("/v1/users/token", AuthHandler(http.HandlerFunc(UsersCreateToken)))
-	mux.HandleFunc("/v1/users/revoke", UsersRevokeToken)
+	mux.HandleFunc("/v1/users/token", app.AuthHandler(http.HandlerFunc(UsersCreateToken)))
+	mux.HandleFunc("/v1/users/revoke", app.UsersRevokeToken)
 
-	// mux.HandleFunc("/v1/users/get-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
-	mux.HandleFunc("/v1/users/get-data", AuthHandler(http.HandlerFunc(UsersGetData)))
-	mux.HandleFunc("/v1/users/add-zip", AuthHandler(http.HandlerFunc(UsersAddZip)))
-	mux.HandleFunc("/v1/users/delete-zip", AuthHandler(http.HandlerFunc(UsersDeleteZip)))
-	mux.HandleFunc("/v1/users/clear-zip", AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
-	mux.HandleFunc("/v1/users/add-show", AuthHandler(http.HandlerFunc(UsersAddShow)))
+	// mux.HandleFunc("/v1/users/get-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
+	mux.HandleFunc("/v1/users/get-data", app.AuthHandler(http.HandlerFunc(UsersGetData)))
+	mux.HandleFunc("/v1/users/add-zip", app.AuthHandler(http.HandlerFunc(UsersAddZip)))
+	mux.HandleFunc("/v1/users/delete-zip", app.AuthHandler(http.HandlerFunc(UsersDeleteZip)))
+	mux.HandleFunc("/v1/users/clear-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
+	mux.HandleFunc("/v1/users/add-show", app.AuthHandler(http.HandlerFunc(UsersAddShow)))
 
 	mux.HandleFunc("/v1/sports/nhl/games", NHLGamesHandler)
 	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
@@ -84,16 +87,32 @@ func main() {
 	mux.Use(StorageHandler)
 
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", c.GetPort())
-	http.ListenAndServe(c.GetPort(), mux)
-}
+	srv := &http.Server{
+		Addr:         "0.0.0.0" + c.GetPort(),
+		WriteTimeout: time.Second * 15,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+		Handler:      mux,
+	}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			log.Println(err)
+		}
+	}()
 
-// Middleware to add Storage ref to context.
-func StorageHandler(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), models.SqlcStorageContextKey, Queries)
-		r = r.WithContext(ctx)
-		h.ServeHTTP(w, r)
-	})
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+
+	<-c
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	// do something before shutdown.
+
+	srv.Shutdown(ctx)
+	log.Println("shutting down")
+	os.Exit(0)
 }
 
 func enableCors(w *http.ResponseWriter) {
@@ -119,10 +138,6 @@ func cacheStatus(w *http.ResponseWriter, status bool) {
 	}
 }
 
-var strategy union.Union
-var jwtStrategy auth.Strategy
-var cacheObj libcache.Cache
-
 // Validate user with basic auth.
 func validateUser(ctx context.Context, r *http.Request, username, password string) (auth.Info, error) {
 	u := &models.User{Email: username, Password: password}
@@ -138,15 +153,25 @@ func validateUser(ctx context.Context, r *http.Request, username, password strin
 	return nil, fmt.Errorf("invalid credentials")
 }
 
+type App struct {
+	AuthCache   libcache.Cache
+	JWTStrategy auth.Strategy
+	Strategy    union.Union
+}
+
 // Define strategies, set token expiration time.
-func setupGoGuardian() {
-	cacheObj = libcache.FIFO.New(0)
+func (a *App) setupGoGuardian() {
+	cacheObj := libcache.FIFO.New(0)
 	cacheObj.SetTTL(time.Hour * 72)
 	cacheObj.RegisterOnExpired(func(key, _ interface{}) {
-		cacheObj.Peek(key)
+		cacheObj.Peek(key) // TODO this is pointless.
 	})
 	basicStrategy := basic.NewCached(validateUser, cacheObj)
 
-	jwtStrategy = jwt.New(cacheObj, author.Secret, author.Audience)
-	strategy = union.New(jwtStrategy, basicStrategy)
+	jwtStrategy := jwt.New(cacheObj, author.Secret, author.Audience)
+	strategy := union.New(jwtStrategy, basicStrategy)
+
+	a.AuthCache = cacheObj
+	a.JWTStrategy = jwtStrategy
+	a.Strategy = strategy
 }

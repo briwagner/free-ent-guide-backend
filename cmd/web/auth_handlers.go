@@ -13,7 +13,7 @@ type ContextKey string
 const ContextUserKey ContextKey = "username"
 
 // AuthHandler performs main authentication.
-func AuthHandler(next http.Handler) http.HandlerFunc {
+func (app *App) AuthHandler(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {
 			enableCors(&w)
@@ -24,7 +24,7 @@ func AuthHandler(next http.Handler) http.HandlerFunc {
 			return
 		}
 		enableCors(&w)
-		_, user, err := strategy.AuthenticateRequest(r)
+		_, user, err := app.Strategy.AuthenticateRequest(r)
 		if err != nil {
 			fmt.Println(err)
 			code := http.StatusUnauthorized

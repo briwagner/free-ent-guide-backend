@@ -50,7 +50,7 @@ type UserTokenData struct {
 
 // UsersRevokeToken revokes the token.
 // Responds to /v1/users/token
-func UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(200)
@@ -70,7 +70,7 @@ func UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = auth.Revoke(jwtStrategy, formData.Token)
+	err = auth.Revoke(app.JWTStrategy, formData.Token)
 	if err != nil {
 		w.Write([]byte("error revoking token"))
 		w.WriteHeader(500)
