@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
-	"free-ent-guide-backend/pkg/authenticator"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
 	"os"
@@ -17,38 +16,26 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/shaj13/libcache"
 	_ "github.com/shaj13/libcache/fifo"
 
 	"github.com/shaj13/go-guardian/v2/auth"
-	"github.com/shaj13/go-guardian/v2/auth/strategies/basic"
-	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
-	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 )
 
 var (
 	c        cred.Cred
-	Queries  *modelstore.Queries
-	author   authenticator.Authenticator
 	counters *expvar.Map
+	Queries  *modelstore.Queries
 )
 
 func main() {
-	var app App
 	// Set-up application config.
 	c.GetCreds("creds", ".")
 
 	// Set-up database.
-	Sqlc := models.Setup(c)
-	Queries = modelstore.New(Sqlc)
+	Queries = modelstore.New(models.Setup(c))
 
 	// Set-up authentication.
-	author = authenticator.Authenticator{
-		Audience: jwt.SetAudience("any"),
-		Issuer:   jwt.SetIssuer("ent_api"),
-		Duration: c.TokenDuration,
-	}
-	author.AttachSecret(c.TokenSecret)
+	var app App
 	app.setupGoGuardian()
 
 	mux := mux.NewRouter()
@@ -61,7 +48,7 @@ func main() {
 	mux.HandleFunc("/v1/tv-show/episode/{id}", GetTvEpisode).Methods("GET")
 
 	mux.HandleFunc("/v1/users/create", UsersCreate)
-	mux.HandleFunc("/v1/users/token", app.AuthHandler(http.HandlerFunc(UsersCreateToken)))
+	mux.HandleFunc("/v1/users/token", app.AuthHandler(http.HandlerFunc(app.UsersCreateToken)))
 	mux.HandleFunc("/v1/users/revoke", app.UsersRevokeToken)
 
 	// mux.HandleFunc("/v1/users/get-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
@@ -151,27 +138,4 @@ func validateUser(ctx context.Context, r *http.Request, username, password strin
 	}
 
 	return nil, fmt.Errorf("invalid credentials")
-}
-
-type App struct {
-	AuthCache   libcache.Cache
-	JWTStrategy auth.Strategy
-	Strategy    union.Union
-}
-
-// Define strategies, set token expiration time.
-func (a *App) setupGoGuardian() {
-	cacheObj := libcache.FIFO.New(0)
-	cacheObj.SetTTL(time.Hour * 72)
-	cacheObj.RegisterOnExpired(func(key, _ interface{}) {
-		cacheObj.Peek(key) // TODO this is pointless.
-	})
-	basicStrategy := basic.NewCached(validateUser, cacheObj)
-
-	jwtStrategy := jwt.New(cacheObj, author.Secret, author.Audience)
-	strategy := union.New(jwtStrategy, basicStrategy)
-
-	a.AuthCache = cacheObj
-	a.JWTStrategy = jwtStrategy
-	a.Strategy = strategy
 }

@@ -1,9 +1,7 @@
 package authenticator
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/shaj13/go-guardian/v2/auth"
@@ -14,24 +12,23 @@ import (
 )
 
 type Authenticator struct {
-	Strategy  auth.Strategy
-	Audience  auth.Option
-	Issuer    auth.Option
-	Duration  int64
-	Secret    jwt.StaticSecret
-	SecretKey string
-	Cache     libcache.Cache
+	Audience auth.Option
+	Cache    libcache.Cache
+	Duration int64
+	Issuer   auth.Option
+	Secret   jwt.StaticSecret
+	Strategy auth.Strategy
 }
 
 // SetSecretKey is a setter
-func (a *Authenticator) SetSecretKey(s string) {
-	a.SecretKey = s
-}
+// func (a *Authenticator) SetSecretKey(s string) {
+// 	a.SecretKey = s
+// }
 
 // GetSecretKey is a getter
-func (a *Authenticator) GetSecretKey() string {
-	return a.SecretKey
-}
+// func (a *Authenticator) GetSecretKey() string {
+// return a.SecretKey
+// }
 
 // AttachSecret stores a secret
 func (a *Authenticator) AttachSecret(s string) {
@@ -61,27 +58,27 @@ func (a *Authenticator) IssueJWT(username string, uid string) string {
 
 // IssueToken generates a token.
 // @todo: we're not using this. Or re-purpose for password reset.
-func (a *Authenticator) IssueToken(username string, uid string) string {
-	// Some user info is passed
-	u := auth.NewUserInfo(username, uid, nil, nil)
+// func (a *Authenticator) IssueToken(username string, uid string) string {
+// 	// Some user info is passed
+// 	u := auth.NewUserInfo(username, uid, nil, nil)
 
-	a.Cache.Store("token", u)
+// 	a.Cache.Store("token", u)
 
-	token, err := jwt.IssueAccessToken(u, a.Secret)
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
+// 	token, err := jwt.IssueAccessToken(u, a.Secret)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return ""
+// 	}
 
-	return token
-}
+// 	return token
+// }
 
 // HandleUserRequest manages a user request using auth
-func (a *Authenticator) HandleUserRequest(token string, r *http.Request) (auth.Info, error) {
-	user, err := a.Strategy.Authenticate(r.Context(), r)
-	if err != nil {
-		fmt.Printf("got error %s", err.Error())
-		return nil, err
-	}
-	return user, nil
-}
+// func (a *Authenticator) HandleUserRequest(token string, r *http.Request) (auth.Info, error) {
+// 	user, err := a.Strategy.Authenticate(r.Context(), r)
+// 	if err != nil {
+// 		fmt.Printf("got error %s", err.Error())
+// 		return nil, err
+// 	}
+// 	return user, nil
+// }

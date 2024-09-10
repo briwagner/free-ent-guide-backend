@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -23,10 +23,11 @@ func (app *App) AuthHandler(next http.Handler) http.HandlerFunc {
 			w.WriteHeader(200)
 			return
 		}
+
 		enableCors(&w)
-		_, user, err := app.Strategy.AuthenticateRequest(r)
+		user, err := app.Authy.Strategy.Authenticate(context.Background(), r)
 		if err != nil {
-			fmt.Println(err)
+			log.Print(err)
 			code := http.StatusUnauthorized
 			http.Error(w, http.StatusText(code), code)
 			return

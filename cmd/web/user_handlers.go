@@ -14,7 +14,7 @@ import (
 
 // UsersCreateToken will return token for authenticated users.
 // Responds to /v1/users/token
-func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	username := r.Context().Value(ContextUserKey)
 
@@ -31,7 +31,7 @@ func UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 
 	// @todo: add named scopes.
 
-	jwtToken := author.IssueJWT(u.Email, fmt.Sprintf("%d", u.ID))
+	jwtToken := app.Authy.IssueJWT(u.Email, fmt.Sprintf("%d", u.ID))
 	// Does not throw error, only empty string, if it fails.
 	if jwtToken == "" {
 		log.Printf("Failed to generate JWT for %s", username)
