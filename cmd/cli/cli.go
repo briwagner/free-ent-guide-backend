@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/cred"
+	"io"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -54,5 +58,41 @@ Or 'cache' with one of: show, stale, clear, wipe.
 	case "discover":
 		handleDiscoverMovies(c, os.Args)
 	}
+}
 
+type SlackBody struct {
+	Text string `json:"text"`
+}
+
+func slackMessage(msg string) error {
+	url := c.SlackURL
+
+	var b strings.Builder
+	_, err := b.WriteString(msg)
+	if err != nil {
+		return fmt.Errorf("error writing to slack %w", err)
+	}
+
+	var sb SlackBody
+	sb.Text = b.String()
+	data, err := json.Marshal(sb)
+	if err != nil {
+		return err
+	}
+
+	cli := &http.Client{}
+	resp, err := cli.Post(url, "applicaton/json", bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode >= 400 {
+		by, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("slackbot error resp, failed to read body %d", resp.StatusCode)
+		}
+		return fmt.Errorf("slackbot error resp %d: %s", resp.StatusCode, string(by))
+	}
+
+	return nil
 }

@@ -223,10 +223,10 @@ func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
 }
 
 // ImportMLB calls to MLB api and saves new games to the DB.
-func ImportMLB(q *modelstore.Queries, startDate time.Time) error {
+func ImportMLB(q *modelstore.Queries, startDate time.Time) (string, error) {
 	gameweek, err := mlbapi.ImportDates(startDate)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var count, countErrs int
@@ -296,9 +296,9 @@ func ImportMLB(q *modelstore.Queries, startDate time.Time) error {
 		}
 	}
 
-	log.Printf("mlb import complete, adding %d games. Errors: %d", count, countErrs)
+	ret := fmt.Sprintf("mlb import complete, adding %d games. Errors: %d", count, countErrs)
 
-	return nil
+	return ret, nil
 }
 
 // MLBGetLatestGames loads all games on the latest date found in the DB.

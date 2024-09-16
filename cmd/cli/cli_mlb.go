@@ -15,28 +15,38 @@ func handleMLB(q *modelstore.Queries, args []string) {
 		return
 	}
 
+	var ret string
+	defer func() {
+		fmt.Println(ret)
+		err := slackMessage(ret)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
 	if subCo == "last" {
 		games, err := models.MLBGetLatestGames(q)
 		if err != nil {
-			fmt.Printf("error fetching games %s", err)
+			ret = fmt.Sprintf("error fetching games %s", err)
+			return
 		}
 
 		if len(games) == 0 {
-			fmt.Println("no games found")
+			log.Println("no games found")
 			return
 		}
-		fmt.Printf("Got %d MLB games for %s\n", len(games), games[0].Gametime.Format(format))
+		ret = fmt.Sprintf("Got %d MLB games for %s\n", len(games), games[0].Gametime.Format(format))
 		return
 	}
 
 	d, err := time.Parse(format, subCo)
 	if err != nil {
-		log.Printf("MLB game importer error: bad date for %s: %s\n", subCo, err)
+		ret = fmt.Sprintf("MLB game importer error: bad date for %s: %s\n", subCo, err)
 		return
 	}
-	err = models.ImportMLB(q, d)
+	ret, err = models.ImportMLB(q, d)
 	if err != nil {
-		log.Printf("MLB importer error: %s\n", err)
+		ret = fmt.Sprintf("MLB importer error: %s\n", err)
 		return
 	}
 }

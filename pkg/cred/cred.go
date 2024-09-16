@@ -21,6 +21,7 @@ type Cred struct {
 	TokenDuration int64  `mapstructure:"token_duration"`
 	TokenSecret   string `mapstructure:"token_secret"`
 	CorsOrigin    string `mapstructure:"cors_origin"`
+	SlackURL      string `mapstructure:"slack_url"`
 }
 
 // GetCreds copies the configuration file into the cred struct.

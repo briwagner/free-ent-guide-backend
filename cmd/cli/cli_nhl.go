@@ -19,17 +19,26 @@ func handleNHL(q *modelstore.Queries, args []string) {
 		return
 	}
 
+	var ret string
+	defer func() {
+		log.Println(ret)
+		err := slackMessage(ret)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
 	if subCo == "last" {
 		games, err := models.NHLGetLatestGames(q)
 		if err != nil {
-			fmt.Printf("Error getting last games: %s\n", err)
+			ret = fmt.Sprintf("Error getting last games: %s\n", err)
 			return
 		}
 		if len(games) == 0 {
 			fmt.Println("no games found")
 			return
 		}
-		fmt.Printf("Got %d NHL games on %s\n", len(games), games[0].Gametime.Format(format))
+		ret = fmt.Sprintf("Got %d NHL games on %s\n", len(games), games[0].Gametime.Format(format))
 		return
 	}
 
