@@ -5,16 +5,17 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
 	"log"
-	"strings"
 )
 
 func handleGameUpdates(q *modelstore.Queries, args []string) {
 	date := args[2]
 
-	var ret []string
+	var ret string
 	defer func() {
-		retMsg := strings.Join(ret, " | ")
-		err := slackMessage(retMsg)
+		if ret == "" {
+			return
+		}
+		err := slackMessage(ret)
 		if err != nil {
 			log.Println(err)
 		}
@@ -24,16 +25,15 @@ func handleGameUpdates(q *modelstore.Queries, args []string) {
 	mlbs := models.MLBGames{}
 	err := mlbs.LoadByDate(q, date)
 	if err != nil {
-		log.Print(err)
+		ret = fmt.Sprintf("error loading mlb for update: %s", err)
 		return
 	}
-	ret = append(ret, fmt.Sprintf("updating MLB games %d\n", len(mlbs)))
-	log.Println(ret)
+	log.Printf("updating MLB games %d\n", len(mlbs))
 
 	for _, mlb := range mlbs {
 		err := mlb.UpdateScore(q)
 		if err != nil {
-			log.Println(err)
+			ret = fmt.Sprintf("error updating score: %s", err)
 		}
 	}
 
@@ -41,19 +41,17 @@ func handleGameUpdates(q *modelstore.Queries, args []string) {
 	nhls := models.NHLGames{}
 	err = nhls.LoadByDate(q, date)
 	if err != nil {
-		log.Print(err)
+		ret = fmt.Sprintf("error loading nhl for update: %s", err)
 		return
 	}
-	ret2 := fmt.Sprintf("updating NHL games %d\n", len(nhls))
-	ret = append(ret, ret2)
-	log.Println(ret2)
+	log.Printf("updating NHL games %d\n", len(nhls))
 	for _, nhl := range nhls {
 		if nhl.Status == "Final" {
 			continue
 		}
 		err := nhl.UpdateScore(q)
 		if err != nil {
-			log.Println(err)
+			ret = fmt.Sprintf("error updating score :%s", err)
 		}
 	}
 }
