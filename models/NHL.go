@@ -8,6 +8,7 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -57,6 +58,34 @@ func (nt *NHLTeam) FindByTeamID(q *modelstore.Queries, teamID int64) error {
 	return nil
 }
 
+func (nt *NHLTeam) FindOrCreateByTeamID(q *modelstore.Queries, teamID int64) error {
+	err := nt.FindByTeamID(q, teamID)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+
+		// Create
+		idStr := strconv.FormatInt(teamID, 10)
+		newteam, err := nhlapi.GetTeam(idStr)
+		if err != nil {
+			return err
+		}
+
+		nt.TeamID = newteam.ID
+		nt.Name = newteam.Name
+		nt.Tricode = newteam.Tricode
+
+		err = nt.Create(q)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// FromDB converts types to return a team we use for the API.
 func (nt *NHLTeam) FromDB(team modelstore.NhlTeam) {
 	nt.ID = uint(team.ID)
 	nt.TeamID = int(team.TeamID)
@@ -284,9 +313,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 
 			// Map MLB team IDs to my database IDs.
 			home := &NHLTeam{}
-			err := home.FindByTeamID(q, int64(g.Home.ID))
-			// TODO we don't try to create missing teams, cuz there isn't a clear API endpoint to look them up.
-			// We would want name, ID and tricode for that.
+			err := home.FindOrCreateByTeamID(q, int64(g.Home.ID))
 			if err != nil {
 				countErrs++
 				log.Printf("error finding home team %d for game %d: %s", g.Home.ID, g.ID, err)
@@ -295,7 +322,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 			game.HomeID = home.ID
 
 			away := &NHLTeam{}
-			err = away.FindByTeamID(q, int64(g.Away.ID))
+			err = away.FindOrCreateByTeamID(q, int64(g.Away.ID))
 			if err != nil {
 				countErrs++
 				log.Printf("error finding away team %d for game %d: %s", g.Away.ID, g.ID, err)
@@ -310,6 +337,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 				if err.(*mysql.MySQLError).Number != 1062 {
 					log.Printf("error creating game %d: %s", g.ID, err)
 				}
+				log.Printf("some error %s", err)
 				continue
 			}
 

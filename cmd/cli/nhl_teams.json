@@ -471,6 +471,14 @@
       "leagueId": 133,
       "rawTricode": "LAK",
       "triCode": "LAK"
+    },
+    {
+      "franchiseId": 40,
+      "fullName": "Utah Hockey Team",
+      "id": 59,
+      "leagueId": 133,
+      "rawTricode": "UTA",
+      "triCode": "UTA"
     }
   ],
   "total": 59

@@ -21,6 +21,10 @@ func handleNHL(q *modelstore.Queries, args []string) {
 
 	var ret string
 	defer func() {
+		if ret == "" {
+			return
+		}
+		// Raw slack message
 		log.Println(ret)
 		err := slackMessage(ret)
 		if err != nil {
@@ -69,7 +73,7 @@ var nhlTeamData []byte
 
 func seedNHLTeams() error {
 	// These were taken from old api, based on teams from the 2023-24 game schedule.
-	activeIDs := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 52, 53, 54, 55, 87, 88, 89, 90, 99}
+	activeIDs := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 52, 53, 54, 55, 59, 87, 88, 89, 90, 99}
 
 	data := nhlTeamData
 	// data, err := os.ReadFile("pkg/nhlapi/testdata/nhl_teams.json")

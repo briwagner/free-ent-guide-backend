@@ -40,8 +40,12 @@ type NHLTeam struct {
 	Link        string // we don't seem to use this anyway
 }
 
+// TODO is this v1 only?
 // Example to get stats for one team, using franchiseID.
 // https://api.nhle.com/stats/rest/en/team/summary?isAggregate=false&cayenneExp=franchiseId=32%20and%20gameTypeId=2%20and%20seasonId%3C=20232024%20and%20seasonId%3E=20232024
+
+// List of Franchises, V2
+// https://api.nhle.com/stats/rest/en/franchise
 
 type GameType struct {
 	Type string `json:"gameType"`
@@ -98,6 +102,62 @@ type GetTeamsPayload struct {
 	Data []NHLTeam `json:"data"`
 }
 
+type (
+	GetTeamPayload struct {
+		Teams []GetTeamTeam `json:"teams"`
+	}
+
+	GetTeamTeam struct {
+		Tricode string `json:"tricode"`
+		TeamID  int    `json:"teamId"`
+		Name    struct {
+			Default string `json:"default"`
+		} `json:"name"`
+	}
+)
+
+// Assume we fetch a single team and convert it.
+func (gt *GetTeamPayload) ToTeam() NHLTeam {
+	nhlt := NHLTeam{}
+
+	if len(gt.Teams) == 0 {
+		return nhlt
+	}
+
+	nhlt.Tricode = gt.Teams[0].Tricode
+	nhlt.ID = gt.Teams[0].TeamID
+	nhlt.Name = gt.Teams[0].Name.Default
+
+	return nhlt
+}
+
+func GetTeam(id string) (NHLTeam, error) {
+	url := "https://api-web.nhle.com/v1/meta?teams=" + id
+
+	t := NHLTeam{}
+	resp, err := http.Get(url)
+	if err != nil {
+		return t, fmt.Errorf("failed to get team %s: %s", id, err)
+	}
+
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return t, fmt.Errorf("error reading response for nhl team: %s", err)
+	}
+
+	pl := GetTeamPayload{}
+	err = json.Unmarshal(data, &pl)
+	if err != nil {
+		return t, fmt.Errorf("error unmarshalling nhl team: %s", err)
+	}
+
+	team := pl.ToTeam()
+
+	return team, nil
+}
+
+// TODO unused. Convert this to v2 api, for team ID or IDs, e.g. https://api-web.nhle.com/v1/meta?teams=59,14,26,28
 func GetTeams() ([]NHLTeam, error) {
 	var teams []NHLTeam
 

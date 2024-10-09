@@ -60,3 +60,22 @@ func TestMarshal_NHLGameUpdate(t *testing.T) {
 	assert.Equal(t, 3, int(gu.HomeScore))
 	assert.Equal(t, 0, int(gu.VisitorScore))
 }
+
+func Test_GetTeam(t *testing.T) {
+	data := `{"players":[],"teams":[{"name":{"default":"Utah Hockey Club","fr":"Club de hockey de l'Utah"},"tricode":"UTA","teamId":59}],"seasonStates":[]}`
+	tpl := GetTeamPayload{}
+	err := json.Unmarshal([]byte(data), &tpl)
+	require.NoError(t, err)
+
+	nhlteam := tpl.ToTeam()
+	assert.Equal(t, "Utah Hockey Club", nhlteam.Name)
+	assert.Equal(t, "UTA", nhlteam.Tricode)
+	assert.Equal(t, 59, nhlteam.ID)
+
+	t.Skip("http request")
+	team, err := GetTeam("59")
+	require.NoError(t, err)
+	assert.Equal(t, "Utah Hockey Club", team.Name)
+	assert.Equal(t, "UTA", team.Tricode)
+	assert.Equal(t, 59, team.ID)
+}
