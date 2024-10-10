@@ -10,7 +10,6 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"log"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
@@ -26,7 +25,7 @@ func GetNetwork(cli *client.Client) (string, error) {
 	f := filters.NewArgs()
 	// This `common` network should have been manually created.
 	f.Add("name", "common")
-	nets, err := cli.NetworkList(ctx, types.NetworkListOptions{Filters: f})
+	nets, err := cli.NetworkList(ctx, network.ListOptions{Filters: f})
 	if err != nil {
 		return "", err
 	}
@@ -57,7 +56,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 	f := filters.NewArgs()
 	f.Add("name", fmt.Sprintf("/%s", contName))
 	f.Add("status", "exited")
-	ctrs, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: f})
+	ctrs, err := cli.ContainerList(ctx, container.ListOptions{Filters: f})
 	if err != nil {
 		log.Print(err)
 		return err
@@ -70,7 +69,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 			return err
 		}
 		log.Printf("removing old container %s", v.ID)
-		err = cli.ContainerRemove(ctx, v.ID, types.ContainerRemoveOptions{})
+		err = cli.ContainerRemove(ctx, v.ID, container.RemoveOptions{})
 		if err != nil {
 			log.Print(err)
 			return err
@@ -116,7 +115,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 		return err
 	}
 
-	err = cli.ContainerStart(ctx, cont.ID, types.ContainerStartOptions{})
+	err = cli.ContainerStart(ctx, cont.ID, container.StartOptions{})
 	if err != nil {
 		log.Print(err)
 		return err
@@ -145,7 +144,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 		return err
 	}
 
-	out, err := cli.ContainerLogs(ctx, cont.ID, types.ContainerLogsOptions{
+	out, err := cli.ContainerLogs(ctx, cont.ID, container.LogsOptions{
 		ShowStdout: true,
 		Follow:     true,
 	})
@@ -203,7 +202,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 		log.Print(err)
 		return err
 	}
-	err = cli.ContainerRemove(ctx, cont.ID, types.ContainerRemoveOptions{})
+	err = cli.ContainerRemove(ctx, cont.ID, container.RemoveOptions{})
 	if err != nil {
 		log.Print(err)
 		return err
@@ -228,7 +227,7 @@ func ImportMLB(q *modelstore.Queries, startDate string) error {
 	f := filters.NewArgs()
 	f.Add("name", fmt.Sprintf("/%s", contName))
 	f.Add("status", "exited")
-	ctrs, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: f})
+	ctrs, err := cli.ContainerList(ctx, container.ListOptions{Filters: f})
 	if err != nil {
 		log.Print(err)
 		return err
@@ -241,7 +240,7 @@ func ImportMLB(q *modelstore.Queries, startDate string) error {
 			return err
 		}
 		log.Printf("removing old container %s", v.ID)
-		err = cli.ContainerRemove(ctx, v.ID, types.ContainerRemoveOptions{})
+		err = cli.ContainerRemove(ctx, v.ID, container.RemoveOptions{})
 		if err != nil {
 			log.Print(err)
 			return err
@@ -287,7 +286,7 @@ func ImportMLB(q *modelstore.Queries, startDate string) error {
 		return err
 	}
 
-	err = cli.ContainerStart(ctx, cont.ID, types.ContainerStartOptions{})
+	err = cli.ContainerStart(ctx, cont.ID, container.StartOptions{})
 	if err != nil {
 		log.Print(err)
 		return err
@@ -316,7 +315,7 @@ func ImportMLB(q *modelstore.Queries, startDate string) error {
 		return err
 	}
 
-	out, err := cli.ContainerLogs(ctx, cont.ID, types.ContainerLogsOptions{
+	out, err := cli.ContainerLogs(ctx, cont.ID, container.LogsOptions{
 		ShowStdout: true,
 		Follow:     true,
 	})
@@ -375,7 +374,7 @@ func ImportMLB(q *modelstore.Queries, startDate string) error {
 		log.Print(err)
 		return err
 	}
-	err = cli.ContainerRemove(ctx, cont.ID, types.ContainerRemoveOptions{})
+	err = cli.ContainerRemove(ctx, cont.ID, container.RemoveOptions{})
 	if err != nil {
 		log.Print(err)
 		return err
