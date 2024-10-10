@@ -33,7 +33,7 @@ func handleGameUpdates(q *modelstore.Queries, args []string) {
 	for _, mlb := range mlbs {
 		err := mlb.UpdateScore(q)
 		if err != nil {
-			ret = fmt.Sprintf("error updating score: %s", err)
+			log.Printf("error updating mlb score: %s", err)
 		}
 	}
 
@@ -51,7 +51,7 @@ func handleGameUpdates(q *modelstore.Queries, args []string) {
 		}
 		err := nhl.UpdateScore(q)
 		if err != nil {
-			ret = fmt.Sprintf("error updating score :%s", err)
+			log.Printf("error updating nhl score :%s", err)
 		}
 	}
 }
