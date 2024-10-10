@@ -35,14 +35,14 @@ func handleNHL(q *modelstore.Queries, args []string) {
 	if subCo == "last" {
 		games, err := models.NHLGetLatestGames(q)
 		if err != nil {
-			ret = fmt.Sprintf("Error getting last games: %s\n", err)
+			log.Printf("Error getting last games: %s\n", err)
 			return
 		}
 		if len(games) == 0 {
 			fmt.Println("no games found")
 			return
 		}
-		ret = fmt.Sprintf("Got %d NHL games on %s\n", len(games), games[0].Gametime.Format(format))
+		log.Printf("Got %d NHL games on %s\n", len(games), games[0].Gametime.Format(format))
 		return
 	}
 
@@ -63,7 +63,7 @@ func handleNHL(q *modelstore.Queries, args []string) {
 	}
 	err = models.ImportNHL(q, d.Format(format))
 	if err != nil {
-		log.Print(err)
+		ret = fmt.Sprintf("NHL importer error for %s: %s", subCo, err)
 		return
 	}
 }

@@ -27,7 +27,7 @@ func handleMLB(q *modelstore.Queries, args []string) {
 	if subCo == "last" {
 		games, err := models.MLBGetLatestGames(q)
 		if err != nil {
-			ret = fmt.Sprintf("error fetching games %s", err)
+			log.Printf("error fetching games %s", err)
 			return
 		}
 
@@ -35,7 +35,7 @@ func handleMLB(q *modelstore.Queries, args []string) {
 			log.Println("no games found")
 			return
 		}
-		ret = fmt.Sprintf("Got %d MLB games for %s\n", len(games), games[0].Gametime.Format(format))
+		log.Printf("Got %d MLB games for %s\n", len(games), games[0].Gametime.Format(format))
 		return
 	}
 
@@ -46,7 +46,7 @@ func handleMLB(q *modelstore.Queries, args []string) {
 	}
 	ret, err = models.ImportMLB(q, d)
 	if err != nil {
-		ret = fmt.Sprintf("MLB importer error: %s\n", err)
+		ret = fmt.Sprintf("MLB importer error for %s: %s", subCo, err)
 		return
 	}
 }
