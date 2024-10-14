@@ -25,7 +25,7 @@ func handleNHL(q *modelstore.Queries, args []string) {
 			return
 		}
 		// Raw slack message
-		log.Println(ret)
+		log.Printf("slack: %s", ret)
 		err := slackMessage(ret)
 		if err != nil {
 			log.Println(err)
@@ -61,7 +61,7 @@ func handleNHL(q *modelstore.Queries, args []string) {
 		fmt.Printf("NHL game importer error: bad date for '%s'. Did you mean 'last'?\n", subCo)
 		return
 	}
-	err = models.ImportNHL(q, d.Format(format))
+	ret, err = models.ImportNHL(q, d.Format(format))
 	if err != nil {
 		ret = fmt.Sprintf("NHL importer error for %s: %s", subCo, err)
 		return

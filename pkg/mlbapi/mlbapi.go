@@ -132,6 +132,7 @@ func (gu *MLBGameUpdate) UnmarshalJSON(data []byte) error {
 
 	gd := vals["gameData"].(map[string]interface{})
 	st := gd["status"].(map[string]interface{})
+	// TODO add nil check
 	gu.Status = st["detailedState"].(string)
 
 	ld := vals["liveData"].(map[string]interface{})

@@ -292,16 +292,16 @@ func NHLGetLatestGames(q *modelstore.Queries) (NHLGames, error) {
 
 // ImportNHL fetches a week of games from NHL API and converts to struct
 // storing them in DB.
-func ImportNHL(q *modelstore.Queries, startDate string) error {
+func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
 	gameweek, err := nhlapi.ImportNHL(startDate)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var count, countErrs int
 
 	for _, days := range gameweek.Days {
-		fmt.Printf("import %d NHL games for %s\n", days.NumberOfGames, days.Date)
+		log.Printf("import %d NHL games for %s\n", days.NumberOfGames, days.Date)
 		daysGames := days.Games
 
 		for _, g := range daysGames {
@@ -350,7 +350,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) error {
 		}
 	}
 
-	log.Printf("nhl import complete, adding %d games. Errors: %d", count, countErrs)
+	ret := fmt.Sprintf("nhl import complete, adding %d games. Errors: %d", count, countErrs)
 
-	return nil
+	return ret, nil
 }
