@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -117,6 +118,26 @@ func NHLGamesLatest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gsJSON, err := json.Marshal(games)
+	if err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	enableCors(&w)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(gsJSON))
+}
+
+func NHLGamesNext(w http.ResponseWriter, r *http.Request) {
+	queries := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+	d := time.Now()
+	gs, err := models.NHLGetNextGameday(queries, d)
+	if err != nil {
+		log.Printf("error getting next NHL games for %s: %s", d.Format("2006-01-02"), err)
+	}
+
+	gsJSON, err := json.Marshal(gs)
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)

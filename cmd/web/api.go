@@ -58,11 +58,13 @@ func main() {
 	mux.HandleFunc("/v1/users/clear-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
 	mux.HandleFunc("/v1/users/add-show", app.AuthHandler(http.HandlerFunc(UsersAddShow)))
 
-	mux.HandleFunc("/v1/sports/nhl/games", NHLGamesHandler)
 	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
-	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
 	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
+
+	mux.HandleFunc("/v1/sports/nhl/games", NHLGamesHandler)
+	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
 	mux.HandleFunc("/v1/sports/nhl/latest", NHLGamesLatest)
+	mux.HandleFunc("/v1/sports/nhl/next", NHLGamesNext)
 
 	// Metrics
 	mux.Handle("/debug/vars", http.DefaultServeMux)

@@ -273,6 +273,28 @@ func (ngs *NHLGames) LoadByDate(q *modelstore.Queries, datestr string) error {
 	return nil
 }
 
+// NHLGetNextGameday tries to find games for the date passed,
+// and if not will continue searching on the next day until
+// reaching a limit of days searched.
+func NHLGetNextGameday(q *modelstore.Queries, date time.Time) (NHLGames, error) {
+	tries := 4
+
+	var gs NHLGames
+	var err error
+	for i := 0; i < tries; i++ {
+		err = gs.LoadByDate(q, date.Format("2006-01-02"))
+		if err != nil {
+			return gs, err
+		}
+		if len(gs) > 0 {
+			return gs, nil
+		}
+		date = date.Add(24 * time.Hour)
+	}
+
+	return gs, err
+}
+
 // NHLGetLatestGames loads all games on the latest date found in the DB.
 func NHLGetLatestGames(q *modelstore.Queries) (NHLGames, error) {
 	var games []NHLGame
