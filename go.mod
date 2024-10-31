@@ -7,6 +7,7 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gorilla/mux v1.8.1
+	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.2.1
@@ -25,11 +26,13 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae // indirect

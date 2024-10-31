@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"free-ent-guide-backend/pkg/cred"
 	"free-ent-guide-backend/pkg/moviedb"
+	"log"
 	"os"
 	"time"
 )
@@ -48,5 +49,7 @@ func handleDiscoverMovies(c cred.Cred, args []string) error {
 
 	fmt.Printf("File generated: %s. Results %d \n", fn, len(results))
 
-	return nil
+	b := "free-entertainment-guide.com"
+	log.Printf("pushing to bucket %s", b)
+	return c.Spaces.PutFile("discover.json", "discover.json", b)
 }

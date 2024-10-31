@@ -8,6 +8,7 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/cred"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"slices"
@@ -46,6 +47,7 @@ Or 'cache' with one of: show, stale, clear, wipe.
 		return
 	}
 
+	var err error
 	switch cmd {
 	case "nhl":
 		handleNHL(Querier, os.Args)
@@ -56,7 +58,11 @@ Or 'cache' with one of: show, stale, clear, wipe.
 	case "gup":
 		handleGameUpdates(Querier, os.Args)
 	case "discover":
-		handleDiscoverMovies(c, os.Args)
+		err = handleDiscoverMovies(c, os.Args)
+	}
+
+	if err != nil {
+		log.Print(err)
 	}
 }
 

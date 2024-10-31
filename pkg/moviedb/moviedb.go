@@ -97,6 +97,7 @@ func (m *MovieDb) GetDiscover(date string, p string) {
 }
 
 // GetToken retrieves a token.
+// TODO unused except in test.
 func (m *MovieDb) GetToken() error {
 	url := base + "authentication/token/new"
 	p := map[string]string{
