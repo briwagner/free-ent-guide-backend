@@ -29,9 +29,10 @@ func (a *App) setupGoGuardian() {
 
 	cacheObj := libcache.FIFO.New(0)
 	cacheObj.SetTTL(time.Hour * 72)
-	cacheObj.RegisterOnExpired(func(key, _ interface{}) {
-		cacheObj.Peek(key) // TODO this is pointless.
-	})
+	// TODO this is deprecated
+	// cacheObj.RegisterOnExpired(func(key, _ interface{}) {
+	// 	cacheObj.Peek(key) // TODO this is pointless.
+	// })
 
 	jwtStrategy := jwt.New(cacheObj, author.Secret, author.Audience)
 	basicStrategy := basic.NewCached(validateUser, cacheObj)
