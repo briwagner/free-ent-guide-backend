@@ -115,6 +115,7 @@ func enableCors(w *http.ResponseWriter) {
 	}
 
 	(*w).Header().Set("Access-Control-Allow-Origin", c.CorsOrigin)
+	(*w).Header().Set("Vary", "Origin")
 }
 
 func cacheStatus(w *http.ResponseWriter, status bool) {
