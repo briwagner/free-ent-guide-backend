@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"free-ent-guide-backend/pkg/cred"
 	"free-ent-guide-backend/pkg/moviedb"
 	"log"
 	"os"
 	"time"
 )
 
-func handleDiscoverMovies(c cred.Cred, args []string) error {
+func handleDiscoverMovies(tp TaskPayload, args []string) error {
 	subCo := args[2]
 	if subCo == "" {
 		fmt.Println("Must pass date for discover movies lookup.")
@@ -24,7 +23,7 @@ func handleDiscoverMovies(c cred.Cred, args []string) error {
 		return err
 	}
 
-	mdb := moviedb.MovieDb{Key: c.Moviedb}
+	mdb := moviedb.MovieDb{Key: tp.Cred.Moviedb}
 	results, err := mdb.GetDiscoverPaged(subCo)
 	if err != nil {
 		return err
@@ -51,5 +50,5 @@ func handleDiscoverMovies(c cred.Cred, args []string) error {
 
 	b := "free-entertainment-guide.com"
 	log.Printf("pushing to bucket %s", b)
-	return c.Spaces.PutFile("discover.json", "discover.json", b)
+	return tp.Cred.Spaces.PutFile("discover.json", "discover.json", b)
 }

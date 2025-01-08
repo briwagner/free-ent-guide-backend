@@ -14,11 +14,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
-
 	_ "github.com/shaj13/libcache/fifo"
-
-	"github.com/shaj13/go-guardian/v2/auth"
 )
 
 var (
@@ -38,42 +34,10 @@ func main() {
 	var app App
 	app.setupGoGuardian()
 
-	mux := mux.NewRouter()
-	mux.HandleFunc("/v1/movies", GetMovies).Methods("GET")
-	mux.HandleFunc("/v1/discover", DiscoverMovies).Methods("GET")
-	mux.HandleFunc("/v1/tv-movies", GetTvMovies).Methods("GET")
-	mux.HandleFunc("/v1/tv-sports", GetTvSports).Methods("GET")
-	mux.HandleFunc("/v1/tv-search", GetTvSearch).Methods("GET")
-	mux.HandleFunc("/v1/tv-show/{show_id}", GetTvShow).Methods("GET")
-	mux.HandleFunc("/v1/tv-show/episode/{id}", GetTvEpisode).Methods("GET")
-
-	mux.HandleFunc("/v1/users/create", UsersCreate)
-	mux.HandleFunc("/v1/users/token", app.AuthHandler(http.HandlerFunc(app.UsersCreateToken)))
-	mux.HandleFunc("/v1/users/revoke", app.UsersRevokeToken)
-
-	// mux.HandleFunc("/v1/users/get-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
-	mux.HandleFunc("/v1/users/get-data", app.AuthHandler(http.HandlerFunc(UsersGetData)))
-	mux.HandleFunc("/v1/users/add-zip", app.AuthHandler(http.HandlerFunc(UsersAddZip)))
-	mux.HandleFunc("/v1/users/delete-zip", app.AuthHandler(http.HandlerFunc(UsersDeleteZip)))
-	mux.HandleFunc("/v1/users/clear-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
-	mux.HandleFunc("/v1/users/add-show", app.AuthHandler(http.HandlerFunc(UsersAddShow)))
-
-	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
-	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
-
-	mux.HandleFunc("/v1/sports/nhl/games", NHLGamesHandler)
-	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
-	mux.HandleFunc("/v1/sports/nhl/latest", NHLGamesLatest)
-	mux.HandleFunc("/v1/sports/nhl/next", NHLGamesNext)
-
-	// Metrics
-	mux.Handle("/debug/vars", http.DefaultServeMux)
+	mux := NewRouter(app)
 	counters = expvar.NewMap("counters")
 	counters.Set("cache_hit", new(expvar.Int))
 	counters.Set("cache_miss", new(expvar.Int))
-
-	// Middleware
-	mux.Use(StorageHandler)
 
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", c.GetPort())
 	srv := &http.Server{
@@ -126,19 +90,4 @@ func cacheStatus(w *http.ResponseWriter, status bool) {
 		(*w).Header().Set("Cache", "MISS")
 		counters.Add("cache_miss", 1)
 	}
-}
-
-// Validate user with basic auth.
-func validateUser(ctx context.Context, r *http.Request, username, password string) (auth.Info, error) {
-	u := &models.User{Email: username, Password: password}
-	err := u.FindByEmail(Queries)
-	if err != nil {
-		log.Print(err)
-		return nil, fmt.Errorf("failed to load user")
-	}
-	if u.CheckPasswordHash(Queries, password) {
-		return auth.NewDefaultUser(u.Email, fmt.Sprintf("%d", u.ID), nil, nil), nil
-	}
-
-	return nil, fmt.Errorf("invalid credentials")
 }

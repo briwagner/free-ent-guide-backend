@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
@@ -12,11 +13,10 @@ import (
 	"time"
 )
 
-func handleNHL(q *modelstore.Queries, args []string) {
+func handleNHL(tp TaskPayload, args []string) error {
 	subCo := args[2]
 	if subCo == "" {
-		fmt.Println("For NHL, must pass valid date or 'last'.")
-		return
+		return errors.New("for NHL, must pass valid date or 'last'")
 	}
 
 	var ret string
@@ -26,52 +26,50 @@ func handleNHL(q *modelstore.Queries, args []string) {
 		}
 		// Raw slack message
 		log.Printf("slack: %s", ret)
-		err := slackMessage(ret)
+		err := slackMessage(tp.Cred, ret)
 		if err != nil {
 			log.Println(err)
 		}
 	}()
 
 	if subCo == "last" {
-		games, err := models.NHLGetLatestGames(q)
+		games, err := models.NHLGetLatestGames(tp.Querier)
 		if err != nil {
-			log.Printf("Error getting last games: %s\n", err)
-			return
+			return fmt.Errorf("error getting last games: %w", err)
 		}
 		if len(games) == 0 {
-			fmt.Println("no games found")
-			return
+			return errors.New("no games found")
 		}
 		log.Printf("Got %d NHL games on %s\n", len(games), games[0].Gametime.Format(format))
-		return
+		return nil
 	}
 
 	// Use only as needed.
 	if subCo == "teamseed" {
-		err := seedNHLTeams()
+		err := seedNHLTeams(tp.Querier)
 		if err != nil {
 			log.Println(err)
 		}
-		return
+		return nil
 	}
 
 	// Importer
 	d, err := time.Parse(format, subCo)
 	if err != nil {
-		fmt.Printf("NHL game importer error: bad date for '%s'. Did you mean 'last'?\n", subCo)
-		return
+		return fmt.Errorf("NHL game importer error: bad date for '%s'. Did you mean 'last'?", subCo)
 	}
-	ret, err = models.ImportNHL(q, d.Format(format))
+	ret, err = models.ImportNHL(tp.Querier, d.Format(format))
 	if err != nil {
-		ret = fmt.Sprintf("NHL importer error for %s: %s", subCo, err)
-		return
+		return fmt.Errorf("NHL importer error for %s: %w", subCo, err)
 	}
+
+	return nil
 }
 
 //go:embed nhl_teams.json
 var nhlTeamData []byte
 
-func seedNHLTeams() error {
+func seedNHLTeams(q *modelstore.Queries) error {
 	// These were taken from old api, based on teams from the 2023-24 game schedule.
 	activeIDs := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 52, 53, 54, 55, 59, 87, 88, 89, 90, 99}
 
@@ -97,7 +95,7 @@ func seedNHLTeams() error {
 			dbTeam.FranchiseID = apiTeam.FranchiseID
 			dbTeam.UpdatedAt = time.Now()
 
-			err := dbTeam.Create(Querier)
+			err := dbTeam.Create(q)
 			if err != nil {
 				return err
 			}

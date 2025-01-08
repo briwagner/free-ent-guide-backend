@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/pkg/authenticator"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/shaj13/go-guardian/v2/auth"
@@ -42,4 +47,19 @@ func (a *App) setupGoGuardian() {
 	a.JWTStrategy = jwtStrategy
 
 	a.Authy = &author
+}
+
+// Validate user with basic auth.
+func validateUser(ctx context.Context, r *http.Request, username, password string) (auth.Info, error) {
+	u := &models.User{Email: username, Password: password}
+	err := u.FindByEmail(Queries)
+	if err != nil {
+		log.Print(err)
+		return nil, fmt.Errorf("failed to load user")
+	}
+	if u.CheckPasswordHash(Queries, password) {
+		return auth.NewDefaultUser(u.Email, fmt.Sprintf("%d", u.ID), nil, nil), nil
+	}
+
+	return nil, fmt.Errorf("invalid credentials")
 }
