@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -26,13 +27,18 @@ func handleBackup(tp TaskPayload, args []string) error {
 		return err
 	}
 
-	fn := "ent_backup_" + time.Now().Format("01-02-2006"+".sql")
+	fn := "ent_backup_" + time.Now().Format("2006-01-02-15-04-05"+".sql")
 	f, err := os.Create(fn)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	f.Write(data)
+	_, err = f.Write(data)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("writing backup to %s\n", fn)
 
 	return nil
 }
