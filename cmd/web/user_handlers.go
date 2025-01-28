@@ -305,7 +305,7 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 // TV SHOWS
 
 // UsersAddShow creates or appends to user's stored shows.
-// Responds to /v1/users/add-show?username={name}&show={show_id}
+// Responds to /v1/users/add-show?show={show_id}
 func UsersAddShow(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
@@ -315,7 +315,7 @@ func UsersAddShow(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		// Infer user from authentication.
 		uname := r.Context().Value(ContextUserKey)
-		username := fmt.Sprintf("%v", uname) // what is the point of this??
+		username := fmt.Sprintf("%v", uname) /// make it a string
 		if username == "" {
 			w.WriteHeader(404)
 			w.Write([]byte("User not found"))
@@ -353,6 +353,54 @@ func UsersAddShow(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
+		return
+	default:
+		w.WriteHeader(405)
+		w.Write([]byte("Only POST requests are accepted."))
+	}
+}
+
+// UsersDeleteShow removes shows from user's saved shows.
+// Responds to /v1/users-delete-show?show={show_id}
+func UsersDeleteShow(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	switch r.Method {
+	case "OPTIONS":
+		w.WriteHeader(200)
+		return
+	case "POST":
+		// Infer user from authentication.
+		uname := r.Context().Value(ContextUserKey)
+		username := fmt.Sprintf("%v", uname) // make it a string
+		if username == "" {
+			w.WriteHeader(404)
+			w.Write([]byte("User not found"))
+			return
+		}
+		qShow := r.URL.Query().Get("show")
+		if qShow == "" {
+			w.WriteHeader(406)
+			w.Write([]byte("Must pass a show ID"))
+			return
+		}
+
+		q := r.Context().Value(models.SqlcStorageContextKey).(*modelstore.Queries)
+		user := &models.User{Email: username}
+		show, err := strconv.ParseInt(qShow, 10, 64)
+		if err != nil {
+			log.Printf("error parsing show %s", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		err = user.DeleteShow(q, show)
+		if err != nil {
+			log.Printf("Storage error %s", err.Error())
+			w.WriteHeader(500)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 		return
 	default:
 		w.WriteHeader(405)

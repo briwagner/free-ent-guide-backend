@@ -26,6 +26,7 @@ func NewRouter(app App) *mux.Router {
 	mux.HandleFunc("/v1/users/delete-zip", app.AuthHandler(http.HandlerFunc(UsersDeleteZip)))
 	mux.HandleFunc("/v1/users/clear-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
 	mux.HandleFunc("/v1/users/add-show", app.AuthHandler(http.HandlerFunc(UsersAddShow)))
+	mux.HandleFunc("/v1/users/delete-show", app.AuthHandler(http.HandlerFunc(UsersDeleteShow)))
 
 	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
 	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
