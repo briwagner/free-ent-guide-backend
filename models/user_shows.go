@@ -91,8 +91,8 @@ func (u *User) DeleteShow(q *modelstore.Queries, show int64) error {
 		err = q.UserClearShows(ctx, u.Email)
 	} else {
 		err = q.UserSetShows(ctx, modelstore.UserSetShowsParams{
-			Column1: data,
-			Email:   u.Email,
+			JSONEXTRACT: string(data),
+			Email:       u.Email,
 		})
 	}
 

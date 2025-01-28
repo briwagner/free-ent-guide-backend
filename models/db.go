@@ -21,6 +21,10 @@ func Setup(c cred.Cred) RawStore {
 	rawdb.SetMaxIdleConns(2)
 	rawdb.SetConnMaxIdleTime(time.Minute * 60)
 
+	// Log all queries.
+	// loggerAdapter := zerologadapter.New(zerolog.New(os.Stdout))
+	// rawdb = sqldblogger.OpenDriver(c.DB, rawdb.Driver(), loggerAdapter)
+
 	rawstore := RawStore{rawdb}
 
 	return rawstore
@@ -29,6 +33,5 @@ func Setup(c cred.Cred) RawStore {
 type StorageContextType string
 
 const (
-	// StorageContextKey     StorageContextType = "store" // deprecated GORM
 	SqlcStorageContextKey StorageContextType = "sqlc"
 )

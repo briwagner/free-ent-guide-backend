@@ -28,7 +28,7 @@ UPDATE users
 
 -- name: UserSetZips :exec
 UPDATE users
-  SET data = JSON_SET(data, '$.zips', CAST(? AS JSON))
+  SET data = JSON_SET(data, '$.zips', JSON_EXTRACT(?, "$"))
   WHERE email = ?;
 
 -- name: UserClearZips :exec
@@ -51,7 +51,7 @@ UPDATE users
 
 -- name: UserSetShows :exec
 UPDATE users
-  SET data = JSON_SET(data, '$.shows', CAST(? AS JSON))
+  SET data = JSON_SET(data, '$.shows', JSON_EXTRACT(?, "$"))
   WHERE email = ?;
 
 -- name: UserClearShows :exec

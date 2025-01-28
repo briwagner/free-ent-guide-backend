@@ -94,9 +94,10 @@ func (u *User) DeleteZip(q *modelstore.Queries, zip int64) error {
 	if len(newZips) == 0 {
 		err = q.UserClearZips(ctx, u.Email)
 	} else {
+		log.Printf("doing user set zips with %s and %s", data, u.Email)
 		err = q.UserSetZips(ctx, modelstore.UserSetZipsParams{
-			Column1: data,
-			Email:   u.Email,
+			JSONEXTRACT: string(data),
+			Email:       u.Email,
 		})
 	}
 
