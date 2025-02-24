@@ -24,7 +24,6 @@ func handleDiscoverMovies(tp TaskPayload, args []string) error {
 		return err
 	}
 
-	// mdb := moviedb.MovieDb{Key: tp.Cred.Moviedb}
 	mdb := moviedb.NewMovieDB(tp.Cred.Moviedb)
 	results, err := mdb.GetDiscoverPaged(subCo)
 	if err != nil {
