@@ -15,7 +15,9 @@ import (
 const base = "https://api.themoviedb.org/3/"
 
 type MovieDb struct {
-	Key      string
+	Key        string
+	popularity float64 // filter movies in Discover
+
 	Status   int
 	Response []byte
 	Token    Token
@@ -25,6 +27,13 @@ type Token struct {
 	Success bool   `json:"success"`
 	Expires string `json:"expires_at"`
 	Token   string `json:"request_token"`
+}
+
+func NewMovieDB(key string) *MovieDb {
+	return &MovieDb{
+		Key:        key,
+		popularity: float64(20),
+	}
 }
 
 // GetTrending retrieves the trending TV listings.
@@ -72,7 +81,7 @@ func (m *MovieDb) GetDiscoverPaged(date string) ([]MovieRelease, error) {
 		return mr, err
 	}
 
-	filtered := FilterReleases(ti, mr)
+	filtered := m.filterReleases(ti, mr)
 	SortByDate(filtered)
 
 	return filtered, nil
@@ -96,9 +105,9 @@ func (m *MovieDb) GetDiscover(date string, p string) {
 	_ = m.fetch(url, params)
 }
 
-// GetToken retrieves a token.
+// getToken retrieves a token.
 // TODO unused except in test.
-func (m *MovieDb) GetToken() error {
+func (m *MovieDb) getToken() error {
 	url := base + "authentication/token/new"
 	p := map[string]string{
 		"api_key": m.Key,
@@ -169,13 +178,13 @@ func SortByDate(rel []MovieRelease) {
 	})
 }
 
-func FilterReleases(d time.Time, rel []MovieRelease) []MovieRelease {
+func (m *MovieDb) filterReleases(d time.Time, rel []MovieRelease) []MovieRelease {
 	var filtered []MovieRelease
 
 	limit := d.Add(time.Hour * 24 * 30)
 	for _, r := range rel {
 		// This list is really big. How to control?
-		if r.ReleaseDate.Time.Before(limit) && r.Popularity > float64(50) {
+		if r.ReleaseDate.Time.Before(limit) && r.Popularity > m.popularity {
 			filtered = append(filtered, r)
 		}
 	}

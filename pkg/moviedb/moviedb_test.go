@@ -53,7 +53,7 @@ func TestGetDiscover(t *testing.T) {
 
 func TestGetToken(t *testing.T) {
 	mdb := MovieDb{Key: c.Moviedb}
-	mdb.GetToken()
+	mdb.getToken()
 
 	if mdb.Status != http.StatusOK {
 		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", mdb.Status, http.StatusOK)
@@ -64,6 +64,8 @@ func TestGetToken(t *testing.T) {
 }
 
 func TestDiscover(t *testing.T) {
+	mdb := NewMovieDB("secret")
+
 	data, err := os.ReadFile("./testdata/discover.json")
 	require.NoError(t, err)
 
@@ -81,7 +83,7 @@ func TestDiscover(t *testing.T) {
 
 	ti, err := time.Parse("2006-01-02", "2024-08-16")
 	require.NoError(t, err)
-	filtered := FilterReleases(ti, results.Results)
+	filtered := mdb.filterReleases(ti, results.Results)
 	assert.Len(t, filtered, 8)
 
 	limit := ti.Add(time.Hour * 24 * 30)

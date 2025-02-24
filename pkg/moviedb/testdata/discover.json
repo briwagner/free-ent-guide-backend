@@ -1,0 +1,403 @@
+{
+  "page": 1,
+  "results": [
+      {
+          "adult": false,
+          "backdrop_path": "/yhEu41kat5sZ5QhCdZnh3Vypu5V.jpg",
+          "genre_ids": [
+              27,
+              53,
+              35
+          ],
+          "id": 1225377,
+          "original_language": "en",
+          "original_title": "The Mouse Trap",
+          "overview": "It's Alex's 21st Birthday, but she's stuck at the amusement arcade on a late shift so her friends decide to surprise her, but a masked killer dressed as Mickey Mouse decides to play a game of his own with them which she must survive.",
+          "popularity": 940.199,
+          "poster_path": "/3ovFaFeojLFIl5ClqhtgYMDS8sE.jpg",
+          "release_date": "2024-08-23",
+          "title": "The Mouse Trap",
+          "video": false,
+          "vote_average": 2.625,
+          "vote_count": 4
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/4oYaZcYovt34sd60X2IL0ayg2js.jpg",
+          "genre_ids": [
+              16,
+              12,
+              10751,
+              35
+          ],
+          "id": 1241982,
+          "original_language": "en",
+          "original_title": "Moana 2",
+          "overview": "After receiving an unexpected call from her wayfinding ancestors, Moana journeys alongside Maui and a new crew to the far seas of Oceania and into dangerous, long-lost waters for an adventure unlike anything she's ever faced.",
+          "popularity": 206.474,
+          "poster_path": "/yh64qw9mgXBvlaWDi7Q9tpUBAvH.jpg",
+          "release_date": "2024-11-27",
+          "title": "Moana 2",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/v9Du2HC3hlknAvGlWhquRbeifwW.jpg",
+          "genre_ids": [
+              28,
+              12,
+              878
+          ],
+          "id": 539972,
+          "original_language": "en",
+          "original_title": "Kraven the Hunter",
+          "overview": "Sergei Kravinoff is a big game hunter, who takes a magical serum giving him superhuman abilities and a longer life.",
+          "popularity": 224.971,
+          "poster_path": "/1GvBhRxY6MELDfxFrete6BNhBB5.jpg",
+          "release_date": "2024-12-11",
+          "title": "Kraven the Hunter",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/mvDMt3JZ5zlsrXduGzj9jBEfVBT.jpg",
+          "genre_ids": [
+              27,
+              53,
+              80
+          ],
+          "id": 1034541,
+          "original_language": "en",
+          "original_title": "Terrifier 3",
+          "overview": "Art the Clown unleashes chaos on the unsuspecting residents of Miles County as they peacefully drift off to sleep on Christmas Eve.",
+          "popularity": 211.256,
+          "poster_path": "/l1175hgL5DoXnqeZQCcU3eZIdhX.jpg",
+          "release_date": "2024-10-10",
+          "title": "Terrifier 3",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/8c5DY9CWuwiIHIcit5qMHDpNFpb.jpg",
+          "genre_ids": [
+              35,
+              27,
+              14
+          ],
+          "id": 917496,
+          "original_language": "en",
+          "original_title": "Beetlejuice Beetlejuice",
+          "overview": "Thirty-six years after the events of the first film, the Deetz family returns home to Winter River following Charles Deetz's unexpected death. Lydia's life is turned upside down when her rebellious teenage daughter, Astrid, discovers the mysterious model of the town in the attic and the portal to the Afterlife is accidentally opened, releasing Betelgeuse.",
+          "popularity": 186.334,
+          "poster_path": "/kKgQzkUCnQmeTPkyIwHly2t6ZFI.jpg",
+          "release_date": "2024-09-04",
+          "title": "Beetlejuice Beetlejuice",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/3V4kLQg0kSqPLctI5ziYWabAZYF.jpg",
+          "genre_ids": [
+              28,
+              878,
+              12
+          ],
+          "id": 912649,
+          "original_language": "en",
+          "original_title": "Venom: The Last Dance",
+          "overview": "Eddie and Venom are on the run. Hunted by both of their worlds and with the net closing in, the duo are forced into a devastating decision that will bring the curtains down on Venom and Eddie's last dance.",
+          "popularity": 154.11,
+          "poster_path": "/8mRrl8lc7TrbdA1PFzUhQ0nFZ7R.jpg",
+          "release_date": "2024-10-23",
+          "title": "Venom: The Last Dance",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/vrncuH8IDqQ5M47XPk19yxY8o1b.jpg",
+          "genre_ids": [
+              878
+          ],
+          "id": 1003596,
+          "original_language": "en",
+          "original_title": "Avengers: Doomsday",
+          "overview": "An upcoming film in the MCU’s sixth Phase and part of The Multiverse Saga. Plot unknown.",
+          "popularity": 132.501,
+          "poster_path": "/eO6OdA4RDRWeCVlDMcsoxWYFySD.jpg",
+          "release_date": "2026-04-29",
+          "title": "Avengers: Doomsday",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/dhvcoBBQ7ReFoYGflxpFERZMmtg.jpg",
+          "genre_ids": [
+              12,
+              10751,
+              18
+          ],
+          "id": 762509,
+          "original_language": "en",
+          "original_title": "Mufasa: The Lion King",
+          "overview": "Rafiki relays the legend of Mufasa to lion cub Kiara, daughter of Simba and Nala. Told in flashbacks, the story introduces Mufasa as an orphaned cub, lost and alone until he meets a sympathetic lion named Taka—the heir to a royal bloodline. The chance meeting sets in motion a journey of misfits searching for their destiny and working together to evade a threatening and deadly foe.",
+          "popularity": 127.631,
+          "poster_path": "/9bXHaLlsFYpJUutg4E6WXAjaxDi.jpg",
+          "release_date": "2024-12-18",
+          "title": "Mufasa: The Lion King",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/bxwKC4qAbceMgHU1xCCTBK1eYdn.jpg",
+          "genre_ids": [
+              28,
+              53,
+              80
+          ],
+          "id": 5492,
+          "original_language": "en",
+          "original_title": "Gunner",
+          "overview": "While on a camping trip in order to reconnect, war veteran Colonel Lee Gunner must save his two sons from a gang of violent bikers when they're kidnapped after accidentally stumbling upon to a massive drug operation.",
+          "popularity": 132.776,
+          "poster_path": "/eEkAY5veAnwxUOOlpF62KawkFO9.jpg",
+          "release_date": "2024-08-16",
+          "title": "Gunner",
+          "video": false,
+          "vote_average": 4.591,
+          "vote_count": 11
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/h0rLRgh21cQS2Mrou9fEcZQuaku.jpg",
+          "genre_ids": [
+              878
+          ],
+          "id": 1003598,
+          "original_language": "en",
+          "original_title": "Avengers: Secret Wars",
+          "overview": "An upcoming film in Phase 6 of the Marvel Cinematic Universe and the finale of The Multiverse Saga. Plot TBA.",
+          "popularity": 99.701,
+          "poster_path": "/f0YBuh4hyiAheXhh4JnJWoKi9g5.jpg",
+          "release_date": "2027-05-05",
+          "title": "Avengers: Secret Wars",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": null,
+          "genre_ids": [
+              12,
+              35,
+              10751,
+              14
+          ],
+          "id": 1108427,
+          "original_language": "en",
+          "original_title": "Moana",
+          "overview": "In Ancient Polynesia, when a terrible curse incurred by Maui reaches the island of an impetuous Chieftain, his willful daughter answers the Ocean's call to seek out the demigod to set things right.  Live-action adaptation of the 2016 Disney animated film 'Moana'",
+          "popularity": 107.277,
+          "poster_path": "/ys0jZr0quHERDUEoCboGQEKPvgQ.jpg",
+          "release_date": "2026-07-09",
+          "title": "Moana",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/tbgIhYwQ5IAgNaFU1SBBxxNXCmm.jpg",
+          "genre_ids": [
+              28,
+              80,
+              53
+          ],
+          "id": 646097,
+          "original_language": "en",
+          "original_title": "Rebel Ridge",
+          "overview": "A former Marine confronts corruption in a small town when local law enforcement unjustly seizes the bag of cash he needs to post his cousin's bail.",
+          "popularity": 126.421,
+          "poster_path": "/rOIy79DDrmX8ecveVBB6QIavd02.jpg",
+          "release_date": "2024-09-05",
+          "title": "Rebel Ridge",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/e86BQFrxPtDZwv4CfzfJJFufUAm.jpg",
+          "genre_ids": [
+              53,
+              9648
+          ],
+          "id": 840705,
+          "original_language": "en",
+          "original_title": "Blink Twice",
+          "overview": "When tech billionaire Slater King meets cocktail waitress Frida at his fundraising gala, he invites her to join him and his friends on a dream vacation on his private island. But despite the epic setting, beautiful people, ever-flowing champagne, and late-night dance parties, Frida can sense that there’s something terrifying hiding beneath the island’s lush facade.",
+          "popularity": 92.491,
+          "poster_path": "/vy7eA40pQCWUtgE0FF4vplzsIFq.jpg",
+          "release_date": "2024-08-21",
+          "title": "Blink Twice",
+          "video": false,
+          "vote_average": 5.0,
+          "vote_count": 2
+      },
+      {
+          "adult": false,
+          "backdrop_path": null,
+          "genre_ids": [
+              27
+          ],
+          "id": 1038392,
+          "original_language": "en",
+          "original_title": "The Conjuring: Last Rites",
+          "overview": "The next chapter in the story of Ed and Lorraine Warren.",
+          "popularity": 114.794,
+          "poster_path": "/9a58oKKJejkohIXO6wGRb45A3ui.jpg",
+          "release_date": "2025-09-04",
+          "title": "The Conjuring: Last Rites",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/qYXeKnlqDkFliZ1FVdjGdg8mpNY.jpg",
+          "genre_ids": [
+              878,
+              10751,
+              35,
+              12
+          ],
+          "id": 939243,
+          "original_language": "en",
+          "original_title": "Sonic the Hedgehog 3",
+          "overview": "Sonic, Tails, and Knuckles face a mysterious new adversary, Shadow the Hedgehog, as Dr. Robotnik reemerges after his defeat with a new plan.",
+          "popularity": 87.185,
+          "poster_path": "/hknd8HZkMm7QZAsA94YJvIuXqh9.jpg",
+          "release_date": "2024-12-19",
+          "title": "Sonic the Hedgehog 3",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": null,
+          "genre_ids": [
+              28,
+              80,
+              53
+          ],
+          "id": 755679,
+          "original_language": "en",
+          "original_title": "Fast X: Part 2",
+          "overview": "The eleventh installment in The Fast Saga.",
+          "popularity": 53.396,
+          "poster_path": "/lD8V3DBban95Mxz4sjuA81Tw771.jpg",
+          "release_date": "2026-06-22",
+          "title": "Fast X: Part 2",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/l60qbxRAIvVWhPIYj9Kj9it7Mtw.jpg",
+          "genre_ids": [
+              28,
+              14,
+              27
+          ],
+          "id": 957452,
+          "original_language": "en",
+          "original_title": "The Crow",
+          "overview": "Soulmates Eric and Shelly are brutally murdered when the demons of her dark past catch up with them. Given the chance to save his true love by sacrificing himself, Eric sets out to seek merciless revenge on their killers, traversing the worlds of the living and the dead to put the wrong things right.",
+          "popularity": 69.218,
+          "poster_path": "/AqchrmqqSCsEvhuinXgFXTD8q83.jpg",
+          "release_date": "2024-08-21",
+          "title": "The Crow",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/AberucUf0ir8utdOZu61vkceFkc.jpg",
+          "genre_ids": [
+              16,
+              878,
+              10751
+          ],
+          "id": 1184918,
+          "original_language": "en",
+          "original_title": "The Wild Robot",
+          "overview": "A robot — ROZZUM unit 7134, “Roz” for short — is shipwrecked on an uninhabited island and must learn to adapt to the harsh surroundings, gradually building relationships with the animals on the island and becoming the adoptive parent of an orphaned gosling.",
+          "popularity": 94.676,
+          "poster_path": "/wTnV3PCVW5O92JMrFvvrRcV39RU.jpg",
+          "release_date": "2024-09-12",
+          "title": "The Wild Robot",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/9LsZh2O1sidMvxKuMCI9RDzdZj4.jpg",
+          "genre_ids": [
+              80,
+              53,
+              28
+          ],
+          "id": 1245708,
+          "original_language": "en",
+          "original_title": "Crescent City",
+          "overview": "When a ruthless serial killer terrorizes a small Southern town, everyone becomes a suspect -- including local authorities. As the body count rises and the dark mystery deepens, the chief detective becomes haunted by the horrors of his past.",
+          "popularity": 90.943,
+          "poster_path": "/kWwIkWextuqVUvAEM9DwJfEfkKe.jpg",
+          "release_date": "2024-08-16",
+          "title": "Crescent City",
+          "video": false,
+          "vote_average": 6.2,
+          "vote_count": 5
+      },
+      {
+          "adult": false,
+          "backdrop_path": "/t461FGnPy3b8wLoJ252CwKycAuv.jpg",
+          "genre_ids": [
+              28,
+              12,
+              53
+          ],
+          "id": 575265,
+          "original_language": "en",
+          "original_title": "Mission: Impossible 8",
+          "overview": "The eighth installment of the Mission: Impossible franchise.",
+          "popularity": 69.198,
+          "poster_path": "/mRhEg5hBCSi2aOdercqLC3AmT0A.jpg",
+          "release_date": "2025-05-22",
+          "title": "Mission: Impossible 8",
+          "video": false,
+          "vote_average": 0.0,
+          "vote_count": 0
+      }
+  ],
+  "total_pages": 73,
+  "total_results": 1452
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"free-ent-guide-backend/pkg/moviedb"
 	"log"
@@ -23,10 +24,15 @@ func handleDiscoverMovies(tp TaskPayload, args []string) error {
 		return err
 	}
 
-	mdb := moviedb.MovieDb{Key: tp.Cred.Moviedb}
+	// mdb := moviedb.MovieDb{Key: tp.Cred.Moviedb}
+	mdb := moviedb.NewMovieDB(tp.Cred.Moviedb)
 	results, err := mdb.GetDiscoverPaged(subCo)
 	if err != nil {
 		return err
+	}
+
+	if len(results) == 0 {
+		return errors.New("no results for discovery movies")
 	}
 
 	fn := "discover.json"

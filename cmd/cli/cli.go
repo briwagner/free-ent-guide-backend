@@ -123,14 +123,14 @@ func buildTaskCommander(c *cred.Cred, q *modelstore.Queries) TaskCommander {
 	tasks["gup"] = Task{
 		Command:     "gup",
 		Description: "Fetch game updates for NHL or MLB, for date provided",
-		Subcommands: []string{"valid date, e.g. 202-01-06"},
+		Subcommands: []string{"valid date, e.g. 2025-01-06"},
 		Args:        2,
 		Runner:      handleGameUpdates,
 	}
 	tasks["discover"] = Task{
 		Command:     "discover",
 		Description: "Fetch new movies, for data provided",
-		Subcommands: []string{"valid date, e.g. 202-01-06"},
+		Subcommands: []string{"valid date, e.g. 2025-01-06"},
 		Args:        2,
 		Runner:      handleDiscoverMovies,
 	}
