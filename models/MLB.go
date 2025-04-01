@@ -337,12 +337,13 @@ func (t *MLBTeam) NextGamesByTeam(ctx context.Context, q *modelstore.Queries, d 
 	gs := make([]MLBGame, len(games))
 	for i, g := range games {
 		gs[i] = MLBGame{
-			ID:       uint(g.ID),
-			GameID:   int(g.GameID),
-			Gametime: g.Gametime.Time,
-			Status:   g.Status.String,
-			Link:     g.Link.String,
-			HomeID:   uint(g.Homeid),
+			ID:          uint(g.ID),
+			GameID:      int(g.GameID),
+			Gametime:    g.Gametime.Time,
+			Description: g.Description.String,
+			Status:      g.Status.String,
+			Link:        g.Link.String,
+			HomeID:      uint(g.Homeid),
 			Home: MLBTeam{
 				ID:     uint(g.Homeid),
 				TeamID: int(g.Hometeamid),

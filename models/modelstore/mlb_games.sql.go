@@ -224,8 +224,9 @@ SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.ho
 	FROM mlb_games as mg
 	INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
 	INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
-	WHERE mg.gametime > ?
+	WHERE mg.gametime >= ?
 	AND (at.team_id = ? OR ht.team_id = ?)
+	ORDER BY mg.gametime
 	LIMIT 5
 `
 
