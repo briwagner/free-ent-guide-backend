@@ -62,14 +62,14 @@ func (g *MLBGame) Create(q *modelstore.Queries) error {
 	return nil
 }
 
-func (mg *MLBGame) FindByGameID(q *modelstore.Queries, gameID int) error {
+func FindByGameID(q *modelstore.Queries, gameID int) (*MLBGame, error) {
 	row, err := q.MLBFindGameByID(context.Background(), int64(gameID))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	mg.FromDB(row)
-	return nil
+	g := fromDB(row)
+	return g, nil
 }
 
 // UpdateScore pulls update from MLB api.
@@ -103,30 +103,6 @@ func (mg *MLBGame) UpdateScoreV2(q *modelstore.Queries) error {
 		Status:       sql.NullString{Valid: true, String: mg.Status},
 		GameID:       int64(mg.GameID),
 	})
-}
-
-func (mg *MLBGame) FromDB(row modelstore.MLBFindGameByIDRow) {
-	mg.ID = uint(row.ID)
-	mg.GameID = int(row.GameID)
-	mg.Gametime = row.Gametime.Time
-	mg.Description = row.Description.String
-	mg.Status = row.Status.String
-	mg.Link = row.Link.String
-	mg.HomeID = uint(row.Homeid)
-	mg.Home = MLBTeam{
-		ID:     uint(row.Homeid),
-		TeamID: int(row.Hometeamid),
-		Name:   row.Homename.String,
-	}
-	mg.HomeScore = int(row.HomeScore.Int64)
-
-	mg.VisitorID = uint(row.Awayid)
-	mg.Visitor = MLBTeam{
-		ID:     uint(row.Awayid),
-		TeamID: int(row.Awayteamid),
-		Name:   row.Awayname.String,
-	}
-	mg.VisitorScore = int(row.VisitorScore.Int64)
 }
 
 type MLBTeam struct {
@@ -339,4 +315,90 @@ func (g *MLBGame) GetUpdate() error {
 	g.Inning = gameup.Inning
 
 	return nil
+}
+
+type MLBTeamData struct {
+	Team      *MLBTeam
+	NextGames []MLBGame
+	PastGames []MLBGame
+}
+
+// NextGamesByTeam fetches next 5 games for the team, either home or visitor.
+func (t *MLBTeam) NextGamesByTeam(ctx context.Context, q *modelstore.Queries, d time.Time) (*MLBTeamData, error) {
+	games, err := q.MLBNextGamesByTeam(ctx, modelstore.MLBNextGamesByTeamParams{
+		Gametime: sql.NullTime{Time: d, Valid: true},
+		TeamID:   int64(t.TeamID),
+		TeamID_2: int64(t.TeamID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get games: %s", err)
+	}
+
+	gs := make([]MLBGame, len(games))
+	for i, g := range games {
+		gs[i] = MLBGame{
+			ID:       uint(g.ID),
+			GameID:   int(g.GameID),
+			Gametime: g.Gametime.Time,
+			Status:   g.Status.String,
+			Link:     g.Link.String,
+			HomeID:   uint(g.Homeid),
+			Home: MLBTeam{
+				ID:     uint(g.Homeid),
+				TeamID: int(g.Hometeamid),
+				Name:   g.Homename.String,
+			},
+			HomeScore: int(g.HomeScore.Int64),
+			VisitorID: uint(g.Awayid),
+			Visitor: MLBTeam{
+				ID:     uint(g.Awayid),
+				TeamID: int(g.Awayid),
+				Name:   g.Awayname.String,
+			},
+			VisitorScore: int(g.VisitorScore.Int64),
+		}
+		// Grab the team data. More than name??
+		if i == 0 {
+			if g.Hometeamid == int64(t.TeamID) {
+				t.Name = g.Homename.String
+			} else if g.Awayteamid == int64(t.TeamID) {
+				t.Name = g.Awayname.String
+			}
+		}
+	}
+
+	td := MLBTeamData{
+		Team:      t,
+		NextGames: gs,
+	}
+	return &td, nil
+}
+
+// fromDB converts the sqlc type into the general MLBGame type.
+// TODO can this be a more generic method? This doesn't work for NextGamesByTeam, for example.
+func fromDB(row modelstore.MLBFindGameByIDRow) *MLBGame {
+	var mg MLBGame
+	mg.ID = uint(row.ID)
+	mg.GameID = int(row.GameID)
+	mg.Gametime = row.Gametime.Time
+	mg.Description = row.Description.String
+	mg.Status = row.Status.String
+	mg.Link = row.Link.String
+	mg.HomeID = uint(row.Homeid)
+	mg.Home = MLBTeam{
+		ID:     uint(row.Homeid),
+		TeamID: int(row.Hometeamid),
+		Name:   row.Homename.String,
+	}
+	mg.HomeScore = int(row.HomeScore.Int64)
+
+	mg.VisitorID = uint(row.Awayid)
+	mg.Visitor = MLBTeam{
+		ID:     uint(row.Awayid),
+		TeamID: int(row.Awayteamid),
+		Name:   row.Awayname.String,
+	}
+	mg.VisitorScore = int(row.VisitorScore.Int64)
+
+	return &mg
 }

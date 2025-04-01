@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// cache_test.go runs init here to set:
+// cache_test.go runs init here. To set:
 // var Queries *modelstore.Queries
 
 func TestDB_MLB(t *testing.T) {
@@ -72,6 +72,19 @@ func TestGamesByDate(t *testing.T) {
 		assert.NotNil(t, v.ID)
 		assert.NotNil(t, v.GameID)
 	}
+}
+
+func TestGameByID(t *testing.T) {
+	t.Skipf("need a valid DB, i.e. switch to ent_v2")
+
+	ctx := context.Background()
+	team := models.MLBTeam{ID: 29}
+	ti, err := time.Parse("2006-01-02", "2025-03-25")
+	require.NoError(t, err)
+	gameData, err := team.NextGamesByTeam(ctx, Queries, ti)
+	require.NoError(t, err)
+
+	assert.Equal(t, 4, len(gameData.NextGames))
 }
 
 func mlbWipe(t *testing.T) {

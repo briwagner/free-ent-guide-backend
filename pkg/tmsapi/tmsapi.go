@@ -16,13 +16,13 @@ type TmsApi struct {
 }
 
 // GetCinema returns listings for movies showing by date, zip.
-func (t *TmsApi) GetCinema(zip string, date string) {
+func (t *TmsApi) GetCinema(zip string, date string) error {
 	url := base + "movies/showings"
 	params := make(map[string]string)
 	params["zip"] = zip
 	params["startDate"] = date
 
-	_ = t.fetch(url, params)
+	return t.fetch(url, params)
 }
 
 // GetTvMovies returns listings for tv movies by date, lineup.

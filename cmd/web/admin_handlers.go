@@ -48,6 +48,7 @@ func GamesImporter(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DISABLED
 // NHLImportHandler responds to the HTTP request and runs
 // the Docker import for NHL games on the specified date.
 func NHLImportHandler(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +69,7 @@ func NHLImportHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("ok"))
 }
 
+// DISABLED
 // MLBImportHandler responds to the HTTP request and runs
 // the Docker import for MLB games on the specified date.
 func MLBImportHandler(w http.ResponseWriter, r *http.Request) {

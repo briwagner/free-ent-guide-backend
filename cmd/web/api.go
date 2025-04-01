@@ -62,6 +62,7 @@ func main() {
 	defer cancel()
 
 	// do something before shutdown.
+	// e.g. send slack message. Need to move cli_slack to pkg/
 
 	srv.Shutdown(ctx)
 	log.Println("shutting down")

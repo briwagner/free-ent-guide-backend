@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"free-ent-guide-backend/models"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -30,6 +32,7 @@ func NewRouter(app App) *mux.Router {
 
 	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
 	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
+	mux.HandleFunc("/v1/sports/mlb/team/{team_id}", MLBTeamHandler)
 
 	mux.HandleFunc("/v1/sports/nhl/games", NHLGamesHandler)
 	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
@@ -43,4 +46,13 @@ func NewRouter(app App) *mux.Router {
 	mux.Use(StorageHandler)
 
 	return mux
+}
+
+// Middleware to add Storage ref to context.
+func StorageHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), models.SqlcStorageContextKey, Queries)
+		r = r.WithContext(ctx)
+		h.ServeHTTP(w, r)
+	})
 }
