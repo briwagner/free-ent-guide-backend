@@ -107,6 +107,75 @@ func (q *Queries) MLBFindGameByID(ctx context.Context, gameID int64) (MLBFindGam
 	return i, err
 }
 
+const mLBLastGamesByTeam = `-- name: MLBLastGamesByTeam :many
+SELECT mlb_games.id, mlb_games.updated_at, mlb_games.gametime, mlb_games.game_id, mlb_games.description, mlb_games.status, mlb_games.link, mlb_games.home_id, mlb_games.visitor_id, mlb_games.home_score, mlb_games.visitor_score,
+		ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+		at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+	FROM mlb_games
+	INNER JOIN mlb_teams AS ht ON (mlb_games.home_id = ht.id)
+	INNER JOIN mlb_teams AS at ON (mlb_games.visitor_id = at.id)
+	WHERE mlb_games.gametime < ?
+	AND (at.team_id = ? OR ht.team_id = ?)
+	ORDER BY mlb_games.gametime DESC
+	LIMIT 5
+`
+
+type MLBLastGamesByTeamParams struct {
+	Gametime sql.NullTime
+	TeamID   int64
+}
+
+type MLBLastGamesByTeamRow struct {
+	MlbGame    MlbGame
+	Homeid     int64
+	Hometeamid int64
+	Homename   sql.NullString
+	Awayid     int64
+	Awayteamid int64
+	Awayname   sql.NullString
+}
+
+func (q *Queries) MLBLastGamesByTeam(ctx context.Context, arg MLBLastGamesByTeamParams) ([]MLBLastGamesByTeamRow, error) {
+	rows, err := q.db.QueryContext(ctx, mLBLastGamesByTeam, arg.Gametime, arg.TeamID, arg.TeamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MLBLastGamesByTeamRow
+	for rows.Next() {
+		var i MLBLastGamesByTeamRow
+		if err := rows.Scan(
+			&i.MlbGame.ID,
+			&i.MlbGame.UpdatedAt,
+			&i.MlbGame.Gametime,
+			&i.MlbGame.GameID,
+			&i.MlbGame.Description,
+			&i.MlbGame.Status,
+			&i.MlbGame.Link,
+			&i.MlbGame.HomeID,
+			&i.MlbGame.VisitorID,
+			&i.MlbGame.HomeScore,
+			&i.MlbGame.VisitorScore,
+			&i.Homeid,
+			&i.Hometeamid,
+			&i.Homename,
+			&i.Awayid,
+			&i.Awayteamid,
+			&i.Awayname,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const mLBLatestGames = `-- name: MLBLatestGames :many
 SELECT id, gametime
   FROM mlb_games
@@ -148,13 +217,13 @@ func (q *Queries) MLBLatestGames(ctx context.Context) ([]MLBLatestGamesRow, erro
 
 const mLBLoadGamesByDate = `-- name: MLBLoadGamesByDate :many
 SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.home_score, mg.visitor_score,
-  ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
-  at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
-  FROM mlb_games AS mg
-  INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
-  INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
-  WHERE mg.gametime BETWEEN ? AND ?
-  ORDER BY mg.gametime
+		ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+		at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+	FROM mlb_games AS mg
+	INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
+	INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
+	WHERE mg.gametime BETWEEN ? AND ?
+	ORDER BY mg.gametime
 `
 
 type MLBLoadGamesByDateParams struct {
@@ -218,43 +287,35 @@ func (q *Queries) MLBLoadGamesByDate(ctx context.Context, arg MLBLoadGamesByDate
 }
 
 const mLBNextGamesByTeam = `-- name: MLBNextGamesByTeam :many
-SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.home_score, mg.visitor_score,
-	ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
-	at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
-	FROM mlb_games as mg
-	INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
-	INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
-	WHERE mg.gametime >= ?
+SELECT mlb_games.id, mlb_games.updated_at, mlb_games.gametime, mlb_games.game_id, mlb_games.description, mlb_games.status, mlb_games.link, mlb_games.home_id, mlb_games.visitor_id, mlb_games.home_score, mlb_games.visitor_score,
+		ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+		at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+	FROM mlb_games
+	INNER JOIN mlb_teams AS ht ON (mlb_games.home_id = ht.id)
+	INNER JOIN mlb_teams AS at ON (mlb_games.visitor_id = at.id)
+	WHERE mlb_games.gametime >= ?
 	AND (at.team_id = ? OR ht.team_id = ?)
-	ORDER BY mg.gametime
+	ORDER BY mlb_games.gametime
 	LIMIT 5
 `
 
 type MLBNextGamesByTeamParams struct {
 	Gametime sql.NullTime
 	TeamID   int64
-	TeamID_2 int64
 }
 
 type MLBNextGamesByTeamRow struct {
-	ID           int64
-	GameID       int64
-	Gametime     sql.NullTime
-	Description  sql.NullString
-	Status       sql.NullString
-	Link         sql.NullString
-	HomeScore    sql.NullInt64
-	VisitorScore sql.NullInt64
-	Homeid       int64
-	Hometeamid   int64
-	Homename     sql.NullString
-	Awayid       int64
-	Awayteamid   int64
-	Awayname     sql.NullString
+	MlbGame    MlbGame
+	Homeid     int64
+	Hometeamid int64
+	Homename   sql.NullString
+	Awayid     int64
+	Awayteamid int64
+	Awayname   sql.NullString
 }
 
 func (q *Queries) MLBNextGamesByTeam(ctx context.Context, arg MLBNextGamesByTeamParams) ([]MLBNextGamesByTeamRow, error) {
-	rows, err := q.db.QueryContext(ctx, mLBNextGamesByTeam, arg.Gametime, arg.TeamID, arg.TeamID_2)
+	rows, err := q.db.QueryContext(ctx, mLBNextGamesByTeam, arg.Gametime, arg.TeamID, arg.TeamID)
 	if err != nil {
 		return nil, err
 	}
@@ -263,14 +324,17 @@ func (q *Queries) MLBNextGamesByTeam(ctx context.Context, arg MLBNextGamesByTeam
 	for rows.Next() {
 		var i MLBNextGamesByTeamRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.GameID,
-			&i.Gametime,
-			&i.Description,
-			&i.Status,
-			&i.Link,
-			&i.HomeScore,
-			&i.VisitorScore,
+			&i.MlbGame.ID,
+			&i.MlbGame.UpdatedAt,
+			&i.MlbGame.Gametime,
+			&i.MlbGame.GameID,
+			&i.MlbGame.Description,
+			&i.MlbGame.Status,
+			&i.MlbGame.Link,
+			&i.MlbGame.HomeID,
+			&i.MlbGame.VisitorID,
+			&i.MlbGame.HomeScore,
+			&i.MlbGame.VisitorScore,
 			&i.Homeid,
 			&i.Hometeamid,
 			&i.Homename,

@@ -81,7 +81,7 @@ func TestGameByID(t *testing.T) {
 	team := models.MLBTeam{ID: 29}
 	ti, err := time.Parse("2006-01-02", "2025-03-25")
 	require.NoError(t, err)
-	gameData, err := team.NextGamesByTeam(ctx, Queries, ti)
+	gameData, err := team.GamesByTeam(ctx, Queries, ti)
 	require.NoError(t, err)
 
 	assert.Equal(t, 4, len(gameData.NextGames))

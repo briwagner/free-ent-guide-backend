@@ -15,7 +15,9 @@ type SlackBody struct {
 }
 
 func slackMessage(c *cred.Cred, msg string) error {
-	url := c.SlackURL
+	if c.SlackURL == "" {
+		return nil
+	}
 
 	var b strings.Builder
 	_, err := b.WriteString(msg)
@@ -31,7 +33,7 @@ func slackMessage(c *cred.Cred, msg string) error {
 	}
 
 	cli := &http.Client{}
-	resp, err := cli.Post(url, "applicaton/json", bytes.NewBuffer(data))
+	resp, err := cli.Post(c.SlackURL, "applicaton/json", bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // NHLGameHandler returns a single scheduled game by GameID,
@@ -197,7 +198,8 @@ func MLBTeamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	team := models.MLBTeam{TeamID: teamID}
-	games, err := team.NextGamesByTeam(r.Context(), common.queries, common.now)
+	// Use midnight to get any games this day.
+	games, err := team.GamesByTeam(r.Context(), common.queries, common.now.UTC().Truncate(24*time.Hour))
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusServiceUnavailable)

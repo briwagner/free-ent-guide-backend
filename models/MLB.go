@@ -323,56 +323,81 @@ type MLBTeamData struct {
 	PastGames []MLBGame
 }
 
-// NextGamesByTeam fetches next 5 games for the team, either home or visitor.
-func (t *MLBTeam) NextGamesByTeam(ctx context.Context, q *modelstore.Queries, d time.Time) (*MLBTeamData, error) {
+// GamesByTeam fetches next and last 5 games for the team, either home or visitor.
+func (t *MLBTeam) GamesByTeam(ctx context.Context, q *modelstore.Queries, d time.Time) (*MLBTeamData, error) {
 	games, err := q.MLBNextGamesByTeam(ctx, modelstore.MLBNextGamesByTeamParams{
 		Gametime: sql.NullTime{Time: d, Valid: true},
 		TeamID:   int64(t.TeamID),
-		TeamID_2: int64(t.TeamID),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get games: %s", err)
+		return nil, fmt.Errorf("failed to get coming games: %s", err)
 	}
 
-	gs := make([]MLBGame, len(games))
+	td := MLBTeamData{Team: t}
+
 	for i, g := range games {
-		gs[i] = MLBGame{
-			ID:          uint(g.ID),
-			GameID:      int(g.GameID),
-			Gametime:    g.Gametime.Time,
-			Description: g.Description.String,
-			Status:      g.Status.String,
-			Link:        g.Link.String,
-			HomeID:      uint(g.Homeid),
-			Home: MLBTeam{
-				ID:     uint(g.Homeid),
-				TeamID: int(g.Hometeamid),
-				Name:   g.Homename.String,
-			},
-			HomeScore: int(g.HomeScore.Int64),
-			VisitorID: uint(g.Awayid),
-			Visitor: MLBTeam{
-				ID:     uint(g.Awayid),
-				TeamID: int(g.Awayid),
-				Name:   g.Awayname.String,
-			},
-			VisitorScore: int(g.VisitorScore.Int64),
-		}
+		td.NextGames = append(td.NextGames, fromDBGamesByTeam(g.MlbGame, g.Hometeamid, g.Awayteamid, g.Homename, g.Awayname))
+
 		// Grab the team data. More than name??
 		if i == 0 {
 			if g.Hometeamid == int64(t.TeamID) {
-				t.Name = g.Homename.String
+				td.Team.Name = g.Homename.String
 			} else if g.Awayteamid == int64(t.TeamID) {
-				t.Name = g.Awayname.String
+				td.Team.Name = g.Awayname.String
 			}
 		}
 	}
 
-	td := MLBTeamData{
-		Team:      t,
-		NextGames: gs,
+	gamesPast, err := q.MLBLastGamesByTeam(ctx, modelstore.MLBLastGamesByTeamParams{
+		Gametime: sql.NullTime{Time: d, Valid: true},
+		TeamID:   int64(t.TeamID),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get past games: %s", err)
 	}
+
+	for i, g := range gamesPast {
+		td.PastGames = append(td.PastGames, fromDBGamesByTeam(g.MlbGame, g.Hometeamid, g.Awayteamid, g.Homename, g.Awayname))
+
+		// Try again, if neeed?
+		if i == 0 && td.Team.Name == "" {
+			if g.Hometeamid == int64(t.TeamID) {
+				td.Team.Name = g.Homename.String
+			} else if g.Awayteamid == int64(t.TeamID) {
+				td.Team.Name = g.Awayname.String
+			}
+		}
+	}
+
 	return &td, nil
+}
+
+// Convert DB row to go struct.
+func fromDBGamesByTeam(g modelstore.MlbGame, homeTeamID, awayTeamID int64, homeName, awayName sql.NullString) MLBGame {
+	game := MLBGame{
+		ID:          uint(g.ID),
+		GameID:      int(g.GameID),
+		Gametime:    g.Gametime.Time,
+		Description: g.Description.String,
+		Status:      g.Status.String,
+		Link:        g.Link.String,
+		HomeID:      uint(g.HomeID),
+		Home: MLBTeam{
+			ID:     uint(g.HomeID),
+			TeamID: int(homeTeamID),
+			Name:   homeName.String,
+		},
+		HomeScore: int(g.HomeScore.Int64),
+		VisitorID: uint(g.VisitorID),
+		Visitor: MLBTeam{
+			ID:     uint(g.VisitorID),
+			TeamID: int(awayTeamID),
+			Name:   awayName.String,
+		},
+		VisitorScore: int(g.VisitorScore.Int64),
+	}
+
+	return game
 }
 
 // fromDB converts the sqlc type into the general MLBGame type.
