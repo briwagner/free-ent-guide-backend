@@ -31,7 +31,7 @@ func handleGameUpdates(tp TaskPayload, args []string) error {
 	log.Printf("updating MLB games %d\n", len(mlbs))
 
 	for _, mlb := range mlbs {
-		err := mlb.UpdateScore(tp.Querier)
+		err := mlb.UpdateScore(tp.Querier, tp.client)
 		if err != nil {
 			log.Printf("error updating mlb score: %s", err)
 		}

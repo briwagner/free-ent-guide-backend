@@ -143,7 +143,7 @@ func MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch scores, timing from the MLB api.
-	err = g.GetUpdate()
+	err = g.GetUpdate(client)
 	if err != nil {
 		log.Print(err)
 		// Special error case for canceled game that should be marked deleted in DB.
@@ -198,15 +198,21 @@ func MLBTeamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	team := models.MLBTeam{TeamID: teamID}
-	// Use midnight to get any games this day.
-	games, err := team.GamesByTeam(r.Context(), common.queries, common.now.UTC().Truncate(24*time.Hour))
+	// Use midnight to get any teamData this day.
+	teamData, err := team.GamesByTeam(r.Context(), common.queries, common.now.UTC().Truncate(24*time.Hour))
 	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(games)
+	standing, err := teamData.Team.GetStandings(client)
+	if err != nil {
+		log.Printf("error getting standings for %s: %s", teamData.Team.Name, err)
+	}
+	teamData.Standings = standing
+
+	err = json.NewEncoder(w).Encode(teamData)
 	if err != nil {
 		log.Print(err)
 	}

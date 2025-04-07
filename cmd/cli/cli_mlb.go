@@ -16,6 +16,9 @@ func handleMLB(tp TaskPayload, args []string) error {
 
 	var ret string
 	defer func() {
+		if ret == "" {
+			return
+		}
 		fmt.Println(ret)
 		err := slackMessage(tp.Cred, ret)
 		if err != nil {
@@ -23,7 +26,7 @@ func handleMLB(tp TaskPayload, args []string) error {
 		}
 	}()
 
-	if subCo == "last" {
+	if subCo == "last" || subCo == "latest" {
 		games, err := models.MLBGetLatestGames(tp.Querier)
 		if err != nil {
 			return fmt.Errorf("error fetching games %w", err)
@@ -41,7 +44,7 @@ func handleMLB(tp TaskPayload, args []string) error {
 	if err != nil {
 		return fmt.Errorf("MLB game importer error: bad date for %s: %w", subCo, err)
 	}
-	ret, err = models.ImportMLB(tp.Querier, d)
+	ret, err = models.ImportMLB(tp.Querier, tp.client, d)
 	if err != nil {
 		return fmt.Errorf("MLB importer error for %s: %w", subCo, err)
 	}

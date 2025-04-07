@@ -3,6 +3,7 @@ package models_test
 import (
 	"context"
 	"free-ent-guide-backend/models"
+	"net/http"
 	"testing"
 	"time"
 
@@ -54,7 +55,7 @@ func TestGameUpdate(t *testing.T) {
 	err = g.Create(Queries)
 	require.NoError(t, err)
 
-	err = g.GetUpdate()
+	err = g.GetUpdate(&http.Client{Timeout: time.Second * 3})
 	require.NoError(t, err)
 	assert.Equal(t, 3, g.VisitorScore)
 	assert.Equal(t, 2, g.HomeScore)

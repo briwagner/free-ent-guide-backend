@@ -2,8 +2,10 @@ package mlbapi
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,6 +43,54 @@ func TestUnmarshal_Schedule(t *testing.T) {
 	assert.Equal(t, 111, game.Teams.Home.ID)
 }
 
+func TestUnmarshal_Teams(t *testing.T) {
+	by := []byte(`          {"teams": {
+            "away": {
+              "isWinner": true,
+              "leagueRecord": {
+                "losses": 72,
+                "pct": ".500",
+                "wins": 72
+              },
+              "score": 3,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 147,
+                "link": "/api/v1/teams/147",
+                "name": "New York Yankees"
+              }
+            },
+            "home": {
+              "isWinner": false,
+              "leagueRecord": {
+                "losses": 71,
+                "pct": ".507",
+                "wins": 73
+              },
+              "score": 2,
+              "seriesNumber": 47,
+              "splitSquad": false,
+              "team": {
+                "id": 111,
+                "link": "/api/v1/teams/111",
+                "name": "Boston Red Sox"
+              }
+            }
+          }}`)
+
+	var game MLBGame
+	require.NoError(t, json.Unmarshal(by, &game))
+	assert.Equal(t, "New York Yankees", game.Teams.Away.Name)
+	assert.Equal(t, 147, game.Teams.Away.ID)
+	assert.Equal(t, 3, game.Teams.Away.Score)
+	assert.Equal(t, "Boston Red Sox", game.Teams.Home.Name)
+	assert.Equal(t, 111, game.Teams.Home.ID)
+	assert.Equal(t, 2, game.Teams.Home.Score)
+	assert.Equal(t, "/api/v1/teams/111", game.Teams.Home.Link)
+
+}
+
 func TestUnmarshal_Update(t *testing.T) {
 	data, err := os.ReadFile("testdata/mlb_gameupdate.json")
 	if err != nil {
@@ -57,9 +107,84 @@ func TestUnmarshal_Update(t *testing.T) {
 	assert.Equal(t, 2, g.VisitorScore)
 }
 
+func TestUnmarshal_Standings(t *testing.T) {
+	by, err := os.ReadFile("testdata/mlb_standings.json")
+	require.NoError(t, err)
+	var st Standings
+	require.NoError(t, json.Unmarshal(by, &st))
+
+	assert.Len(t, st.Records, 3)
+
+	alWest := st.Records[0]
+	assert.Len(t, alWest.TeamRecords, 5)
+	for _, team := range alWest.TeamRecords {
+		assert.NotEqual(t, "", team.Team.Name)
+	}
+
+	yanks := alWest.TeamRecords[0]
+	assert.Equal(t, "New York Yankees", yanks.Team.Name)
+	assert.Equal(t, 147, yanks.Team.ID)
+	assert.Equal(t, "1", yanks.DivisionRank)
+	assert.Equal(t, "3", yanks.LeagueRank)
+	assert.Equal(t, 3, yanks.LeagueRecord.Losses)
+	assert.Equal(t, 6, yanks.LeagueRecord.Wins)
+	assert.Equal(t, 0, yanks.LeagueRecord.Ties)
+	assert.Equal(t, ".667", yanks.LeagueRecord.Percentage)
+}
+
 func TestGameUpdate(t *testing.T) {
-	g, err := GetGameUpdate("/api/v1.1/game/716608/feed/live")
+	g, err := GetGameUpdate(&http.Client{Timeout: time.Second * 3}, "/api/v1.1/game/716608/feed/live")
 	require.NoError(t, err)
 	assert.NotEqual(t, 716608, g.GamePK)
 	// other vals same as above
+}
+
+func TestGetStandings(t *testing.T) {
+	t.Skip("live stats will vary")
+
+	st, err := GetStandings(&http.Client{Timeout: time.Second * 3})
+	require.Len(t, err, 2)
+	require.NoError(t, err[0])
+	assert.Len(t, st.Records, 6) // 3 for each league
+	for _, div := range st.Records {
+		assert.NotEqual(t, 0, div.Division.ID)
+		assert.Equal(t, "regularSeason", div.StandingsType)
+	}
+
+	alWest := st.Records[0]
+	assert.Len(t, alWest.TeamRecords, 5)
+	for _, team := range alWest.TeamRecords {
+		assert.NotEqual(t, "", team.Team.Name)
+	}
+
+	yanks := alWest.TeamRecords[0]
+	assert.Equal(t, "New York Yankees", yanks.Team.Name)
+	assert.Equal(t, 147, yanks.Team.ID)
+	assert.Equal(t, "1", yanks.DivisionRank)
+	assert.Equal(t, "3", yanks.LeagueRank)
+	assert.Equal(t, 3, yanks.LeagueRecord.Losses)
+	assert.Equal(t, 6, yanks.LeagueRecord.Wins)
+	assert.Equal(t, 0, yanks.LeagueRecord.Ties)
+	assert.Equal(t, ".667", yanks.LeagueRecord.Percentage)
+
+	yanksRec, ok := st.RecordByTeam["New York Yankees"]
+	assert.True(t, ok)
+	assert.Equal(t, 5, len(yanksRec.TeamRecords))
+	var found bool
+	for _, rec := range yanksRec.TeamRecords {
+		if rec.Team.ID == 147 {
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestGetDivisions(t *testing.T) {
+	divisions, err := GetDivisions()
+	require.NoError(t, err)
+	assert.Len(t, divisions, 6)
+	alw, ok := divisions["200"]
+	assert.True(t, ok)
+	assert.Equal(t, "American League West", alw.Name)
+	assert.Equal(t, "ALW", alw.Abbreviation)
 }

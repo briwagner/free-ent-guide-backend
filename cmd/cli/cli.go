@@ -7,8 +7,10 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
@@ -39,6 +41,7 @@ type (
 	TaskPayload struct {
 		Cred    *cred.Cred
 		Querier *modelstore.Queries
+		client  *http.Client
 	}
 
 	Task struct {
@@ -53,6 +56,7 @@ type (
 		Cred    *cred.Cred
 		Querier *modelstore.Queries
 		Tasks   map[string]Task
+		Client  *http.Client
 	}
 )
 
@@ -87,7 +91,7 @@ func (tc *TaskCommander) Run(args []string) error {
 		return fmt.Errorf("%s command requires %d arguments. Try: %s", cmd, t.Args, strings.Join(t.Subcommands, ", "))
 	}
 
-	tp := TaskPayload{Cred: tc.Cred, Querier: tc.Querier}
+	tp := TaskPayload{Cred: tc.Cred, Querier: tc.Querier, client: tc.Client}
 	return t.Runner(tp, args)
 }
 
@@ -95,6 +99,7 @@ func buildTaskCommander(c *cred.Cred, q *modelstore.Queries) TaskCommander {
 	tc := TaskCommander{
 		Cred:    c,
 		Querier: q,
+		Client:  &http.Client{Timeout: time.Second * 5},
 	}
 
 	tasks := make(map[string]Task)
@@ -103,14 +108,14 @@ func buildTaskCommander(c *cred.Cred, q *modelstore.Queries) TaskCommander {
 		Command:     "nhl",
 		Description: "Fetch new games from NHL, for date provided",
 		Args:        2,
-		Subcommands: []string{"valid date", "'last'"},
+		Subcommands: []string{"valid date", "'last'", "'latest'"},
 		Runner:      handleNHL,
 	}
 	tasks["mlb"] = Task{
 		Command:     "mlb",
 		Description: "Fetch new games from MLB, for date provided",
 		Args:        2,
-		Subcommands: []string{"valid date", "'last'"},
+		Subcommands: []string{"valid date", "'last'", "'latest'"},
 		Runner:      handleMLB,
 	}
 	tasks["cache"] = Task{

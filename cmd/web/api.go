@@ -21,6 +21,7 @@ var (
 	c        cred.Cred
 	counters *expvar.Map
 	Queries  *modelstore.Queries
+	client   *http.Client
 )
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 
 	// Set-up database.
 	Queries = modelstore.New(models.Setup(c))
+	client = &http.Client{Timeout: time.Second * 5}
 
 	// Set-up authentication.
 	var app App

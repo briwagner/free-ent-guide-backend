@@ -32,7 +32,7 @@ func handleNHL(tp TaskPayload, args []string) error {
 		}
 	}()
 
-	if subCo == "last" {
+	if subCo == "last" || subCo == "latest" {
 		games, err := models.NHLGetLatestGames(tp.Querier)
 		if err != nil {
 			return fmt.Errorf("error getting last games: %w", err)

@@ -8,6 +8,7 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/mlbapi"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -73,8 +74,8 @@ func FindByGameID(q *modelstore.Queries, gameID int) (*MLBGame, error) {
 }
 
 // UpdateScore pulls update from MLB api.
-func (mg *MLBGame) UpdateScore(q *modelstore.Queries) error {
-	up, err := mlbapi.GetGameUpdate(mg.Link)
+func (mg *MLBGame) UpdateScore(q *modelstore.Queries, client *http.Client) error {
+	up, err := mlbapi.GetGameUpdate(client, mg.Link)
 	if err != nil {
 		return err
 	}
@@ -199,8 +200,8 @@ func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
 }
 
 // ImportMLB calls to MLB api and saves new games to the DB.
-func ImportMLB(q *modelstore.Queries, startDate time.Time) (string, error) {
-	gameweek, err := mlbapi.ImportDates(startDate)
+func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) (string, error) {
+	gameweek, err := mlbapi.ImportDates(client, startDate)
 	if err != nil {
 		return "", err
 	}
@@ -299,12 +300,12 @@ var ErrorGameCanceled = errors.New("game is zeroed")
 
 // GetUpdate makes an api request to get game update to
 // merge with scheduled game info from the database. Called from handler.
-func (g *MLBGame) GetUpdate() error {
+func (g *MLBGame) GetUpdate(client *http.Client) error {
 	if g.GameID == 0 {
 		return fmt.Errorf("invalid game id %d", g.GameID)
 	}
 
-	gameup, err := mlbapi.GetGameUpdate(g.Link)
+	gameup, err := mlbapi.GetGameUpdate(client, g.Link)
 	if err != nil {
 		return err
 	}
@@ -321,6 +322,7 @@ type MLBTeamData struct {
 	Team      *MLBTeam
 	NextGames []MLBGame
 	PastGames []MLBGame
+	Standings *mlbapi.Record
 }
 
 // GamesByTeam fetches next and last 5 games for the team, either home or visitor.
@@ -370,6 +372,21 @@ func (t *MLBTeam) GamesByTeam(ctx context.Context, q *modelstore.Queries, d time
 	}
 
 	return &td, nil
+}
+
+// GetStandings fetches the relevant division standings for this team.
+func (t *MLBTeam) GetStandings(client *http.Client) (*mlbapi.Record, error) {
+	st, errs := mlbapi.GetStandings(client)
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
+	}
+
+	standings, ok := st.RecordByTeam[t.Name]
+	if !ok {
+		return nil, fmt.Errorf("standings not found for %s", t.Name)
+	}
+
+	return standings, nil
 }
 
 // Convert DB row to go struct.

@@ -1,0 +1,52 @@
+{
+	"copyright": "Copyright 2025 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+	"teams": [
+		{
+			"abbreviation": "NYY",
+			"active": true,
+			"allStarStatus": "N",
+			"clubName": "Yankees",
+			"division": {
+				"id": 201,
+				"link": "/api/v1/divisions/201",
+				"name": "American League East"
+			},
+			"fileCode": "nyy",
+			"firstYearOfPlay": "1903",
+			"franchiseName": "New York",
+			"id": 147,
+			"league": {
+				"id": 103,
+				"link": "/api/v1/league/103",
+				"name": "American League"
+			},
+			"link": "/api/v1/teams/147",
+			"locationName": "Bronx",
+			"name": "New York Yankees",
+			"season": 2025,
+			"shortName": "NY Yankees",
+			"sport": {
+				"id": 1,
+				"link": "/api/v1/sports/1",
+				"name": "Major League Baseball"
+			},
+			"springLeague": {
+				"abbreviation": "GL",
+				"id": 115,
+				"link": "/api/v1/league/115",
+				"name": "Grapefruit League"
+			},
+			"springVenue": {
+				"id": 2523,
+				"link": "/api/v1/venues/2523"
+			},
+			"teamCode": "nya",
+			"teamName": "Yankees",
+			"venue": {
+				"id": 3313,
+				"link": "/api/v1/venues/3313",
+				"name": "Yankee Stadium"
+			}
+		}
+	]
+}

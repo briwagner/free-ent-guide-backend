@@ -2,92 +2,34 @@ package mlbapi
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
+	"log"
 	"net/http"
+	"strconv"
+	"sync"
 	"time"
 )
 
-const baseURL = "https://statsapi.mlb.com/"
+//go:embed divisions.json
+var divisionsJSON []byte
 
-type MLBGameDay struct {
-	Dates []struct {
-		Date  string    `json:"date"`
-		Games []MLBGame `json:"games"`
-	} `json:"dates"`
-}
-
-type MLBGame struct {
-	Time        time.Time    `json:"gameDate"`
-	Link        string       `json:"link"`
-	GameID      int          `json:"gamePk"`
-	Description string       `json:"seriesDescription"` // 'Regular Season', etc.
-	Status      StatusString `json:"status"`
-	Teams       MLBTeams     `json:"teams"`
-}
-
-type StatusString struct {
-	Status string
-}
-
-func (ss *StatusString) UnmarshalJSON(data []byte) error {
-	var vals map[string]interface{}
-	if err := json.Unmarshal(data, &vals); err != nil {
-		return err
-	}
-	state, ok := vals["detailedState"]
-	if ok {
-		ss.Status = state.(string)
-	}
-
-	return nil
-}
-
-type MLBTeams struct {
-	Home MLBTeam `json:"home"`
-	Away MLBTeam `json:"away"`
-}
-
-type MLBTeam struct {
-	Score int    `json:"-"`
-	Name  string `json:"name"`
-	ID    int    `json:"id"`
-	Link  string `json:"link"`
-}
-
-func (t *MLBTeam) UnmarshalJSON(data []byte) error {
-	var vals map[string]interface{}
-	if err := json.Unmarshal(data, &vals); err != nil {
-		return err
-	}
-
-	if sc, ok := vals["score"]; ok {
-		t.Score = int(math.Round(sc.(float64)))
-	}
-
-	team := vals["team"].(map[string]interface{})
-	if n, ok := team["name"]; ok {
-		t.Name = n.(string)
-	}
-	if l, ok := team["link"]; ok {
-		t.Link = l.(string)
-	}
-	if id, ok := team["id"]; ok {
-		t.ID = int(math.Round(id.(float64)))
-	}
-
-	return nil
-}
+const (
+	baseURL    = "https://statsapi.mlb.com"
+	amerLeague = "103"
+	natLeague  = "104"
+	season     = "2025"
+)
 
 // ImportDates fetches a single day schedule.
-func ImportDates(sd time.Time) (*MLBGameDay, error) {
+func ImportDates(client *http.Client, sd time.Time) (*MLBGameDay, error) {
 	gameday := &MLBGameDay{}
 
 	dt := sd.Format("2006-01-02")
 	url := fmt.Sprintf("%s/api/v1/schedule?sportId=1&startDate=%s&endDate=%s", baseURL, dt, dt)
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		return gameday, err
 	}
@@ -106,72 +48,11 @@ func ImportDates(sd time.Time) (*MLBGameDay, error) {
 	return gameday, nil
 }
 
-type MLBGameUpdate struct {
-	GamePK       int64
-	Game         MLBGame
-	Status       string
-	Inning       int
-	HomeScore    int
-	VisitorScore int
-}
-
-func (gu *MLBGameUpdate) UnmarshalJSON(data []byte) error {
-	var vals map[string]interface{}
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.UseNumber()
-	err := dec.Decode(&vals)
-	if err != nil {
-		return err
-	}
-
-	id, err := vals["gamePk"].(json.Number).Int64()
-	if err != nil {
-		return err
-	}
-	gu.GamePK = id
-
-	gd := vals["gameData"].(map[string]interface{})
-	st := gd["status"].(map[string]interface{})
-	// TODO add nil check
-	gu.Status = st["detailedState"].(string)
-
-	ld := vals["liveData"].(map[string]interface{})
-	ls := ld["linescore"].(map[string]interface{})
-	// If not live, the currentInning prop is not found.
-	if _, ok := ls["currentInning"]; ok {
-		inning, err := ls["currentInning"].(json.Number).Int64()
-		if err != nil {
-			return err
-		}
-		gu.Inning = int(inning)
-	}
-
-	ts := ls["teams"].(map[string]interface{})
-	ht := ts["home"].(map[string]interface{})
-	if _, ok := ht["runs"]; ok {
-		hg, err := ht["runs"].(json.Number).Int64()
-		if err != nil {
-			return err
-		}
-		gu.HomeScore = int(hg)
-	}
-
-	vt := ts["away"].(map[string]interface{})
-	if _, ok := ht["runs"]; ok {
-		vg, err := vt["runs"].(json.Number).Int64()
-		if err != nil {
-			return err
-		}
-		gu.VisitorScore = int(vg)
-	}
-	return nil
-}
-
-func GetGameUpdate(link string) (MLBGameUpdate, error) {
+func GetGameUpdate(client *http.Client, link string) (MLBGameUpdate, error) {
 	var gameup MLBGameUpdate
 
 	url := fmt.Sprintf("%s/%s", baseURL, link)
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		return gameup, fmt.Errorf("error fetching MLB update: %w", err)
 	}
@@ -189,4 +70,124 @@ func GetGameUpdate(link string) (MLBGameUpdate, error) {
 	}
 
 	return gameup, nil
+}
+
+func GetStandings(client *http.Client) (Standings, []error) {
+	// testdata/mlb_standings.json // AL only
+
+	var wg sync.WaitGroup
+	var alStandings Standings
+	var nlStandings Standings
+	alURL := fmt.Sprintf("%s/%s?leagueId=%s&season=%s&standingsTypes=%s", baseURL, "api/v1/standings", amerLeague, season, "regularSeason")
+	nlURL := fmt.Sprintf("%s/%s?leagueId=%s&season=%s&standingsTypes=%s", baseURL, "api/v1/standings", natLeague, season, "regularSeason")
+	errors := make([]error, 2)
+
+	// Do American League
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		resp, err := client.Get(alURL)
+		if err != nil {
+			errors[0] = err
+			return
+		}
+
+		defer resp.Body.Close()
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			errors[0] = err
+			return
+		}
+
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.UseNumber()
+		err = dec.Decode(&alStandings)
+		if err != nil {
+			errors[0] = err
+			return
+		}
+	}()
+	// Do National League
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		resp, err := client.Get(nlURL)
+		if err != nil {
+			errors[1] = err
+			return
+		}
+
+		defer resp.Body.Close()
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			errors[1] = err
+			return
+		}
+
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.UseNumber()
+		err = dec.Decode(&nlStandings)
+		if err != nil {
+			errors[1] = err
+			return
+		}
+	}()
+
+	wg.Wait()
+
+	// Get both calls and just smash 'em together.
+	alStandings.Records = append(alStandings.Records, nlStandings.Records...)
+
+	if alStandings.RecordByTeam == nil {
+		// TODO why does this initialize as nil?
+		alStandings.RecordByTeam = make(map[string]*Record)
+	}
+
+	divisionsLU, divErr := GetDivisions()
+	if divErr != nil {
+		log.Print(divErr)
+	}
+
+	for _, rec := range alStandings.Records {
+		for _, team := range rec.TeamRecords {
+			if _, exists := alStandings.RecordByTeam[team.Team.Name]; exists {
+				continue
+			}
+			if rec.Division.Name == "" && divErr == nil {
+				div, found := divisionsLU[string(rec.Division.ID)]
+				if found {
+					rec.Division.Name = div.Name
+				}
+			}
+			alStandings.RecordByTeam[team.Team.Name] = &rec
+		}
+	}
+
+	return alStandings, errors
+}
+
+func GetTeamInfo(client *http.Client, id string) {
+	// testdata/mlb_team.json
+
+	// url := "https://statsapi.mlb.com/api/v1/teams/" + id
+}
+
+func GetDivisions() (map[string]Division, error) {
+	// TODO check file and if fail, do actual http lookup.
+	// url := "https://statsapi.mlb.com/api/v1/divisions?sportId=1"
+
+	var divs DivisionPayload
+	divsLU := make(map[string]Division)
+
+	err := json.Unmarshal(divisionsJSON, &divs)
+	if err != nil {
+		return divsLU, err
+	}
+
+	for _, d := range divs.Divisions {
+		divsLU[strconv.Itoa(d.ID)] = d
+	}
+	return divsLU, err
 }
