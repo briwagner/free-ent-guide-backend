@@ -286,6 +286,78 @@ func (q *Queries) MLBLoadGamesByDate(ctx context.Context, arg MLBLoadGamesByDate
 	return items, nil
 }
 
+const mLBLoadIncompleteGamesByDate = `-- name: MLBLoadIncompleteGamesByDate :many
+SELECT mg.id, mg.game_id, mg.gametime, mg.description, mg.status, mg.link, mg.home_score, mg.visitor_score,
+		ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+		at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+	FROM mlb_games AS mg
+	INNER JOIN mlb_teams AS ht ON (mg.home_id = ht.id)
+	INNER JOIN mlb_teams AS at ON (mg.visitor_id = at.id)
+	WHERE mg.gametime BETWEEN ? AND ?
+	AND (mg.status NOT IN ("Final","Postponed","Completed Early"))
+	ORDER BY mg.gametime
+`
+
+type MLBLoadIncompleteGamesByDateParams struct {
+	FromGametime sql.NullTime
+	ToGametime   sql.NullTime
+}
+
+type MLBLoadIncompleteGamesByDateRow struct {
+	ID           int64
+	GameID       int64
+	Gametime     sql.NullTime
+	Description  sql.NullString
+	Status       sql.NullString
+	Link         sql.NullString
+	HomeScore    sql.NullInt64
+	VisitorScore sql.NullInt64
+	Homeid       int64
+	Hometeamid   int64
+	Homename     sql.NullString
+	Awayid       int64
+	Awayteamid   int64
+	Awayname     sql.NullString
+}
+
+func (q *Queries) MLBLoadIncompleteGamesByDate(ctx context.Context, arg MLBLoadIncompleteGamesByDateParams) ([]MLBLoadIncompleteGamesByDateRow, error) {
+	rows, err := q.db.QueryContext(ctx, mLBLoadIncompleteGamesByDate, arg.FromGametime, arg.ToGametime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MLBLoadIncompleteGamesByDateRow
+	for rows.Next() {
+		var i MLBLoadIncompleteGamesByDateRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.Gametime,
+			&i.Description,
+			&i.Status,
+			&i.Link,
+			&i.HomeScore,
+			&i.VisitorScore,
+			&i.Homeid,
+			&i.Hometeamid,
+			&i.Homename,
+			&i.Awayid,
+			&i.Awayteamid,
+			&i.Awayname,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const mLBNextGamesByTeam = `-- name: MLBNextGamesByTeam :many
 SELECT mlb_games.id, mlb_games.updated_at, mlb_games.gametime, mlb_games.game_id, mlb_games.description, mlb_games.status, mlb_games.link, mlb_games.home_id, mlb_games.visitor_id, mlb_games.home_score, mlb_games.visitor_score,
 		ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,

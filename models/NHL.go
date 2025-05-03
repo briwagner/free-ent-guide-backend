@@ -273,6 +273,55 @@ func (ngs *NHLGames) LoadByDate(q *modelstore.Queries, datestr string) error {
 	return nil
 }
 
+// LoadByDateIncomplete fetches all games for the given date and not 'Final, OFF' (official).
+func (ngs *NHLGames) LoadByDateIncomplete(q *modelstore.Queries, datestr string) error {
+	date, err := time.Parse("2006-01-02", datestr)
+	if err != nil {
+		return err
+	}
+	// Set date to noon to allow capturing anything in PM that may show as next-day with UTC.
+	dateFrom := time.Date(date.Year(), date.Month(), date.Day(), 12, 0, 0, 0, date.Location())
+	dateTo := dateFrom.Add(time.Hour * 24)
+
+	rows, err := q.NHLLoadIncompleteGamesByDate(context.Background(), modelstore.NHLLoadIncompleteGamesByDateParams{
+		FromGametime: sql.NullTime{Time: dateFrom, Valid: true},
+		ToGametime:   sql.NullTime{Time: dateTo, Valid: true},
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, row := range rows {
+		g := NHLGame{
+			ID:           uint(row.ID),
+			GameID:       int(row.GameID.Int64),
+			Gametime:     row.Gametime.Time,
+			Description:  row.Description.String,
+			Status:       row.Status.String,
+			HomeScore:    int(row.HomeScore.Int64),
+			VisitorScore: int(row.VisitorScore.Int64),
+		}
+		home := NHLTeam{
+			ID:     uint(row.Homeid),
+			TeamID: int(row.Hometeamid),
+			Name:   row.Homename.String,
+		}
+		g.Home = &home
+		g.HomeID = home.ID
+
+		away := NHLTeam{
+			ID:     uint(row.Awayid),
+			TeamID: int(row.Awayteamid),
+			Name:   row.Awayname.String,
+		}
+		g.Visitor = &away
+		g.VisitorID = away.ID
+
+		*ngs = append(*ngs, g)
+	}
+	return nil
+}
+
 // NHLGetNextGameday tries to find games for the date passed,
 // and if not will continue searching on the next day until
 // reaching a limit of days searched.

@@ -213,6 +213,76 @@ func (q *Queries) NHLLoadGamesByDate(ctx context.Context, arg NHLLoadGamesByDate
 	return items, nil
 }
 
+const nHLLoadIncompleteGamesByDate = `-- name: NHLLoadIncompleteGamesByDate :many
+SELECT ng.id, ng.game_id, ng.gametime, ng.description, ng.status, ng.home_score, ng.visitor_score,
+  ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+  at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+  FROM nhl_games AS ng
+  INNER JOIN nhl_teams AS ht ON (ng.home_id = ht.id)
+  INNER JOIN nhl_teams AS at ON (ng.visitor_id = at.id)
+  WHERE ng.gametime BETWEEN ? AND ?
+  AND ng.status NOT IN ("Final","OFF")
+  ORDER BY ng.gametime
+`
+
+type NHLLoadIncompleteGamesByDateParams struct {
+	FromGametime sql.NullTime
+	ToGametime   sql.NullTime
+}
+
+type NHLLoadIncompleteGamesByDateRow struct {
+	ID           int64
+	GameID       sql.NullInt64
+	Gametime     sql.NullTime
+	Description  sql.NullString
+	Status       sql.NullString
+	HomeScore    sql.NullInt64
+	VisitorScore sql.NullInt64
+	Homeid       int64
+	Hometeamid   int64
+	Homename     sql.NullString
+	Awayid       int64
+	Awayteamid   int64
+	Awayname     sql.NullString
+}
+
+func (q *Queries) NHLLoadIncompleteGamesByDate(ctx context.Context, arg NHLLoadIncompleteGamesByDateParams) ([]NHLLoadIncompleteGamesByDateRow, error) {
+	rows, err := q.db.QueryContext(ctx, nHLLoadIncompleteGamesByDate, arg.FromGametime, arg.ToGametime)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []NHLLoadIncompleteGamesByDateRow
+	for rows.Next() {
+		var i NHLLoadIncompleteGamesByDateRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GameID,
+			&i.Gametime,
+			&i.Description,
+			&i.Status,
+			&i.HomeScore,
+			&i.VisitorScore,
+			&i.Homeid,
+			&i.Hometeamid,
+			&i.Homename,
+			&i.Awayid,
+			&i.Awayteamid,
+			&i.Awayname,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const nHLUpdateScore = `-- name: NHLUpdateScore :exec
 UPDATE nhl_games
   SET home_score = ?, visitor_score = ?, status = ?

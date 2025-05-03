@@ -24,7 +24,7 @@ func handleGameUpdates(tp TaskPayload, args []string) error {
 
 	// Check MLB games first.
 	mlbs := models.MLBGames{}
-	err := mlbs.LoadByDate(tp.Querier, date)
+	err := mlbs.LoadByDateIncomplete(tp.Querier, date)
 	if err != nil {
 		return fmt.Errorf("error loading mlb for update: %w", err)
 	}
@@ -39,7 +39,7 @@ func handleGameUpdates(tp TaskPayload, args []string) error {
 
 	// Do same for NHL.
 	nhls := models.NHLGames{}
-	err = nhls.LoadByDate(tp.Querier, date)
+	err = nhls.LoadByDateIncomplete(tp.Querier, date)
 	if err != nil {
 		return fmt.Errorf("error loading nhl for update: %w", err)
 	}

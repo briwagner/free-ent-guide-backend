@@ -199,6 +199,52 @@ func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
 	return nil
 }
 
+// LoadByDateIncomplete fetches all games for the given date that are not "Final, Postponed, Completed Early".
+func (mgs *MLBGames) LoadByDateIncomplete(q *modelstore.Queries, d string) error {
+	date, err := time.Parse("2006-01-02", d)
+	if err != nil {
+		return fmt.Errorf("mlb error parsing date: %w", err)
+	}
+	// Set date to noon to allow capturing anything in PM that may show as next-day with UTC.
+	dateFrom := time.Date(date.Year(), date.Month(), date.Day(), 12, 0, 0, 0, date.Location())
+	dateTo := dateFrom.Add(time.Hour * 24)
+
+	rows, err := q.MLBLoadIncompleteGamesByDate(context.Background(), modelstore.MLBLoadIncompleteGamesByDateParams{
+		FromGametime: sql.NullTime{Time: dateFrom, Valid: true},
+		ToGametime:   sql.NullTime{Time: dateTo, Valid: true},
+	})
+	if err != nil {
+		return fmt.Errorf("error fetching MLB games: %w", err)
+	}
+
+	for _, row := range rows {
+		*mgs = append(*mgs, MLBGame{
+			ID:          uint(row.ID),
+			GameID:      int(row.GameID),
+			Gametime:    row.Gametime.Time,
+			Description: row.Description.String,
+			Status:      row.Status.String,
+			Link:        row.Link.String,
+			HomeID:      uint(row.Homeid),
+			Home: MLBTeam{
+				ID:     uint(row.Homeid),
+				Name:   row.Homename.String,
+				TeamID: int(row.Hometeamid),
+			},
+			VisitorID: uint(row.Awayid),
+			Visitor: MLBTeam{
+				ID:     uint(row.Awayid),
+				Name:   row.Awayname.String,
+				TeamID: int(row.Awayteamid),
+			},
+			HomeScore:    int(row.HomeScore.Int64),
+			VisitorScore: int(row.VisitorScore.Int64),
+		})
+	}
+
+	return nil
+}
+
 // ImportMLB calls to MLB api and saves new games to the DB.
 func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) (string, error) {
 	gameweek, err := mlbapi.ImportDates(client, startDate)

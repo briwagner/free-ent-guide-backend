@@ -28,6 +28,17 @@ SELECT ng.id, ng.game_id, ng.gametime, ng.description, ng.status, ng.home_score,
   WHERE ng.gametime BETWEEN ? AND ?
   ORDER BY ng.gametime;
 
+-- name: NHLLoadIncompleteGamesByDate :many
+SELECT ng.id, ng.game_id, ng.gametime, ng.description, ng.status, ng.home_score, ng.visitor_score,
+  ht.id AS homeID, ht.team_id AS homeTeamID, ht.name AS homeName,
+  at.id AS awayID, at.team_id AS awayTeamID, at.name AS awayName
+  FROM nhl_games AS ng
+  INNER JOIN nhl_teams AS ht ON (ng.home_id = ht.id)
+  INNER JOIN nhl_teams AS at ON (ng.visitor_id = at.id)
+  WHERE ng.gametime BETWEEN ? AND ?
+  AND ng.status NOT IN ("Final","OFF")
+  ORDER BY ng.gametime;
+
 -- name: NHLLatestGames :many
 SELECT id, gametime
   FROM nhl_games
