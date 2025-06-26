@@ -9,6 +9,7 @@ import (
 	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -366,10 +367,13 @@ func NHLGetLatestGames(q *modelstore.Queries) (NHLGames, error) {
 func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
 	gameweek, err := nhlapi.ImportNHL(startDate)
 	if err != nil {
-		return "", err
+		return err.Error(), err
 	}
 
-	var count, countErrs int
+	var (
+		count, countErrs int
+		sb               strings.Builder
+	)
 
 	for _, days := range gameweek.Days {
 		log.Printf("import %d NHL games for %s\n", days.NumberOfGames, days.Date)
@@ -419,9 +423,8 @@ func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
 
 			count++
 		}
+		sb.WriteString(fmt.Sprintf("nhl import complete for %s, adding %d games. Errors: %d\n", days.Date, count, countErrs))
 	}
 
-	ret := fmt.Sprintf("nhl import complete, adding %d games. Errors: %d", count, countErrs)
-
-	return ret, nil
+	return sb.String(), nil
 }

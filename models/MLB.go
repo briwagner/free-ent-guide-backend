@@ -9,6 +9,7 @@ import (
 	"free-ent-guide-backend/pkg/mlbapi"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -246,13 +247,17 @@ func (mgs *MLBGames) LoadByDateIncomplete(q *modelstore.Queries, d string) error
 }
 
 // ImportMLB calls to MLB api and saves new games to the DB.
+// String return is posted to Slack.
 func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) (string, error) {
 	gameweek, err := mlbapi.ImportDates(client, startDate)
 	if err != nil {
-		return "", err
+		return err.Error(), err
 	}
 
-	var count, countErrs int
+	var (
+		count, countErrs int
+		sb               strings.Builder
+	)
 
 	for _, day := range gameweek.Dates {
 		log.Printf("importing MLB games for %s\n", day.Date)
@@ -317,11 +322,12 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 
 			count++
 		}
+
+		// TODO pass this strings.Builder in so it can capture more before and after?
+		sb.WriteString(fmt.Sprintf("mlb import complete for %s, adding %d games. Errors: %d\n", day.Date, count, countErrs))
 	}
 
-	ret := fmt.Sprintf("mlb import complete, adding %d games. Errors: %d", count, countErrs)
-
-	return ret, nil
+	return sb.String(), nil
 }
 
 // MLBGetLatestGames loads all games on the latest date found in the DB.
