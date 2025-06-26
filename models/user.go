@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"free-ent-guide-backend/models/modelstore"
 	"log"
+	"slices"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -114,6 +115,9 @@ func (u *User) FindByEmail(q *modelstore.Queries) error {
 	}
 	u.Data = userData
 
+	// We append shows, so newest is last. Let's reverse so new is first.
+	slices.Reverse(u.Data.Shows)
+
 	return nil
 }
 
@@ -167,4 +171,17 @@ func (u *User) LoadData(q *modelstore.Queries) error {
 	}
 
 	return nil
+}
+
+// Stupid JSON field gets borked. Reset it to valid null values.
+func (u *User) FixData(ctx context.Context, q *modelstore.Queries) error {
+	if u.Email == "" {
+		return errors.New("no user email provided")
+	}
+
+	data, err := json.Marshal(NewUserData())
+	if err != nil {
+		return err
+	}
+	return q.UserResetData(ctx, modelstore.UserResetDataParams{Email: u.Email, Data: data})
 }

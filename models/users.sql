@@ -58,3 +58,8 @@ UPDATE users
 UPDATE users
   SET data = JSON_SET(data, '$.shows', JSON_ARRAY())
   WHERE email = ?;
+
+-- name: UserResetData :exec
+UPDATE users
+  SET data = ?
+  WHERE email = ?;

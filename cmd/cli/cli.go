@@ -74,6 +74,7 @@ func (tc *TaskCommander) Print() string {
 	Or 'nhl', 'mlb' with 'last'.
 	Or 'cache' with one of: show, stale, clear, wipe.
 	Or 'discover' with date.
+	Or 'user reset' with email.
 	Or 'backup'.
 
 	`, strings.Join(cmds, ", "))
@@ -144,6 +145,13 @@ func buildTaskCommander(c *cred.Cred, q *modelstore.Queries) TaskCommander {
 		Description: "Generate database backup file",
 		Args:        1,
 		Runner:      handleBackup,
+	}
+	tasks["user"] = Task{
+		Command:     "user",
+		Description: "Reset user data",
+		Subcommands: []string{"reset data, e.g. reset joe@email.com"},
+		Args:        3,
+		Runner:      handleUser,
 	}
 
 	tc.Tasks = tasks

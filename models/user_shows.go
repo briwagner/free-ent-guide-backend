@@ -11,6 +11,7 @@ import (
 )
 
 // GetShows looks up the user's stored show IDs.
+// TODO this is not used. Only for delete path. Does it even work???
 func (u *User) GetShows(q *modelstore.Queries) error {
 	if u.Email == "" {
 		return errors.New("invalid user email")

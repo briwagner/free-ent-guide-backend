@@ -172,6 +172,22 @@ func (q *Queries) UserFindByEmail(ctx context.Context, email string) (UserFindBy
 	return i, err
 }
 
+const userResetData = `-- name: UserResetData :exec
+UPDATE users
+  SET data = ?
+  WHERE email = ?
+`
+
+type UserResetDataParams struct {
+	Data  json.RawMessage
+	Email string
+}
+
+func (q *Queries) UserResetData(ctx context.Context, arg UserResetDataParams) error {
+	_, err := q.db.ExecContext(ctx, userResetData, arg.Data, arg.Email)
+	return err
+}
+
 const userSetShows = `-- name: UserSetShows :exec
 UPDATE users
   SET data = JSON_SET(data, '$.shows', JSON_EXTRACT(?, "$"))
