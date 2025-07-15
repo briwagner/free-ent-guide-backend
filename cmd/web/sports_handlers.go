@@ -198,6 +198,12 @@ func MLBTeamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	team := models.MLBTeam{TeamID: teamID}
+	err = team.FindByTeamID(common.queries, teamID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	// Use midnight to get any teamData this day.
 	teamData, err := team.GamesByTeam(r.Context(), common.queries, common.now.UTC().Truncate(24*time.Hour))
 	if err != nil {
