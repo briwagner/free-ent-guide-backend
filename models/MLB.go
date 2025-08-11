@@ -377,6 +377,14 @@ type MLBTeamData struct {
 	Standings *mlbapi.Record
 }
 
+func NewMLBTeamData(team *MLBTeam) MLBTeamData {
+	return MLBTeamData{
+		Team:      team,
+		PastGames: make([]MLBGame, 0),
+		NextGames: make([]MLBGame, 0),
+	}
+}
+
 // GamesByTeam fetches next and last 5 games for the team, either home or visitor.
 func (t *MLBTeam) GamesByTeam(ctx context.Context, q *modelstore.Queries, d time.Time) (*MLBTeamData, error) {
 	games, err := q.MLBNextGamesByTeam(ctx, modelstore.MLBNextGamesByTeamParams{
@@ -387,7 +395,7 @@ func (t *MLBTeam) GamesByTeam(ctx context.Context, q *modelstore.Queries, d time
 		return nil, fmt.Errorf("failed to get coming games: %s", err)
 	}
 
-	td := MLBTeamData{Team: t}
+	td := NewMLBTeamData(t)
 
 	for i, g := range games {
 		td.NextGames = append(td.NextGames, fromDBGamesByTeam(g.MlbGame, g.Hometeamid, g.Awayteamid, g.Homename, g.Awayname))
