@@ -2,8 +2,10 @@ package mlbapi
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -25,13 +27,33 @@ const (
 
 // ImportDates fetches a single day schedule.
 func ImportDates(client *http.Client, sd time.Time) (*MLBGameDay, error) {
-	gameday := &MLBGameDay{}
-
 	dt := sd.Format("2006-01-02")
 	url := fmt.Sprintf("%s/api/v1/schedule?sportId=1&startDate=%s&endDate=%s", baseURL, dt, dt)
-	resp, err := client.Get(url)
-	if err != nil {
-		return gameday, err
+	return importDates(client, sd, url)
+}
+
+// Internal call to manage url for testing.
+func importDates(client *http.Client, sd time.Time, url string) (*MLBGameDay, error) {
+	gameday := &MLBGameDay{}
+
+	var (
+		tries int
+		wait  time.Duration = time.Second * 5
+		resp  *http.Response
+		err   error
+	)
+
+	for {
+		tries++
+		resp, err = client.Get(url)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) && tries < 3 { // max attempts
+				time.Sleep(wait * 2) // double the time for each try
+				continue
+			}
+			return gameday, err
+		}
+		break
 	}
 
 	defer resp.Body.Close()

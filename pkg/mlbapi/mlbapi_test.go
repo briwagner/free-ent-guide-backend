@@ -2,7 +2,9 @@ package mlbapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
@@ -187,4 +189,36 @@ func TestGetDivisions(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "American League West", alw.Name)
 	assert.Equal(t, "ALW", alw.Abbreviation)
+}
+
+func TestGetGames_Backoff(t *testing.T) {
+	var tries int
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tries++
+		if tries < 3 {
+			time.Sleep(time.Second * 6)
+			return
+		}
+		by, err := os.ReadFile("./testdata/mlb_gameday.json")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprint(w, string(by))
+	})
+
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	cli := &http.Client{Timeout: time.Second * 2}
+
+	ti, err := time.Parse("2006-01-02", "2025-08-11")
+	require.NoError(t, err)
+
+	gd, err := importDates(cli, ti, ts.URL)
+	assert.NoError(t, err)
+	assert.NotNil(t, gd)
+	assert.Equal(t, 3, tries)
+	t.Log(gd)
 }
