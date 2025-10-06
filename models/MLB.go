@@ -260,7 +260,7 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 	)
 
 	for _, day := range gameweek.Dates {
-		log.Printf("importing MLB games for %s\n", day.Date)
+		// log.Printf("importing MLB games for %s\n", day.Date)
 
 		for _, g := range day.Games {
 			game := MLBGame{

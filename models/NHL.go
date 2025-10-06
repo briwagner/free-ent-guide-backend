@@ -376,7 +376,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
 	)
 
 	for _, days := range gameweek.Days {
-		log.Printf("import %d NHL games for %s\n", days.NumberOfGames, days.Date)
+		// log.Printf("import %d NHL games for %s\n", days.NumberOfGames, days.Date)
 		daysGames := days.Games
 
 		for _, g := range daysGames {
@@ -410,9 +410,10 @@ func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
 				countErrs++
 				// Ignore duplicate entry in logs.
 				if err.(*mysql.MySQLError).Number != 1062 {
-					log.Printf("error creating game %d: %s", g.ID, err)
+					msg := fmt.Sprintf("error creating game %d: %s", g.ID, err)
+					log.Println(msg)
+					sb.WriteString(msg)
 				}
-				log.Printf("some error %s", err)
 				continue
 			}
 

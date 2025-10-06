@@ -24,8 +24,7 @@ func handleNHL(tp TaskPayload, args []string) error {
 		if ret == "" {
 			return
 		}
-		// Raw slack message
-		log.Printf("slack: %s", ret)
+		fmt.Println(ret)
 		err := slackMessage(tp.Cred, ret)
 		if err != nil {
 			log.Println(err)
