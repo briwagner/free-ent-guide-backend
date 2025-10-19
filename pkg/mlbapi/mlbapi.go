@@ -88,7 +88,7 @@ func GetGameUpdate(client *http.Client, link string) (MLBGameUpdate, error) {
 
 	err = json.Unmarshal(data, &gameup)
 	if err != nil {
-		return gameup, fmt.Errorf("error unmarshal MLB update: %w", err)
+		return gameup, fmt.Errorf("error unmarshal MLB update for %s: %w", link, err)
 	}
 
 	return gameup, nil

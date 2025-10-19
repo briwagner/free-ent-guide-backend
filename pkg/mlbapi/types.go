@@ -3,6 +3,7 @@ package mlbapi
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"math"
 	"time"
 )
@@ -167,6 +168,11 @@ func (gu *MLBGameUpdate) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+	// Catch games that were scheduled and canceled, i.e. extra playoff games.
+	if id == 0 {
+		return fmt.Errorf("invalid game, likely canceled %d", gu.Game.GameID)
+	}
+
 	gu.GamePK = id
 
 	gd := vals["gameData"].(map[string]interface{})
