@@ -95,9 +95,7 @@ func TestUnmarshal_Teams(t *testing.T) {
 
 func TestUnmarshal_Update(t *testing.T) {
 	data, err := os.ReadFile("testdata/mlb_gameupdate.json")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	g := MLBGameUpdate{}
 	err = json.Unmarshal(data, &g)
@@ -107,6 +105,14 @@ func TestUnmarshal_Update(t *testing.T) {
 	assert.Equal(t, 9, g.Inning)
 	assert.Equal(t, 11, g.HomeScore)
 	assert.Equal(t, 2, g.VisitorScore)
+
+	data2, err := os.ReadFile("testdata/mlb_gameupdate_canceled.json")
+	require.NoError(t, err)
+
+	g2 := MLBGameUpdate{}
+	err = json.Unmarshal(data2, &g2)
+	require.Error(t, err)
+	assert.Equal(t, int64(0), g2.GamePK)
 }
 
 func TestUnmarshal_Standings(t *testing.T) {
