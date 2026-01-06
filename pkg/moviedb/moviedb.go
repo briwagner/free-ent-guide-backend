@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const base = "https://api.themoviedb.org/3/"
+const Base = "https://api.themoviedb.org/3/"
 
 type MovieDb struct {
 	Key        string
@@ -32,13 +32,13 @@ type Token struct {
 func NewMovieDB(key string) *MovieDb {
 	return &MovieDb{
 		Key:        key,
-		popularity: float64(20),
+		popularity: float64(10),
 	}
 }
 
 // GetTrending retrieves the trending TV listings.
 func (m *MovieDb) GetTrending() {
-	url := base + "trending/tv/week"
+	url := Base + "trending/tv/week"
 	p := map[string]string{
 		"api_key": m.Key,
 	}
@@ -53,13 +53,14 @@ func (m *MovieDb) GetDiscoverPaged(date string) ([]MovieRelease, error) {
 	for p <= totalP {
 		m.GetDiscover(date, strconv.Itoa(p))
 		if m.Status != 200 {
-			return mr, fmt.Errorf("error getting discover results; status %d", m.Status)
+			return mr, fmt.Errorf("error getting DiscoverResults; status %d", m.Status)
 		}
 
 		var results DiscoverResults
 		err := json.Unmarshal(m.Response, &results)
 		if err != nil {
-			return mr, err
+			// TODO write this to file in /tmp ? to view what's bad in here?
+			return mr, fmt.Errorf("error unmarshal DiscoverResults: %w", err)
 		}
 
 		if p != results.Page {
@@ -78,7 +79,7 @@ func (m *MovieDb) GetDiscoverPaged(date string) ([]MovieRelease, error) {
 
 	ti, err := time.Parse("2006-01-02", date)
 	if err != nil {
-		return mr, err
+		return mr, fmt.Errorf("error parsing time for %s: %w", date, err)
 	}
 
 	filtered := m.filterReleases(ti, mr)
@@ -89,7 +90,7 @@ func (m *MovieDb) GetDiscoverPaged(date string) ([]MovieRelease, error) {
 
 // GetDiscover retrieves the coming movie listings.
 func (m *MovieDb) GetDiscover(date string, p string) {
-	url := base + "discover/movie"
+	url := Base + "discover/movie"
 	// from discoverMoviesReq(), must include date and other filters
 	// in query param
 	params := map[string]string{
@@ -108,7 +109,7 @@ func (m *MovieDb) GetDiscover(date string, p string) {
 // getToken retrieves a token.
 // TODO unused except in test.
 func (m *MovieDb) getToken() error {
-	url := base + "authentication/token/new"
+	url := Base + "authentication/token/new"
 	p := map[string]string{
 		"api_key": m.Key,
 	}
@@ -206,9 +207,11 @@ type ReleaseDate struct {
 func (rd *ReleaseDate) UnmarshalJSON(b []byte) error {
 	date, err := time.Parse(`"2006-01-02"`, string(b))
 	if err != nil {
-		return err
+		rd.Time = time.Now()
+		log.Printf("error parsing date DiscoverMovies: %s", err.Error())
+	} else {
+		rd.Time = date
 	}
-	rd.Time = date
 	return nil
 }
 

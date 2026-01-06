@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+const (
+	FN     = "discover.json"
+	Domain = "free-entertainment-guide.com"
+)
+
 func handleDiscoverMovies(tp TaskPayload, args []string) error {
 	subCo := args[2]
 	if subCo == "" {
@@ -17,25 +22,24 @@ func handleDiscoverMovies(tp TaskPayload, args []string) error {
 		return nil
 	}
 
-	fmt.Println("Fetching discover movies...")
-
 	_, err := time.Parse("2006-01-02", subCo)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing date for %s: %w", subCo, err)
 	}
+
+	log.Printf("Fetching discover movies for %s...\n", subCo)
 
 	mdb := moviedb.NewMovieDB(tp.Cred.Moviedb)
 	results, err := mdb.GetDiscoverPaged(subCo)
 	if err != nil {
-		return err
+		return fmt.Errorf("error doing GetDiscoverPaged: %w", err)
 	}
 
 	if len(results) == 0 {
 		return errors.New("no results for discovery movies")
 	}
 
-	fn := "discover.json"
-	f, err := os.Create(fn)
+	f, err := os.Create(FN)
 	if err != nil {
 		return err
 	}
@@ -51,9 +55,8 @@ func handleDiscoverMovies(tp TaskPayload, args []string) error {
 		return err
 	}
 
-	fmt.Printf("File generated: %s. Results %d \n", fn, len(results))
+	log.Printf("File generated: %s. Results %d \n", FN, len(results))
 
-	b := "free-entertainment-guide.com"
-	log.Printf("pushing to bucket %s", b)
-	return tp.Cred.Spaces.PutFile("discover.json", "discover.json", b)
+	log.Printf("pushing to bucket %s", Domain)
+	return tp.Cred.Spaces.PutFile(FN, FN, Domain)
 }
