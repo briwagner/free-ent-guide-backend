@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -62,15 +63,23 @@ func (tc *TaskCommander) Print() string {
 func (tc *TaskCommander) Run(ctx context.Context, args []string) error {
 	cmd := args[1]
 
-	t, ok := tc.Tasks[cmd]
+	task, ok := tc.Tasks[cmd]
 	if !ok {
 		return errors.New("command not found: " + cmd)
 	}
 
-	if len(args)-1 < t.Args {
-		return fmt.Errorf("%s command requires %d arguments. Try: %s", cmd, t.Args, strings.Join(t.Subcommands, ", "))
+	if len(args)-1 < task.Args {
+		return fmt.Errorf("%s command requires %d arguments. Try: %s", cmd, task.Args, strings.Join(task.Subcommands, ", "))
 	}
 
 	tp := TaskPayload{Cred: tc.Cred, Querier: tc.Querier, client: tc.Client}
-	return t.Runner(ctx, tc.l, tp, args)
+	// Manually start tracer.
+	ctx, span := tc.t.Start(ctx, "cliTask")
+	defer span.End()
+	span.SetAttributes(
+		attribute.KeyValue{Key: "command", Value: attribute.StringValue(task.Command)},
+		attribute.KeyValue{Key: "args", Value: attribute.StringSliceValue(args)},
+	)
+
+	return task.Runner(ctx, tc.l, tp, args)
 }

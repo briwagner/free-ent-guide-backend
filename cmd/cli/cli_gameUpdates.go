@@ -25,6 +25,8 @@ func handleGameUpdates(ctx context.Context, l *slog.Logger, tp TaskPayload, args
 
 	// TODO consider passing leagues in here to skip MLB during winter, for example.
 
+	// TODO for otel trace, consider adding span for MLB and another for NHL
+
 	// Check MLB games first.
 	mlbs := models.MLBGames{}
 	err := mlbs.LoadByDateIncomplete(ctx, tp.Querier, date)
