@@ -8,6 +8,7 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -59,7 +60,7 @@ func (nt *NHLTeam) FindByTeamID(q *modelstore.Queries, teamID int64) error {
 	return nil
 }
 
-func (nt *NHLTeam) FindOrCreateByTeamID(q *modelstore.Queries, teamID int64) error {
+func (nt *NHLTeam) FindOrCreateByTeamID(ctx context.Context, client *http.Client, q *modelstore.Queries, teamID int64) error {
 	err := nt.FindByTeamID(q, teamID)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -68,7 +69,7 @@ func (nt *NHLTeam) FindOrCreateByTeamID(q *modelstore.Queries, teamID int64) err
 
 		// Create
 		idStr := strconv.FormatInt(teamID, 10)
-		newteam, err := nhlapi.GetTeam(idStr)
+		newteam, err := nhlapi.GetTeam(ctx, client, idStr)
 		if err != nil {
 			return err
 		}
@@ -192,16 +193,19 @@ func (g *NHLGame) UpdateScorev2(q *modelstore.Queries) error {
 	})
 }
 
+// Create custom error to avoid logging this all the time..
+var ErrorNotFinished = errors.New("game not finished")
+
 // UpdateScore updates a DB record to set the scores for a completed game.
-func (g *NHLGame) UpdateScore(q *modelstore.Queries) error {
-	up, err := nhlapi.GetUpdate(g.GameID)
+func (g *NHLGame) UpdateScore(ctx context.Context, client *http.Client, q *modelstore.Queries) error {
+	up, err := nhlapi.GetUpdate(ctx, client, g.GameID)
 	if err != nil {
 		return err
 	}
 
 	// `Final` is now `OFF`, aka official.
 	if up.Status != "Final" {
-		return fmt.Errorf("update failed; game not finished %d", up.ID)
+		return fmt.Errorf("no update %s: %w", up.ID, ErrorNotFinished)
 	}
 	g.HomeScore = int(up.HomeScore)
 	g.VisitorScore = int(up.VisitorScore)
@@ -346,10 +350,10 @@ func NHLGetNextGameday(q *modelstore.Queries, date time.Time) (NHLGames, error) 
 }
 
 // NHLGetLatestGames loads all games on the latest date found in the DB.
-func NHLGetLatestGames(q *modelstore.Queries) (NHLGames, error) {
+func NHLGetLatestGames(ctx context.Context, q *modelstore.Queries) (NHLGames, error) {
 	var games []NHLGame
 
-	rows, err := q.NHLLatestGames(context.Background())
+	rows, err := q.NHLLatestGames(ctx)
 	if err != nil {
 		return games, err
 	}
@@ -364,8 +368,8 @@ func NHLGetLatestGames(q *modelstore.Queries) (NHLGames, error) {
 
 // ImportNHL fetches a week of games from NHL API and converts to struct
 // storing them in DB.
-func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
-	gameweek, err := nhlapi.ImportNHL(startDate)
+func ImportNHL(ctx context.Context, q *modelstore.Queries, client *http.Client, startDate string) (string, error) {
+	gameweek, err := nhlapi.ImportNHL(ctx, client, startDate)
 	if err != nil {
 		return err.Error(), err
 	}
@@ -388,7 +392,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
 
 			// Map MLB team IDs to my database IDs.
 			home := &NHLTeam{}
-			err := home.FindOrCreateByTeamID(q, int64(g.Home.ID))
+			err := home.FindOrCreateByTeamID(ctx, client, q, int64(g.Home.ID))
 			if err != nil {
 				countErrs++
 				log.Printf("error finding home team %d for game %d: %s", g.Home.ID, g.ID, err)
@@ -397,7 +401,7 @@ func ImportNHL(q *modelstore.Queries, startDate string) (string, error) {
 			game.HomeID = home.ID
 
 			away := &NHLTeam{}
-			err = away.FindOrCreateByTeamID(q, int64(g.Away.ID))
+			err = away.FindOrCreateByTeamID(ctx, client, q, int64(g.Away.ID))
 			if err != nil {
 				countErrs++
 				log.Printf("error finding away team %d for game %d: %s", g.Away.ID, g.ID, err)

@@ -1,6 +1,7 @@
 package models_test
 
 import (
+	"context"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/cred"
@@ -22,8 +23,9 @@ func init() {
 
 	Queries = modelstore.New(st)
 
+	ctx := context.TODO()
 	cWipe := &models.Caches{}
-	_, err := cWipe.DropAll(Queries)
+	_, err := cWipe.DropAll(ctx, Queries)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +40,7 @@ func Test_Cache(t *testing.T) {
 		UpdatedAt: time.Now(),
 		Expires:   now.AddDate(0, 0, -2),
 	}
-	err := c1.Insert(Queries)
+	err := c1.Insert(t.Context(), Queries)
 	assert.NoError(t, err)
 	assert.NotEqual(t, 0, c1.ID)
 
@@ -48,26 +50,26 @@ func Test_Cache(t *testing.T) {
 		Value:   "cached values",
 		Expires: now.AddDate(0, 0, -2),
 	}
-	err = c2.Insert(Queries)
+	err = c2.Insert(t.Context(), Queries)
 	require.NoError(t, err)
 	c3 := &models.Cache{
 		Name:    "/v1/tv-movies",
 		Value:   "cached values",
 		Expires: now.AddDate(0, 0, 4),
 	}
-	err = c3.Insert(Queries)
+	err = c3.Insert(t.Context(), Queries)
 	require.NoError(t, err)
 	c4 := &models.Cache{
 		Name:    "/v1/tv-sports",
 		Value:   "cached values",
 		Expires: now.AddDate(0, 0, 1),
 	}
-	err = c4.Insert(Queries)
+	err = c4.Insert(t.Context(), Queries)
 	require.NoError(t, err)
 
 	// Get by name
 	var cName models.Cache
-	err = cName.GetByName("/v1/movies?zip=60048&date=2023-10-12", Queries)
+	err = cName.GetByName(t.Context(), "/v1/movies?zip=60048&date=2023-10-12", Queries)
 	assert.NoError(t, err)
 	assert.NotEqual(t, 0, cName.ID)
 	assert.Equal(t, "/v1/movies?zip=60048&date=2023-10-12", cName.Name)
@@ -77,7 +79,7 @@ func Test_Cache(t *testing.T) {
 
 	// Get by ID
 	var c models.Cache
-	err = c.GetByID(c1.ID, Queries)
+	err = c.GetByID(t.Context(), c1.ID, Queries)
 	assert.NoError(t, err)
 	assert.NotEqual(t, 0, c.ID)
 	assert.Equal(t, "/v1/movies?zip=60048&date=2023-10-12", c.Name)
@@ -87,25 +89,25 @@ func Test_Cache(t *testing.T) {
 
 	// Get all
 	cAll := &models.Caches{}
-	err = cAll.ShowAll(Queries)
+	err = cAll.ShowAll(t.Context(), Queries)
 	assert.NoError(t, err)
 	assert.Len(t, *cAll, 4)
 
 	// Get stale
 	cStale := &models.Caches{}
-	err = cStale.ShowStale(time.Now(), Queries)
+	err = cStale.ShowStale(t.Context(), time.Now(), Queries)
 	assert.NoError(t, err)
 	assert.Len(t, *cStale, 2)
 
 	// Clear stale
 	cClear := &models.Caches{}
-	rows, err := cClear.DropStale(time.Now(), Queries)
+	rows, err := cClear.DropStale(t.Context(), time.Now(), Queries)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(2), rows)
 
 	// Wipe all
 	cWipe := &models.Caches{}
-	rows, err = cWipe.DropAll(Queries)
+	rows, err = cWipe.DropAll(t.Context(), Queries)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(2), rows)
 }

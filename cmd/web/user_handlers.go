@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -24,7 +23,7 @@ func (app *App) UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	err := u.FindByEmail(q)
 
 	if err != nil {
-		log.Print(err)
+		app.l.Error("error createToken", "error", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -34,7 +33,7 @@ func (app *App) UsersCreateToken(w http.ResponseWriter, r *http.Request) {
 	jwtToken := app.Authy.IssueJWT(u.Email, fmt.Sprintf("%d", u.ID))
 	// Does not throw error, only empty string, if it fails.
 	if jwtToken == "" {
-		log.Printf("Failed to generate JWT for %s", username)
+		app.l.Error("failed to generate JWT", "username", username)
 		w.WriteHeader(500)
 		return
 	}
@@ -61,6 +60,7 @@ func (app *App) UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
 	var formData UserTokenData
 	err := decoder.Decode(&formData)
 	if err != nil {
+		app.l.Error("error decoding token", "error", err)
 		panic(err)
 	}
 
@@ -72,6 +72,7 @@ func (app *App) UsersRevokeToken(w http.ResponseWriter, r *http.Request) {
 
 	err = auth.Revoke(app.JWTStrategy, formData.Token)
 	if err != nil {
+		app.l.Error("error revoking token", "error", err)
 		w.Write([]byte("error revoking token"))
 		w.WriteHeader(500)
 		return
@@ -87,7 +88,7 @@ type UserCreateData struct {
 
 // UsersCreate adds a user to storage.
 // Responds to /v1/users/create
-func UsersCreate(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersCreate(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(200)
@@ -98,7 +99,7 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 	var formData UserCreateData
 	err := decoder.Decode(&formData)
 	if err != nil {
-		log.Print(err)
+		app.l.Error("error usersCreate", "error", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -120,17 +121,20 @@ func UsersCreate(w http.ResponseWriter, r *http.Request) {
 	user := &models.User{Email: formData.Username, Password: formData.Password}
 	err = user.Create(q)
 	if err != nil {
+		app.l.Error("error usersCreate", "error", err)
 		w.WriteHeader(500)
 		w.Write([]byte(fmt.Sprintf("Error creating user. %v", err)))
 		return
 	}
+
+	app.l.Info("user created", "username", user.Email)
 
 	w.WriteHeader(204)
 }
 
 // UsersGetData returns the stored zip-codes for a user.
 // Responds to /v1/users/get-zip?username={name}
-func UsersGetData(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersGetData(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
@@ -157,7 +161,7 @@ func UsersGetData(w http.ResponseWriter, r *http.Request) {
 
 		err = json.NewEncoder(w).Encode(user)
 		if err != nil {
-			log.Println(err)
+			app.l.Error("error usersGetData", "error", err)
 		}
 		return
 	default:
@@ -168,7 +172,7 @@ func UsersGetData(w http.ResponseWriter, r *http.Request) {
 
 // UsersAddZip creates or appends a zip code to user in storage.
 // Responds to /v1/users/add-zip?username={name}&zip={zipcode}
-func UsersAddZip(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersAddZip(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
@@ -194,26 +198,26 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 		user := &models.User{Email: username}
 		newZip, err := strconv.ParseInt(qZip, 10, 64)
 		if err != nil {
-			log.Printf("error parsing zip %s", err)
+			app.l.Error("error parsing zip", "error", err)
 			w.WriteHeader(500)
 			return
 		}
 		err = user.AddZip(q, newZip)
 		if err != nil {
-			log.Printf("Storage error %s", err.Error())
+			app.l.Error("storage error", "error", err)
 			w.WriteHeader(500)
 			return
 		}
 
 		err = user.GetZips(q)
 		if err != nil {
-			log.Println(err)
+			app.l.Error("error getZips", "error", err)
 			w.WriteHeader(500)
 		}
 
 		err = json.NewEncoder(w).Encode(user)
 		if err != nil {
-			log.Println(err)
+			app.l.Error("error usersGetZip", "error", err)
 		}
 		return
 	default:
@@ -224,7 +228,7 @@ func UsersAddZip(w http.ResponseWriter, r *http.Request) {
 
 // UsersDeleteZip removes a zip-code from a users list.
 // Responds to /v1/users/delete-zip?username={name}&zip={zipcode}
-func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
@@ -250,12 +254,13 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 		user := &models.User{Email: username}
 		delZip, err := strconv.ParseInt(qZip, 10, 64)
 		if err != nil {
-			log.Printf("error parsing zip %s", err)
+			app.l.Error("error parsing zip", "error", err)
 			w.WriteHeader(500)
 			return
 		}
 		err = user.DeleteZip(q, delZip)
 		if err != nil {
+			app.l.Error("error deleteZip", "error", err)
 			w.WriteHeader(500)
 			w.Write([]byte("Error deleting data."))
 			return
@@ -263,7 +268,7 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 
 		err = json.NewEncoder(w).Encode(user)
 		if err != nil {
-			log.Println(err)
+			app.l.Error("error deleteZip", "error", err)
 		}
 		return
 	default:
@@ -274,7 +279,7 @@ func UsersDeleteZip(w http.ResponseWriter, r *http.Request) {
 
 // UsersClearZip removes all stored zip-codes.
 // Responds to /v1/users/clear-zip?username={name}
-func UsersClearZip(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersClearZip(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
 	case "POST":
@@ -292,6 +297,7 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 		user := &models.User{Email: username}
 		err := user.ClearZips(q)
 		if err != nil {
+			app.l.Error("error clearZip", "error", err)
 			w.Write([]byte("Error removing from storage."))
 			return
 		}
@@ -306,7 +312,7 @@ func UsersClearZip(w http.ResponseWriter, r *http.Request) {
 
 // UsersAddShow creates or appends to user's stored shows.
 // Responds to /v1/users/add-show?show={show_id}
-func UsersAddShow(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersAddShow(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
@@ -332,26 +338,26 @@ func UsersAddShow(w http.ResponseWriter, r *http.Request) {
 		user := &models.User{Email: username}
 		newShow, err := strconv.ParseInt(qShow, 10, 64)
 		if err != nil {
-			log.Printf("error parsing show %s", err)
+			app.l.Error("error parsing show", "error", err)
 			w.WriteHeader(500)
 			return
 		}
 		err = user.AddShow(q, newShow)
 		if err != nil {
-			log.Printf("Storage error %s", err.Error())
+			app.l.Error("storage error", "error", err)
 			w.WriteHeader(500)
 			return
 		}
 
 		err = user.LoadData(q)
 		if err != nil {
-			log.Println(err)
+			app.l.Error("error usersAddShow", "error", err)
 			w.WriteHeader(500)
 		}
 
 		err = json.NewEncoder(w).Encode(user)
 		if err != nil {
-			log.Println(err)
+			app.l.Error("error addShow", "error", err)
 		}
 		return
 	default:
@@ -362,7 +368,7 @@ func UsersAddShow(w http.ResponseWriter, r *http.Request) {
 
 // UsersDeleteShow removes shows from user's saved shows.
 // Responds to /v1/users-delete-show?show={show_id}
-func UsersDeleteShow(w http.ResponseWriter, r *http.Request) {
+func (app *App) UsersDeleteShow(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	switch r.Method {
 	case "OPTIONS":
@@ -388,14 +394,14 @@ func UsersDeleteShow(w http.ResponseWriter, r *http.Request) {
 		user := &models.User{Email: username}
 		show, err := strconv.ParseInt(qShow, 10, 64)
 		if err != nil {
-			log.Printf("error parsing show %s", err)
+			app.l.Error("error parsing show", "error", err)
 			w.WriteHeader(500)
 			return
 		}
 
 		err = user.DeleteShow(q, show)
 		if err != nil {
-			log.Printf("Storage error %s", err.Error())
+			app.l.Error("storage error", "error", err)
 			w.WriteHeader(500)
 			return
 		}

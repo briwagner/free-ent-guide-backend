@@ -6,38 +6,67 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func NewRouter(app App) *mux.Router {
 	mux := mux.NewRouter()
-	mux.HandleFunc("/v1/movies", GetMovies).Methods("GET")
-	mux.HandleFunc("/v1/discover", DiscoverMovies).Methods("GET")
-	mux.HandleFunc("/v1/tv-movies", GetTvMovies).Methods("GET")
-	mux.HandleFunc("/v1/tv-sports", GetTvSports).Methods("GET")
-	mux.HandleFunc("/v1/tv-search", GetTvSearch).Methods("GET")
-	mux.HandleFunc("/v1/tv-show/{show_id}", GetTvShow).Methods("GET")
-	mux.HandleFunc("/v1/tv-show/episode/{id}", GetTvEpisode).Methods("GET")
+	mux.Handle("/v1/movies", otelhttp.NewHandler(
+		http.HandlerFunc(app.GetMovies),
+		"get-movies", // this becomes the title of the trace in Grafana
+	)).Methods("GET")
+	mux.Handle("/v1/discover", otelhttp.NewHandler(
+		http.HandlerFunc(app.DiscoverMovies),
+		"discover-movies",
+	)).Methods("GET")
+	mux.Handle("/v1/tv-movies", otelhttp.NewHandler(
+		http.HandlerFunc(app.GetTvMovies),
+		"tv-movies",
+	)).Methods("GET")
+	mux.Handle("/v1/tv-sports", otelhttp.NewHandler(
+		http.HandlerFunc(app.GetTvSports),
+		"tv-sports",
+	)).Methods("GET")
+	mux.Handle("/v1/tv-search", otelhttp.NewHandler(
+		http.HandlerFunc(app.GetTvSearch),
+		"tv-search",
+	)).Methods("GET")
+	mux.Handle("/v1/tv-show/{show_id}", otelhttp.NewHandler(
+		http.HandlerFunc(app.GetTvShow),
+		"tv-show-id",
+	)).Methods("GET")
+	mux.Handle("/v1/tv-show/episode/{id}", otelhttp.NewHandler(
+		http.HandlerFunc(app.GetTvEpisode),
+		"tv-show-episode",
+	)).Methods("GET")
 
-	mux.HandleFunc("/v1/users/create", UsersCreate)
+	mux.HandleFunc("/v1/users/create", app.UsersCreate)
 	mux.HandleFunc("/v1/users/token", app.AuthHandler(http.HandlerFunc(app.UsersCreateToken)))
 	mux.HandleFunc("/v1/users/revoke", app.UsersRevokeToken)
 
 	// mux.HandleFunc("/v1/users/get-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersGetZip))))
-	mux.HandleFunc("/v1/users/get-data", app.AuthHandler(http.HandlerFunc(UsersGetData)))
-	mux.HandleFunc("/v1/users/add-zip", app.AuthHandler(http.HandlerFunc(UsersAddZip)))
-	mux.HandleFunc("/v1/users/delete-zip", app.AuthHandler(http.HandlerFunc(UsersDeleteZip)))
-	mux.HandleFunc("/v1/users/clear-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(UsersClearZip)))).Methods("POST")
-	mux.HandleFunc("/v1/users/add-show", app.AuthHandler(http.HandlerFunc(UsersAddShow)))
-	mux.HandleFunc("/v1/users/delete-show", app.AuthHandler(http.HandlerFunc(UsersDeleteShow)))
+	mux.HandleFunc("/v1/users/get-data", app.AuthHandler(http.HandlerFunc(app.UsersGetData)))
+	mux.HandleFunc("/v1/users/add-zip", app.AuthHandler(http.HandlerFunc(app.UsersAddZip)))
+	mux.HandleFunc("/v1/users/delete-zip", app.AuthHandler(http.HandlerFunc(app.UsersDeleteZip)))
+	mux.HandleFunc("/v1/users/clear-zip", app.AuthHandler(RoleHandler(http.HandlerFunc(app.UsersClearZip)))).Methods("POST")
+	mux.HandleFunc("/v1/users/add-show", app.AuthHandler(http.HandlerFunc(app.UsersAddShow)))
+	mux.HandleFunc("/v1/users/delete-show", app.AuthHandler(http.HandlerFunc(app.UsersDeleteShow)))
 
-	mux.HandleFunc("/v1/sports/mlb/games", MLBGamesHandler)
-	mux.HandleFunc("/v1/sports/mlb/game/{game_id}", MLBGameHandler)
-	mux.HandleFunc("/v1/sports/mlb/team/{team_id}", MLBTeamHandler)
+	mux.Handle("/v1/sports/mlb/games", otelhttp.NewHandler(
+		http.HandlerFunc(app.MLBGamesHandler), "mlb-games"))
+	mux.Handle("/v1/sports/mlb/game/{game_id}", otelhttp.NewHandler(
+		http.HandlerFunc(app.MLBGameHandler), "mlb-game-id"))
+	mux.Handle("/v1/sports/mlb/team/{team_id}", otelhttp.NewHandler(
+		http.HandlerFunc(app.MLBTeamHandler), "mlb-team"))
 
-	mux.HandleFunc("/v1/sports/nhl/games", NHLGamesHandler)
-	mux.HandleFunc("/v1/sports/nhl/game/{game_id}", NHLGameHandler)
-	mux.HandleFunc("/v1/sports/nhl/latest", NHLGamesLatest)
-	mux.HandleFunc("/v1/sports/nhl/next", NHLGamesNext)
+	mux.Handle("/v1/sports/nhl/games", otelhttp.NewHandler(
+		http.HandlerFunc(app.NHLGamesHandler), "nhl-games"))
+	mux.Handle("/v1/sports/nhl/game/{game_id}", otelhttp.NewHandler(
+		http.HandlerFunc(app.NHLGameHandler), "nhl-game-id"))
+	mux.Handle("/v1/sports/nhl/latest", otelhttp.NewHandler(
+		http.HandlerFunc(app.NHLGamesLatest), "nhl-latest"))
+	mux.Handle("/v1/sports/nhl/next", otelhttp.NewHandler(
+		http.HandlerFunc(app.NHLGamesNext), "nhl-next"))
 
 	// Metrics
 	mux.Handle("/debug/vars", http.DefaultServeMux)

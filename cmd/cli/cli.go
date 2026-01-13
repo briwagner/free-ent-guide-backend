@@ -1,20 +1,29 @@
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
+	"free-ent-guide-backend/pkg/bri_otel"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
-	"net/http"
 	"os"
 	"strings"
-	"time"
+
+	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/log/global"
 )
 
 var (
 	format = "2006-01-02"
+)
+
+const (
+	instrumentationName    = "github.com/briwagner/free-entertainment-guide-backend"
+	instrumentationVersion = "0.1.0"
+	appName                = "cli-ent-api"
 )
 
 func main() {
@@ -24,83 +33,46 @@ func main() {
 
 	tc := buildTaskCommander(&c, modelstore.New(models.Setup(c)))
 
+	// No sub-command was passed.
 	if len(os.Args) <= 1 {
 		fmt.Println(tc.Print())
 		return
 	}
 
-	err := tc.Run(os.Args)
+	// Setup OTel for logging, tracing.
+	ctx := context.Background()
+	lp, tp := bri_otel.SetupOtel(ctx, instrumentationName, instrumentationVersion, appName)
+	if lp == nil || tp == nil {
+		panic("failed to setup open telemetry")
+	}
+	defer func() {
+		// TODO combine these shutdown funcs
+		if err := lp.Shutdown(ctx); err != nil {
+			log.Printf("shutdown logger error %v", err)
+		}
+		if err := tp.Shutdown(ctx); err != nil {
+			log.Printf("shutdown tracer error %v", err)
+		}
+	}()
+	global.SetLoggerProvider(lp)
+	tc.l = otelslog.NewLogger(appName)
+	tc.t = otel.Tracer(appName)
+
+	err := tc.Run(ctx, os.Args)
 	if err != nil {
 		log.Print(err)
+		tc.l.Error("error runner", " error", err, "commands", strings.Join(os.Args, ", "))
+		return
 	}
-}
-
-type (
-	TaskRunner func(tp TaskPayload, args []string) error
-
-	TaskPayload struct {
-		Cred    *cred.Cred
-		Querier *modelstore.Queries
-		client  *http.Client
-	}
-
-	Task struct {
-		Command     string
-		Description string
-		Subcommands []string
-		Args        int // count
-		Runner      TaskRunner
-	}
-
-	TaskCommander struct {
-		Cred    *cred.Cred
-		Querier *modelstore.Queries
-		Tasks   map[string]Task
-		Client  *http.Client
-	}
-)
-
-func (tc *TaskCommander) Print() string {
-	cmds := make([]string, len(tc.Tasks))
-	count := 0
-	for cmdName := range tc.Tasks {
-		cmds[count] = cmdName
-		count++
-	}
-
-	return fmt.Sprintf(`
-	Available commands: %s.
-	'nhl', 'mlb' or 'gup' along with a date e.g. 2022-11-21.
-	Or 'nhl', 'mlb' with 'last'.
-	Or 'cache' with one of: show, stale, clear, wipe.
-	Or 'discover' with date.
-	Or 'user reset' with email.
-	Or 'backup'.
-
-	`, strings.Join(cmds, ", "))
-}
-
-func (tc *TaskCommander) Run(args []string) error {
-	cmd := args[1]
-
-	t, ok := tc.Tasks[cmd]
-	if !ok {
-		return errors.New("command not found: " + cmd)
-	}
-
-	if len(args)-1 < t.Args {
-		return fmt.Errorf("%s command requires %d arguments. Try: %s", cmd, t.Args, strings.Join(t.Subcommands, ", "))
-	}
-
-	tp := TaskPayload{Cred: tc.Cred, Querier: tc.Querier, client: tc.Client}
-	return t.Runner(tp, args)
+	tc.l.Info("task complete", "commands", strings.Join(os.Args, ", "))
+	// If this is hanging and won't close, then Otel is not connected.
 }
 
 func buildTaskCommander(c *cred.Cred, q *modelstore.Queries) TaskCommander {
 	tc := TaskCommander{
 		Cred:    c,
 		Querier: q,
-		Client:  &http.Client{Timeout: time.Second * 5},
+		Client:  bri_otel.NewOtelClient(5),
 	}
 
 	tasks := make(map[string]Task)

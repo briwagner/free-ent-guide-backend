@@ -150,7 +150,7 @@ func TestGameUpdate(t *testing.T) {
 func TestGetStandings(t *testing.T) {
 	t.Skip("live stats will vary")
 
-	st, err := GetStandings(&http.Client{Timeout: time.Second * 3})
+	st, err := GetStandings(t.Context(), &http.Client{Timeout: time.Second * 3})
 	require.Len(t, err, 2)
 	require.NoError(t, err[0])
 	assert.Len(t, st.Records, 6) // 3 for each league

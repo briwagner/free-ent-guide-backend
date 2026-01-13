@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"free-ent-guide-backend/pkg/moviedb"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -15,7 +17,7 @@ const (
 	Domain = "free-entertainment-guide.com"
 )
 
-func handleDiscoverMovies(tp TaskPayload, args []string) error {
+func handleDiscoverMovies(ctx context.Context, l *slog.Logger, tp TaskPayload, args []string) error {
 	subCo := args[2]
 	if subCo == "" {
 		fmt.Println("Must pass date for discover movies lookup.")
@@ -30,7 +32,7 @@ func handleDiscoverMovies(tp TaskPayload, args []string) error {
 	log.Printf("Fetching discover movies for %s...\n", subCo)
 
 	mdb := moviedb.NewMovieDB(tp.Cred.Moviedb)
-	results, err := mdb.GetDiscoverPaged(subCo)
+	results, err := mdb.GetDiscoverPaged(ctx, subCo)
 	if err != nil {
 		return fmt.Errorf("error doing GetDiscoverPaged: %w", err)
 	}
@@ -56,6 +58,7 @@ func handleDiscoverMovies(tp TaskPayload, args []string) error {
 	}
 
 	log.Printf("File generated: %s. Results %d \n", FN, len(results))
+	l.Info("discover file generated", "filename", FN, "results", len(results))
 
 	log.Printf("pushing to bucket %s", Domain)
 	return tp.Cred.Spaces.PutFile(FN, FN, Domain)

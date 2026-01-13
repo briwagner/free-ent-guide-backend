@@ -18,24 +18,24 @@ func TestDB_MLB(t *testing.T) {
 	mlbWipe(t)
 
 	t1 := models.MLBTeam{TeamID: 117, Name: "Houston Astros"}
-	err := t1.Create(Queries)
+	err := t1.Create(t.Context(), Queries)
 	require.NoError(t, err)
 	assert.NotEqual(t, uint(0), t1.ID)
 
 	t2 := models.MLBTeam{TeamID: 143, Name: "Philadelphia Phillies"}
-	err = t2.Create(Queries)
+	err = t2.Create(t.Context(), Queries)
 	require.NoError(t, err)
 	require.NotEqual(t, uint(0), t2.ID)
 
 	tq := models.MLBTeam{}
-	err = tq.FindByTeamID(Queries, 117)
+	err = tq.FindByTeamID(t.Context(), Queries, 117)
 	require.NoError(t, err)
 	assert.Equal(t, "Houston Astros", tq.Name)
 	assert.Equal(t, int(117), tq.TeamID)
 
 	gt := time.Date(2024, 2, 2, 12, 25, 54, 00, time.UTC)
 	g := models.MLBGame{GameID: 444, Gametime: gt, Description: "demo game", Status: "Final", HomeID: t1.ID, HomeScore: 3, VisitorID: t2.ID, VisitorScore: 7}
-	err = g.Create(Queries)
+	err = g.Create(t.Context(), Queries)
 	require.NoError(t, err)
 }
 
@@ -44,15 +44,15 @@ func TestGameUpdate(t *testing.T) {
 	mlbWipe(t)
 
 	th := models.MLBTeam{TeamID: 111, Name: "Boston Red Sox"}
-	err := th.Create(Queries)
+	err := th.Create(t.Context(), Queries)
 	require.NoError(t, err)
 	ta := models.MLBTeam{TeamID: 147, Name: "New York Yankees"}
-	err = ta.Create(Queries)
+	err = ta.Create(t.Context(), Queries)
 	require.NoError(t, err)
 
 	gt := time.Date(2024, 2, 2, 12, 25, 54, 00, time.UTC)
 	g := models.MLBGame{GameID: 716628, Gametime: gt, Description: "Regular Season", Status: "In Progress", Link: "/api/v1.1/game/716628/feed/live", HomeID: th.ID, HomeScore: 0, VisitorID: ta.ID, VisitorScore: 0}
-	err = g.Create(Queries)
+	err = g.Create(t.Context(), Queries)
 	require.NoError(t, err)
 
 	err = g.GetUpdate(&http.Client{Timeout: time.Second * 3})
@@ -66,7 +66,7 @@ func TestGameUpdate(t *testing.T) {
 
 func TestGamesByDate(t *testing.T) {
 	g := &models.MLBGames{}
-	err := g.LoadByDate(Queries, "2024-02-02")
+	err := g.LoadByDate(t.Context(), Queries, "2024-02-02")
 	require.NoError(t, err)
 	assert.NotEmpty(t, *g)
 	for _, v := range *g {

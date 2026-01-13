@@ -2,6 +2,7 @@ package nhlapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -73,13 +74,18 @@ func (gt *GameType) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// ImportNHL is the 2023 go-native version to fetch NHL game schedule
+// ImportNHL is the 2023 Go-native version to fetch NHL game schedule
 // for a given week, and import games and teams to the DB.
-func ImportNHL(startDate string) (*GameWeekPayload, error) {
+func ImportNHL(ctx context.Context, client *http.Client, startDate string) (*GameWeekPayload, error) {
 	url := "https://api-web.nhle.com/v1/schedule/" + startDate
 	payload := &GameWeekPayload{}
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return payload, err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return payload, err
 	}
@@ -131,11 +137,15 @@ func (gt *GetTeamPayload) ToTeam() NHLTeam {
 	return nhlt
 }
 
-func GetTeam(id string) (NHLTeam, error) {
+func GetTeam(ctx context.Context, client *http.Client, id string) (NHLTeam, error) {
 	url := "https://api-web.nhle.com/v1/meta?teams=" + id
 
 	t := NHLTeam{}
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return t, err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return t, fmt.Errorf("failed to get team %s: %s", id, err)
 	}
@@ -187,12 +197,16 @@ func GetTeams() ([]NHLTeam, error) {
 
 // GetUpdate makes an api request to get game update to
 // merge with scheduled game info from the database.
-func GetUpdate(gameID int) (NHLGameUpdate, error) {
+func GetUpdate(ctx context.Context, client *http.Client, gameID int) (NHLGameUpdate, error) {
 	var gu NHLGameUpdate
 
 	base := "https://api-web.nhle.com/v1/gamecenter"
 	url := fmt.Sprintf("%s/%d/play-by-play", base, gameID)
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return gu, err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return gu, err
 	}

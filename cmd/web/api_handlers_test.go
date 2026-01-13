@@ -22,8 +22,10 @@ func TestGetMovies(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	app := App{} // TODO needs setup
+
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(GetMovies)
+	handler := http.HandlerFunc(app.GetMovies)
 
 	handler.ServeHTTP(rr, req)
 
@@ -46,6 +48,8 @@ func TestDiscoverMovies(t *testing.T) {
 		{"/v1/discover?date=2021-05-06", `{"page":1,"results":[`, 200},
 	}
 
+	app := App{} // needs setup
+
 	for _, tt := range requests {
 		req, err := http.NewRequest("GET", tt.url, nil)
 		if err != nil {
@@ -53,7 +57,7 @@ func TestDiscoverMovies(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(DiscoverMovies)
+		handler := http.HandlerFunc(app.DiscoverMovies)
 
 		handler.ServeHTTP(rr, req)
 
@@ -75,6 +79,8 @@ func TestGetTvMovies(t *testing.T) {
 		{"/v1/tv-movies?date=2021-05-06", `[{"startTime":"2021-05-05T21:33Z",`, 200},
 	}
 
+	app := App{} // TODO needs setup
+
 	for _, tt := range requests {
 		req, err := http.NewRequest("GET", tt.url, nil)
 		if err != nil {
@@ -82,7 +88,7 @@ func TestGetTvMovies(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(GetTvMovies)
+		handler := http.HandlerFunc(app.GetTvMovies)
 
 		handler.ServeHTTP(rr, req)
 

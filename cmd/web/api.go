@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
+	"free-ent-guide-backend/pkg/bri_otel"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
 	"os"
@@ -15,6 +16,9 @@ import (
 	"time"
 
 	_ "github.com/shaj13/libcache/fifo"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/log/global"
 )
 
 var (
@@ -24,24 +28,52 @@ var (
 	client   *http.Client
 )
 
+const (
+	instrumentationName    = "github.com/briwagner/free-entertainment-guide-backend"
+	instrumentationVersion = "0.1.0"
+	appName                = "free-entertainment-guide"
+)
+
 func main() {
 	// Set-up application config.
 	c.GetCreds("creds", ".")
 
 	// Set-up database.
 	Queries = modelstore.New(models.Setup(c))
-	client = &http.Client{Timeout: time.Second * 5}
+	client = &http.Client{Timeout: time.Second * 5} // TODO why is this not on the app?
 
 	// Set-up authentication.
 	var app App
 	app.setupGoGuardian()
+	app.setupClient(5)
 
+	// Setup OTel for logging, tracing (TODO metrics?)
+	ctx := context.Background()
+	lp, tp := bri_otel.SetupOtel(ctx, instrumentationName, instrumentationVersion, appName)
+	if lp == nil || tp == nil {
+		panic("failed to setup open telemetry")
+	}
+	defer func() {
+		// TODO combine these shutdown funcs
+		if err := lp.Shutdown(ctx); err != nil {
+			log.Printf("shutdown logger error %v", err)
+		}
+		if err := tp.Shutdown(ctx); err != nil {
+			log.Printf("shutdown tracer error %v", err)
+		}
+	}()
+	global.SetLoggerProvider(lp)
+	app.l = otelslog.NewLogger(appName)
+	app.t = otel.Tracer(appName)
+
+	// Create router
 	mux := NewRouter(app)
 	counters = expvar.NewMap("counters")
 	counters.Set("cache_hit", new(expvar.Int))
 	counters.Set("cache_miss", new(expvar.Int))
 
 	fmt.Printf("ENT API is live. Listening on port %v ...\n", c.GetPort())
+	app.l.Info("app starting up")
 	srv := &http.Server{
 		Addr:         "0.0.0.0" + c.GetPort(),
 		WriteTimeout: time.Second * 15,
@@ -67,7 +99,7 @@ func main() {
 	// e.g. send slack message. Need to move cli_slack to pkg/
 
 	srv.Shutdown(ctx)
-	log.Println("shutting down")
+	app.l.Info("shutting down")
 	os.Exit(0)
 }
 

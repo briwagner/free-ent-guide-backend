@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -9,11 +10,12 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
+	"log/slog"
 	"slices"
 	"time"
 )
 
-func handleNHL(tp TaskPayload, args []string) error {
+func handleNHL(ctx context.Context, l *slog.Logger, tp TaskPayload, args []string) error {
 	subCo := args[2]
 	if subCo == "" {
 		return errors.New("for NHL, must pass valid date or 'last'")
@@ -28,11 +30,12 @@ func handleNHL(tp TaskPayload, args []string) error {
 		err := slackMessage(tp.Cred, ret)
 		if err != nil {
 			log.Println(err)
+			l.Error("error handleNhl", "error", err)
 		}
 	}()
 
 	if subCo == "last" || subCo == "latest" {
-		games, err := models.NHLGetLatestGames(tp.Querier)
+		games, err := models.NHLGetLatestGames(ctx, tp.Querier)
 		if err != nil {
 			return fmt.Errorf("error getting last games: %w", err)
 		}
@@ -57,7 +60,7 @@ func handleNHL(tp TaskPayload, args []string) error {
 	if err != nil {
 		return fmt.Errorf("NHL game importer error: bad date for '%s'. Did you mean 'last'?", subCo)
 	}
-	ret, err = models.ImportNHL(tp.Querier, d.Format(format))
+	ret, err = models.ImportNHL(ctx, tp.Querier, tp.client, d.Format(format))
 	if err != nil {
 		return fmt.Errorf("NHL importer error for %s: %w", subCo, err)
 	}

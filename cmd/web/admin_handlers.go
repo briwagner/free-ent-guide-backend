@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+// DEPRECATED:
 // GamesImporter responds to POST to run the Docker importer
 // for both MLB and NHL games on the date specified.
 func GamesImporter(w http.ResponseWriter, r *http.Request) {

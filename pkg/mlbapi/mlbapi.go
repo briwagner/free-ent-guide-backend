@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -94,7 +93,7 @@ func GetGameUpdate(client *http.Client, link string) (MLBGameUpdate, error) {
 	return gameup, nil
 }
 
-func GetStandings(client *http.Client) (Standings, []error) {
+func GetStandings(ctx context.Context, client *http.Client) (Standings, []error) {
 	// testdata/mlb_standings.json // AL only
 
 	var wg sync.WaitGroup
@@ -109,7 +108,12 @@ func GetStandings(client *http.Client) (Standings, []error) {
 	go func() {
 		defer wg.Done()
 
-		resp, err := client.Get(alURL)
+		req, err := http.NewRequestWithContext(ctx, "GET", alURL, nil)
+		if err != nil {
+			errors[0] = err
+			return
+		}
+		resp, err := client.Do(req)
 		if err != nil {
 			errors[0] = err
 			return
@@ -135,7 +139,12 @@ func GetStandings(client *http.Client) (Standings, []error) {
 	go func() {
 		defer wg.Done()
 
-		resp, err := client.Get(nlURL)
+		req, err := http.NewRequestWithContext(ctx, "GET", nlURL, nil)
+		if err != nil {
+			errors[0] = err
+			return
+		}
+		resp, err := client.Do(req)
 		if err != nil {
 			errors[1] = err
 			return
@@ -162,30 +171,12 @@ func GetStandings(client *http.Client) (Standings, []error) {
 	// Get both calls and just smash 'em together.
 	alStandings.Records = append(alStandings.Records, nlStandings.Records...)
 
-	if alStandings.RecordByTeam == nil {
-		// TODO why does this initialize as nil?
-		alStandings.RecordByTeam = make(map[string]*Record)
-	}
-
 	divisionsLU, divErr := GetDivisions()
 	if divErr != nil {
-		log.Print(divErr)
+		// log.Print(divErr)
+		errors = append(errors, divErr)
 	}
-
-	for _, rec := range alStandings.Records {
-		for _, team := range rec.TeamRecords {
-			if _, exists := alStandings.RecordByTeam[team.Team.Name]; exists {
-				continue
-			}
-			if rec.Division.Name == "" && divErr == nil {
-				div, found := divisionsLU[string(rec.Division.ID)]
-				if found {
-					rec.Division.Name = div.Name
-				}
-			}
-			alStandings.RecordByTeam[team.Team.Name] = &rec
-		}
-	}
+	alStandings.Finalize(divisionsLU, divErr)
 
 	return alStandings, errors
 }
@@ -196,6 +187,7 @@ func GetTeamInfo(client *http.Client, id string) {
 	// url := "https://statsapi.mlb.com/api/v1/teams/" + id
 }
 
+// GetDivisions returns a LUT to use in grouping teams for standings.
 func GetDivisions() (map[string]Division, error) {
 	// TODO check file and if fail, do actual http lookup.
 	// url := "https://statsapi.mlb.com/api/v1/divisions?sportId=1"

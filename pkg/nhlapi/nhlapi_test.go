@@ -2,6 +2,7 @@ package nhlapi
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"testing"
 
@@ -73,7 +74,7 @@ func Test_GetTeam(t *testing.T) {
 	assert.Equal(t, 59, nhlteam.ID)
 
 	t.Skip("http request")
-	team, err := GetTeam("59")
+	team, err := GetTeam(t.Context(), &http.Client{}, "59")
 	require.NoError(t, err)
 	assert.Equal(t, "Utah Hockey Club", team.Name)
 	assert.Equal(t, "UTA", team.Tricode)

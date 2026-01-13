@@ -3,24 +3,40 @@ package main
 import (
 	"context"
 	"fmt"
-	"free-ent-guide-backend/models"
-	"free-ent-guide-backend/pkg/authenticator"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
+
+	"free-ent-guide-backend/models"
+	"free-ent-guide-backend/pkg/authenticator"
+	"free-ent-guide-backend/pkg/bri_otel"
 
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/basic"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
-
 	"github.com/shaj13/libcache"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type App struct {
 	Authy       *authenticator.Authenticator
 	JWTStrategy auth.Strategy
 	Strategy    union.Union
+	client      *http.Client
+
+	l *slog.Logger
+	t trace.Tracer
+}
+
+func (app *App) Tracer() trace.Tracer {
+	return app.t
+}
+
+// setupClient adds the otel-ready http client.
+func (a *App) setupClient(timeout int) {
+	a.client = bri_otel.NewOtelClient(5)
 }
 
 // Define strategies, set token expiration time.

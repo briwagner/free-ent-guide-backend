@@ -34,7 +34,7 @@ func (c *Cred) Setup() {
 func TestGetTrending(t *testing.T) {
 	c.Setup()
 	mdb := MovieDb{Key: c.Moviedb}
-	mdb.GetTrending()
+	mdb.GetTrending(t.Context())
 
 	if mdb.Status != http.StatusOK {
 		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", mdb.Status, http.StatusOK)
@@ -44,7 +44,7 @@ func TestGetTrending(t *testing.T) {
 func TestGetDiscover(t *testing.T) {
 	mdb := MovieDb{Key: c.Moviedb}
 	dateParam := time.Now().Format("2006-01-02")
-	mdb.GetDiscover(dateParam, "1")
+	mdb.GetDiscover(t.Context(), dateParam, "1")
 
 	if mdb.Status != http.StatusOK {
 		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", mdb.Status, http.StatusOK)
@@ -53,7 +53,7 @@ func TestGetDiscover(t *testing.T) {
 
 func TestGetToken(t *testing.T) {
 	mdb := MovieDb{Key: c.Moviedb}
-	mdb.getToken()
+	mdb.getToken(t.Context())
 
 	if mdb.Status != http.StatusOK {
 		t.Errorf("Fetch returned wrong status. Got %v, Wanted %v", mdb.Status, http.StatusOK)
@@ -98,7 +98,7 @@ func TestDiscoverPaging(t *testing.T) {
 	t.Skip("makes api call")
 
 	mdb := MovieDb{Key: c.Moviedb}
-	res, err := mdb.GetDiscoverPaged("2024-08-19")
+	res, err := mdb.GetDiscoverPaged(t.Context(), "2024-08-19")
 	require.NoError(t, err)
 	assert.Equal(t, 313, len(res))
 }

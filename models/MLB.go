@@ -30,7 +30,7 @@ type MLBGame struct {
 	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 }
 
-func (g *MLBGame) Create(q *modelstore.Queries) error {
+func (g *MLBGame) Create(ctx context.Context, q *modelstore.Queries) error {
 	if g.GameID == 0 {
 		return errors.New("invalid game ID")
 	}
@@ -44,7 +44,7 @@ func (g *MLBGame) Create(q *modelstore.Queries) error {
 		g.UpdatedAt = time.Now()
 	}
 
-	id, err := q.MLBCreateGame(context.Background(), modelstore.MLBCreateGameParams{
+	id, err := q.MLBCreateGame(ctx, modelstore.MLBCreateGameParams{
 		Gametime:     sql.NullTime{Time: g.Gametime, Valid: true},
 		GameID:       int64(g.GameID),
 		Description:  sql.NullString{String: g.Description, Valid: true},
@@ -64,8 +64,8 @@ func (g *MLBGame) Create(q *modelstore.Queries) error {
 	return nil
 }
 
-func FindByGameID(q *modelstore.Queries, gameID int) (*MLBGame, error) {
-	row, err := q.MLBFindGameByID(context.Background(), int64(gameID))
+func FindByGameID(ctx context.Context, q *modelstore.Queries, gameID int) (*MLBGame, error) {
+	row, err := q.MLBFindGameByID(ctx, int64(gameID))
 	if err != nil {
 		return nil, err
 	}
@@ -75,14 +75,14 @@ func FindByGameID(q *modelstore.Queries, gameID int) (*MLBGame, error) {
 }
 
 // UpdateScore pulls update from MLB api.
-func (mg *MLBGame) UpdateScore(q *modelstore.Queries, client *http.Client) error {
+func (mg *MLBGame) UpdateScore(ctx context.Context, q *modelstore.Queries, client *http.Client) error {
 	up, err := mlbapi.GetGameUpdate(client, mg.Link)
 	if err != nil {
 		return err
 	}
 
 	if up.Status != "Final" {
-		log.Printf("game not finished: %d, %s\n", up.GamePK, up.Status)
+		log.Printf("game not finished: %d, %s\n", up.GamePK, up.Status) // TODO move this to Grafana logging
 		return nil
 	}
 
@@ -91,15 +91,15 @@ func (mg *MLBGame) UpdateScore(q *modelstore.Queries, client *http.Client) error
 	mg.VisitorScore = up.VisitorScore
 	mg.UpdatedAt = time.Now()
 
-	return mg.UpdateScoreV2(q)
+	return mg.UpdateScoreV2(ctx, q)
 }
 
-func (mg *MLBGame) UpdateScoreV2(q *modelstore.Queries) error {
+func (mg *MLBGame) UpdateScoreV2(ctx context.Context, q *modelstore.Queries) error {
 	if mg.GameID == 0 {
 		return errors.New("invalid game ID")
 	}
 
-	return q.MLBUpdateScore(context.Background(), modelstore.MLBUpdateScoreParams{
+	return q.MLBUpdateScore(ctx, modelstore.MLBUpdateScoreParams{
 		HomeScore:    sql.NullInt64{Valid: true, Int64: int64(mg.HomeScore)},
 		VisitorScore: sql.NullInt64{Valid: true, Int64: int64(mg.VisitorScore)},
 		Status:       sql.NullString{Valid: true, String: mg.Status},
@@ -115,11 +115,11 @@ type MLBTeam struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
-func (mt *MLBTeam) Create(q *modelstore.Queries) error {
+func (mt *MLBTeam) Create(ctx context.Context, q *modelstore.Queries) error {
 	if mt.UpdatedAt.IsZero() {
 		mt.UpdatedAt = time.Now()
 	}
-	id, err := q.MLBCreateTeam(context.Background(), modelstore.MLBCreateTeamParams{
+	id, err := q.MLBCreateTeam(ctx, modelstore.MLBCreateTeamParams{
 		TeamID:    int64(mt.TeamID),
 		Name:      sql.NullString{String: mt.Name, Valid: true},
 		Link:      sql.NullString{String: mt.Link, Valid: true},
@@ -133,12 +133,12 @@ func (mt *MLBTeam) Create(q *modelstore.Queries) error {
 	return nil
 }
 
-func (mt *MLBTeam) FindByTeamID(q *modelstore.Queries, team_id int) error {
+func (mt *MLBTeam) FindByTeamID(ctx context.Context, q *modelstore.Queries, team_id int) error {
 	if team_id == 0 {
 		return errors.New("invalid team id")
 	}
 
-	team, err := q.MLBFindTeamByID(context.Background(), int64(team_id))
+	team, err := q.MLBFindTeamByID(ctx, int64(team_id))
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func (mt *MLBTeam) FindByTeamID(q *modelstore.Queries, team_id int) error {
 type MLBGames []MLBGame
 
 // LoadByDate fetches all games for the given date.
-func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
+func (mgs *MLBGames) LoadByDate(ctx context.Context, q *modelstore.Queries, d string) error {
 	date, err := time.Parse("2006-01-02", d)
 	if err != nil {
 		return fmt.Errorf("mlb error parsing date: %w", err)
@@ -164,7 +164,7 @@ func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
 	dateFrom := time.Date(date.Year(), date.Month(), date.Day(), 12, 0, 0, 0, date.Location())
 	dateTo := dateFrom.Add(time.Hour * 24)
 
-	rows, err := q.MLBLoadGamesByDate(context.Background(), modelstore.MLBLoadGamesByDateParams{
+	rows, err := q.MLBLoadGamesByDate(ctx, modelstore.MLBLoadGamesByDateParams{
 		FromGametime: sql.NullTime{Time: dateFrom, Valid: true},
 		ToGametime:   sql.NullTime{Time: dateTo, Valid: true},
 	})
@@ -201,7 +201,7 @@ func (mgs *MLBGames) LoadByDate(q *modelstore.Queries, d string) error {
 }
 
 // LoadByDateIncomplete fetches all games for the given date that are not "Final, Postponed, Completed Early".
-func (mgs *MLBGames) LoadByDateIncomplete(q *modelstore.Queries, d string) error {
+func (mgs *MLBGames) LoadByDateIncomplete(ctx context.Context, q *modelstore.Queries, d string) error {
 	date, err := time.Parse("2006-01-02", d)
 	if err != nil {
 		return fmt.Errorf("mlb error parsing date: %w", err)
@@ -210,7 +210,7 @@ func (mgs *MLBGames) LoadByDateIncomplete(q *modelstore.Queries, d string) error
 	dateFrom := time.Date(date.Year(), date.Month(), date.Day(), 12, 0, 0, 0, date.Location())
 	dateTo := dateFrom.Add(time.Hour * 24)
 
-	rows, err := q.MLBLoadIncompleteGamesByDate(context.Background(), modelstore.MLBLoadIncompleteGamesByDateParams{
+	rows, err := q.MLBLoadIncompleteGamesByDate(ctx, modelstore.MLBLoadIncompleteGamesByDateParams{
 		FromGametime: sql.NullTime{Time: dateFrom, Valid: true},
 		ToGametime:   sql.NullTime{Time: dateTo, Valid: true},
 	})
@@ -248,7 +248,7 @@ func (mgs *MLBGames) LoadByDateIncomplete(q *modelstore.Queries, d string) error
 
 // ImportMLB calls to MLB api and saves new games to the DB.
 // String return is posted to Slack.
-func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) (string, error) {
+func ImportMLB(ctx context.Context, q *modelstore.Queries, client *http.Client, startDate time.Time) (string, error) {
 	gameweek, err := mlbapi.ImportDates(client, startDate)
 	if err != nil {
 		return err.Error(), err
@@ -272,7 +272,7 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 			}
 
 			var home MLBTeam
-			err := home.FindByTeamID(q, g.Teams.Home.ID)
+			err := home.FindByTeamID(ctx, q, g.Teams.Home.ID)
 			if err != nil {
 				// TODO create custom error and check for "team not found"
 
@@ -281,7 +281,7 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 				home.Name = g.Teams.Home.Name
 				home.TeamID = g.Teams.Home.ID
 				home.Link = g.Teams.Home.Link
-				err = home.Create(q)
+				err = home.Create(ctx, q)
 
 				if err != nil {
 					log.Printf("mlb error finding home team %d\n", g.Teams.Home.ID)
@@ -293,7 +293,7 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 			game.HomeScore = g.Teams.Home.Score
 
 			var away MLBTeam
-			err = away.FindByTeamID(q, g.Teams.Away.ID)
+			err = away.FindByTeamID(ctx, q, g.Teams.Away.ID)
 			if err != nil {
 				// TODO create custom error and check for "team not found"
 
@@ -302,7 +302,7 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 				away.Name = g.Teams.Away.Name
 				away.TeamID = g.Teams.Away.ID
 				away.Link = g.Teams.Away.Link
-				err = away.Create(q)
+				err = away.Create(ctx, q)
 
 				if err != nil {
 					log.Printf("mlb error finding away team %d\n", g.Teams.Away.ID)
@@ -313,7 +313,7 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 			game.VisitorID = away.ID
 			game.VisitorScore = g.Teams.Away.Score
 
-			err = game.Create(q)
+			err = game.Create(ctx, q)
 			if err != nil {
 				log.Printf("mlb error creating game %s", err)
 				countErrs++
@@ -331,9 +331,9 @@ func ImportMLB(q *modelstore.Queries, client *http.Client, startDate time.Time) 
 }
 
 // MLBGetLatestGames loads all games on the latest date found in the DB.
-func MLBGetLatestGames(q *modelstore.Queries) (MLBGames, error) {
+func MLBGetLatestGames(ctx context.Context, q *modelstore.Queries) (MLBGames, error) {
 	var games []MLBGame
-	rows, err := q.MLBLatestGames(context.Background())
+	rows, err := q.MLBLatestGames(ctx)
 	if err != nil {
 		return games, err
 	}
@@ -435,8 +435,8 @@ func (t *MLBTeam) GamesByTeam(ctx context.Context, q *modelstore.Queries, d time
 }
 
 // GetStandings fetches the relevant division standings for this team.
-func (t *MLBTeam) GetStandings(client *http.Client) (*mlbapi.Record, error) {
-	st, errs := mlbapi.GetStandings(client)
+func (t *MLBTeam) GetStandings(ctx context.Context, client *http.Client) (*mlbapi.Record, error) {
+	st, errs := mlbapi.GetStandings(ctx, client)
 	if err := errors.Join(errs...); err != nil {
 		return nil, err
 	}

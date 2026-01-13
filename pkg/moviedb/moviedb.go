@@ -1,9 +1,11 @@
 package moviedb
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"free-ent-guide-backend/pkg/bri_otel"
 	"io"
 	"log"
 	"net/http"
@@ -17,6 +19,8 @@ const Base = "https://api.themoviedb.org/3/"
 type MovieDb struct {
 	Key        string
 	popularity float64 // filter movies in Discover
+	Client     *http.Client
+	// TODO add a logger here!!
 
 	Status   int
 	Response []byte
@@ -33,25 +37,26 @@ func NewMovieDB(key string) *MovieDb {
 	return &MovieDb{
 		Key:        key,
 		popularity: float64(10),
+		Client:     bri_otel.NewOtelClient(5),
 	}
 }
 
 // GetTrending retrieves the trending TV listings.
-func (m *MovieDb) GetTrending() {
+func (m *MovieDb) GetTrending(ctx context.Context) {
 	url := Base + "trending/tv/week"
 	p := map[string]string{
 		"api_key": m.Key,
 	}
-	_ = m.fetch(url, p)
+	_ = m.fetch(ctx, url, p)
 }
 
-func (m *MovieDb) GetDiscoverPaged(date string) ([]MovieRelease, error) {
+func (m *MovieDb) GetDiscoverPaged(ctx context.Context, date string) ([]MovieRelease, error) {
 	var mr []MovieRelease
 	p := 1
 	totalP := 2
 
 	for p <= totalP {
-		m.GetDiscover(date, strconv.Itoa(p))
+		m.GetDiscover(ctx, date, strconv.Itoa(p))
 		if m.Status != 200 {
 			return mr, fmt.Errorf("error getting DiscoverResults; status %d", m.Status)
 		}
@@ -89,7 +94,7 @@ func (m *MovieDb) GetDiscoverPaged(date string) ([]MovieRelease, error) {
 }
 
 // GetDiscover retrieves the coming movie listings.
-func (m *MovieDb) GetDiscover(date string, p string) {
+func (m *MovieDb) GetDiscover(ctx context.Context, date string, p string) {
 	url := Base + "discover/movie"
 	// from discoverMoviesReq(), must include date and other filters
 	// in query param
@@ -103,17 +108,17 @@ func (m *MovieDb) GetDiscover(date string, p string) {
 		// Try to convert text before pushing to DB?
 		"with_original_language": "en",
 	}
-	_ = m.fetch(url, params)
+	_ = m.fetch(ctx, url, params)
 }
 
 // getToken retrieves a token.
 // TODO unused except in test.
-func (m *MovieDb) getToken() error {
+func (m *MovieDb) getToken(ctx context.Context) error {
 	url := Base + "authentication/token/new"
 	p := map[string]string{
 		"api_key": m.Key,
 	}
-	err := m.fetch(url, p)
+	err := m.fetch(ctx, url, p)
 
 	if err != nil {
 		return err
@@ -126,8 +131,8 @@ func (m *MovieDb) getToken() error {
 }
 
 // fetch is a wrapper for api calls.
-func (m *MovieDb) fetch(url string, params map[string]string) error {
-	req, err := http.NewRequest("GET", url, nil)
+func (m *MovieDb) fetch(ctx context.Context, url string, params map[string]string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Fatalf("Cannot build URL for MovieDB. %v", err)
 	}
@@ -138,8 +143,7 @@ func (m *MovieDb) fetch(url string, params map[string]string) error {
 	}
 	// q.Add("api_key", m.Key)
 	req.URL.RawQuery = q.Encode()
-	client := &http.Client{}
-	resp, doErr := client.Do(req)
+	resp, doErr := m.Client.Do(req)
 
 	if doErr != nil {
 		log.Printf("Failed to make request to MovieDB %v", doErr.Error())

@@ -340,7 +340,7 @@ func ImportMLB(q *modelstore.Queries, startDate string) error {
 
 		home := g.Home
 		ht := &models.MLBTeam{TeamID: g.Home.TeamID}
-		err = ht.Create(q)
+		err = ht.Create(ctx, q)
 		if err != nil {
 			log.Print(err)
 			continue
@@ -349,14 +349,14 @@ func ImportMLB(q *modelstore.Queries, startDate string) error {
 
 		visitor := g.Visitor
 		vt := &models.MLBTeam{TeamID: g.Visitor.TeamID}
-		err = vt.Create(q)
+		err = vt.Create(ctx, q)
 		if err != nil {
 			log.Print(err)
 			continue
 		}
 		g.VisitorID = visitor.ID
 
-		err = g.Create(q)
+		err = g.Create(ctx, q)
 		if err != nil {
 			log.Print(err)
 			return err

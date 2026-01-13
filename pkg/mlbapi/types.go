@@ -95,6 +95,30 @@ type (
 	}
 )
 
+// Finalize orders the teams into divisions with their record.
+func (s Standings) Finalize(lut map[string]Division, divErr error) {
+	if s.RecordByTeam == nil {
+		s.RecordByTeam = make(map[string]*Record)
+	}
+
+	for _, rec := range s.Records {
+		for _, team := range rec.TeamRecords {
+			if _, exists := s.RecordByTeam[team.Team.Name]; exists {
+				continue
+			}
+
+			// TODO why this error? We can't look it up without the data??
+			if rec.Division.Name == "" && divErr == nil {
+				div, found := lut[string(rec.Division.ID)]
+				if found {
+					rec.Division.Name = div.Name
+				}
+			}
+			s.RecordByTeam[team.Team.Name] = &rec
+		}
+	}
+}
+
 func (ss *StatusString) UnmarshalJSON(data []byte) error {
 	var vals map[string]interface{}
 	if err := json.Unmarshal(data, &vals); err != nil {

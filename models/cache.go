@@ -19,7 +19,7 @@ type Cache struct {
 
 const expiresDur = time.Hour * 1
 
-func (c *Cache) Insert(db *modelstore.Queries) error {
+func (c *Cache) Insert(ctx context.Context, db *modelstore.Queries) error {
 	t := time.Now()
 	vals := modelstore.SetCacheParams{
 		Name:      sql.NullString{String: c.Name, Valid: true},
@@ -33,7 +33,7 @@ func (c *Cache) Insert(db *modelstore.Queries) error {
 		vals.Expires = sql.NullTime{Time: c.Expires, Valid: true}
 	}
 
-	id, err := db.SetCache(context.Background(), vals)
+	id, err := db.SetCache(ctx, vals)
 	if err != nil {
 		return err
 	}
@@ -41,8 +41,8 @@ func (c *Cache) Insert(db *modelstore.Queries) error {
 	return nil
 }
 
-func (c *Cache) GetByID(id int64, db *modelstore.Queries) error {
-	ret, err := db.GetCacheByID(context.Background(), id)
+func (c *Cache) GetByID(ctx context.Context, id int64, db *modelstore.Queries) error {
+	ret, err := db.GetCacheByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -50,11 +50,11 @@ func (c *Cache) GetByID(id int64, db *modelstore.Queries) error {
 	return nil
 }
 
-func (c *Cache) GetByName(name string, db *modelstore.Queries) error {
+func (c *Cache) GetByName(ctx context.Context, name string, db *modelstore.Queries) error {
 	if name == "" {
 		return errors.New("no cache name passed")
 	}
-	ret, err := db.GetCacheByName(context.Background(), sql.NullString{String: name, Valid: true})
+	ret, err := db.GetCacheByName(ctx, sql.NullString{String: name, Valid: true})
 	if err != nil {
 		return err
 	}
@@ -78,8 +78,8 @@ func (c Cache) String() string {
 type Caches []Cache
 
 // ShowCache returns all cached values.
-func (cs *Caches) ShowAll(db *modelstore.Queries) error {
-	ret, err := db.GetCacheAll(context.Background())
+func (cs *Caches) ShowAll(ctx context.Context, db *modelstore.Queries) error {
+	ret, err := db.GetCacheAll(ctx)
 	if err != nil {
 		return err
 	}
@@ -93,11 +93,11 @@ func (cs *Caches) ShowAll(db *modelstore.Queries) error {
 }
 
 // ShowStale returns all expired cached values.
-func (cs *Caches) ShowStale(t time.Time, db *modelstore.Queries) error {
+func (cs *Caches) ShowStale(ctx context.Context, t time.Time, db *modelstore.Queries) error {
 	if t.IsZero() {
 		return errors.New("invalid time: nil")
 	}
-	ret, err := db.GetCacheStale(context.Background(), sql.NullTime{Time: t, Valid: true})
+	ret, err := db.GetCacheStale(ctx, sql.NullTime{Time: t, Valid: true})
 	if err != nil {
 		return err
 	}
@@ -110,14 +110,14 @@ func (cs *Caches) ShowStale(t time.Time, db *modelstore.Queries) error {
 }
 
 // DropStale removes all cached values with expired dates.
-func (cs *Caches) DropStale(t time.Time, db *modelstore.Queries) (int64, error) {
+func (cs *Caches) DropStale(ctx context.Context, t time.Time, db *modelstore.Queries) (int64, error) {
 	if t.IsZero() {
 		return 0, errors.New("invalid time: nil")
 	}
-	return db.DropCacheStale(context.Background(), sql.NullTime{Time: t, Valid: true})
+	return db.DropCacheStale(ctx, sql.NullTime{Time: t, Valid: true})
 }
 
 // DropAll removes all cached values.
-func (cs *Caches) DropAll(db *modelstore.Queries) (int64, error) {
-	return db.WipeCache(context.Background())
+func (cs *Caches) DropAll(ctx context.Context, db *modelstore.Queries) (int64, error) {
+	return db.WipeCache(ctx)
 }

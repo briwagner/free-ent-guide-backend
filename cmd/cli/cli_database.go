@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"regexp"
@@ -10,7 +12,7 @@ import (
 	"time"
 )
 
-func handleBackup(tp TaskPayload, args []string) error {
+func handleBackup(ctx context.Context, l *slog.Logger, tp TaskPayload, args []string) error {
 	u, p, db := parseSqlString(tp.Cred.DB)
 
 	cmd := exec.Command("mysqldump", "-u"+u, "-p"+p, db)
@@ -39,6 +41,7 @@ func handleBackup(tp TaskPayload, args []string) error {
 	}
 
 	log.Printf("writing backup to %s\n", fn)
+	l.Info("writing backup", "filename", fn)
 
 	return nil
 }

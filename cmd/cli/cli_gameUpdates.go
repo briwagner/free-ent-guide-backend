@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"log"
+	"log/slog"
 )
 
-func handleGameUpdates(tp TaskPayload, args []string) error {
+func handleGameUpdates(ctx context.Context, l *slog.Logger, tp TaskPayload, args []string) error {
 	date := args[2]
 
 	var ret string
@@ -24,16 +27,17 @@ func handleGameUpdates(tp TaskPayload, args []string) error {
 
 	// Check MLB games first.
 	mlbs := models.MLBGames{}
-	err := mlbs.LoadByDateIncomplete(tp.Querier, date)
+	err := mlbs.LoadByDateIncomplete(ctx, tp.Querier, date)
 	if err != nil {
 		return fmt.Errorf("error loading mlb for update: %w", err)
 	}
 	log.Printf("updating MLB games %d\n", len(mlbs))
+	l.Info("updating mlb games", "amount", len(mlbs))
 
 	for _, mlb := range mlbs {
-		err := mlb.UpdateScore(tp.Querier, tp.client)
+		err := mlb.UpdateScore(ctx, tp.Querier, tp.client)
 		if err != nil {
-			log.Printf("error updating mlb score: %s", err)
+			l.Error("error updating mlb score", "error", err, "gameId", mlb.GameID)
 		}
 	}
 
@@ -48,9 +52,13 @@ func handleGameUpdates(tp TaskPayload, args []string) error {
 		if nhl.Status == "Final" {
 			continue
 		}
-		err := nhl.UpdateScore(tp.Querier)
+		err := nhl.UpdateScore(ctx, tp.client, tp.Querier)
 		if err != nil {
-			return fmt.Errorf("error updating nhl score :%w", err)
+			if errors.Is(err, models.ErrorNotFinished) {
+				l.Debug("no game update", "msg", err)
+			} else {
+				return fmt.Errorf("error updating nhl score :%w", err)
+			}
 		}
 	}
 	return nil

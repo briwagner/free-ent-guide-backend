@@ -1,15 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"free-ent-guide-backend/models"
 	"log"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
 )
 
-func handleCache(tp TaskPayload, args []string) error {
+func handleCache(ctx context.Context, l *slog.Logger, tp TaskPayload, args []string) error {
 	op := args[2]
 	ops := []string{"show", "stale", "clear", "wipe"}
 	if !slices.Contains(ops, op) {
@@ -18,12 +20,12 @@ func handleCache(tp TaskPayload, args []string) error {
 	cs := &models.Caches{}
 
 	if op == "show" {
-		err := cs.ShowAll(tp.Querier)
+		err := cs.ShowAll(ctx, tp.Querier)
 		if err != nil {
 			return err
 		}
 		if len(*cs) == 0 {
-			log.Print("no records found")
+			l.Info("no cache records found", "sub-command", op)
 			return nil
 		}
 		for _, c := range *cs {
@@ -33,12 +35,12 @@ func handleCache(tp TaskPayload, args []string) error {
 	}
 
 	if op == "stale" {
-		err := cs.ShowStale(time.Now(), tp.Querier)
+		err := cs.ShowStale(ctx, time.Now(), tp.Querier)
 		if err != nil {
 			return err
 		}
 		if len(*cs) == 0 {
-			log.Print("no records found")
+			l.Info("no cache records found", "sub-command", op)
 			return nil
 		}
 		for _, c := range *cs {
@@ -48,19 +50,21 @@ func handleCache(tp TaskPayload, args []string) error {
 	}
 
 	if op == "clear" {
-		rows, err := cs.DropStale(time.Now(), tp.Querier)
+		rows, err := cs.DropStale(ctx, time.Now(), tp.Querier)
 		if err != nil {
 			return err
 		}
-		log.Printf("Dropped %d records.\n", rows)
+		l.Info("dropped cache records", "rows", rows)
+		fmt.Printf("dropped %d records\n", rows)
 	}
 
 	if op == "wipe" {
-		rows, err := cs.DropAll(tp.Querier)
+		rows, err := cs.DropAll(ctx, tp.Querier)
 		if err != nil {
 			return err
 		}
 		log.Printf("%d caches wiped\n", rows)
+		l.Info("wiped cache records", "rows", rows)
 	}
 
 	return nil

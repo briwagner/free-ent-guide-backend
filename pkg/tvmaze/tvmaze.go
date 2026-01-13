@@ -1,7 +1,9 @@
 package tvmaze
 
 import (
+	"context"
 	"fmt"
+	"free-ent-guide-backend/pkg/bri_otel"
 	"io"
 	"log"
 	"net/http"
@@ -11,34 +13,38 @@ import (
 type TvMaze struct {
 	Status   int
 	Response []byte
+	Client   *http.Client
 }
 
 const base = "http://api.tvmaze.com/"
 
+func NewTVMaze() TvMaze {
+	return TvMaze{Client: bri_otel.NewOtelClient(5)}
+}
+
 // GetSearch makes the api call to find a show by title.
-func (t *TvMaze) GetSearch(title string) {
+func (t *TvMaze) GetSearch(ctx context.Context, title string) error {
 	url := base + "search/shows"
 	params := make(map[string]string, 0)
 	params["q"] = title
-	// Todo: should this be returned or pointer is good enough?
-	_ = t.fetch(url, params)
+	return t.fetch(ctx, url, params)
 }
 
-func (t *TvMaze) GetShow(showID int64) {
+func (t *TvMaze) GetShow(ctx context.Context, showID int64) error {
 	url := fmt.Sprintf("%sshows/%d", base, showID)
 	params := make(map[string]string, 0)
-	_ = t.fetch(url, params)
+	return t.fetch(ctx, url, params)
 }
 
-func (t *TvMaze) GetEpisode(id int64) {
+func (t *TvMaze) GetEpisode(ctx context.Context, id int64) error {
 	url := fmt.Sprintf("%sepisodes/%d", base, id)
 	params := make(map[string]string, 0)
-	_ = t.fetch(url, params)
+	return t.fetch(ctx, url, params)
 }
 
 // fetch is a wrapper for api calls.
-func (t *TvMaze) fetch(url string, params map[string]string) error {
-	req, err := http.NewRequest("GET", url, nil)
+func (t *TvMaze) fetch(ctx context.Context, url string, params map[string]string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Fatalf("Cannot build URL for TV Maze. %v", err)
 	}
@@ -48,9 +54,7 @@ func (t *TvMaze) fetch(url string, params map[string]string) error {
 		q.Add(k, v)
 	}
 	req.URL.RawQuery = q.Encode()
-	client := &http.Client{}
-	resp, doErr := client.Do(req)
-
+	resp, doErr := t.Client.Do(req)
 	if doErr != nil {
 		log.Printf("Failed to make request to TV Maze %v", doErr.Error())
 		t.Status = 500

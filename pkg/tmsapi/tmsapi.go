@@ -1,7 +1,9 @@
 package tmsapi
 
 import (
-	"io/ioutil"
+	"context"
+	"free-ent-guide-backend/pkg/bri_otel"
+	"io"
 	"log"
 	"net/http"
 )
@@ -13,41 +15,49 @@ type TmsApi struct {
 	Key      string
 	Status   int
 	Response []byte
+	Client   *http.Client
+}
+
+func NewTMSApi(key string) TmsApi {
+	return TmsApi{
+		Key:    key,
+		Client: bri_otel.NewOtelClient(5),
+	}
 }
 
 // GetCinema returns listings for movies showing by date, zip.
-func (t *TmsApi) GetCinema(zip string, date string) error {
+func (t *TmsApi) GetCinema(ctx context.Context, zip string, date string) error {
 	url := base + "movies/showings"
 	params := make(map[string]string)
 	params["zip"] = zip
 	params["startDate"] = date
 
-	return t.fetch(url, params)
+	return t.fetch(ctx, url, params)
 }
 
 // GetTvMovies returns listings for tv movies by date, lineup.
-func (t *TmsApi) GetTvMovies(date string, lineup string) {
+func (t *TmsApi) GetTvMovies(ctx context.Context, date string, lineup string) error {
 	url := base + "movies/airings"
 	params := make(map[string]string)
 	params["startDateTime"] = date
 	params["lineupId"] = lineup
 
-	_ = t.fetch(url, params)
+	return t.fetch(ctx, url, params)
 }
 
 // GetTvSports returns listings for tv sports by date, lineup.
-func (t *TmsApi) GetTvSports(date string, lineup string) {
+func (t *TmsApi) GetTvSports(ctx context.Context, date string, lineup string) error {
 	url := base + "sports/all/events/airings"
 	params := make(map[string]string)
 	params["startDateTime"] = date
 	params["lineupId"] = lineup
 
-	_ = t.fetch(url, params)
+	return t.fetch(ctx, url, params)
 }
 
 // fetch is a wrapper for api calls.
-func (t *TmsApi) fetch(url string, p map[string]string) error {
-	req, err := http.NewRequest("GET", url, nil)
+func (t *TmsApi) fetch(ctx context.Context, url string, p map[string]string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Fatalf("Cannot build URL for TmsApi. %v", err)
 		t.Status = 500
@@ -60,8 +70,7 @@ func (t *TmsApi) fetch(url string, p map[string]string) error {
 		q.Add(k, v)
 	}
 	req.URL.RawQuery = q.Encode()
-	client := &http.Client{}
-	resp, doErr := client.Do(req)
+	resp, doErr := t.Client.Do(req)
 
 	if doErr != nil {
 		log.Printf("Failed to make request to TmsApi %v", doErr.Error())
@@ -69,7 +78,7 @@ func (t *TmsApi) fetch(url string, p map[string]string) error {
 		return doErr
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 
 	if err != nil {

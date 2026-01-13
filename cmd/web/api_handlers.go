@@ -10,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // TODO: this should be passed per user.
@@ -17,7 +19,7 @@ const lineup = "USA-TX42500-X"
 
 // GetMovies handler for movies by zip.
 // Responds to /v1/movies?zip={ZIP}.
-func GetMovies(w http.ResponseWriter, r *http.Request) {
+func (app *App) GetMovies(w http.ResponseWriter, r *http.Request) {
 	common := prepareResponse(w, r)
 
 	if common.queryZip == "" {
@@ -29,7 +31,7 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 	// Check cache for stored response.
 	cache := &models.Cache{}
 	cacheKey := r.URL.String()
-	err := cache.GetByName(cacheKey, common.queries)
+	err := cache.GetByName(r.Context(), cacheKey, common.queries)
 	if err != nil {
 		cacheStatus(&w, false)
 
@@ -43,10 +45,16 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 			common.queryDate = common.now.In(zone).Format("2006-01-02")
 		}
 
-		tms := tmsapi.TmsApi{Key: c.Tms}
-		err = tms.GetCinema(common.queryZip, common.queryDate)
+		ctx, span := app.Tracer().Start(r.Context(), "getMovies")
+		span.SetAttributes(
+			attribute.KeyValue{Key: "zip", Value: attribute.StringValue(common.queryZip)},
+		)
+		defer span.End()
+
+		tms := tmsapi.NewTMSApi(c.Tms)
+		err = tms.GetCinema(ctx, common.queryZip, common.queryDate)
 		if err != nil {
-			log.Print(err)
+			app.l.Error("error getMovies", "error", err)
 			w.WriteHeader(500)
 			return
 		}
@@ -54,9 +62,9 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 		// Save to cache.
 		if tms.Status == http.StatusOK {
 			newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
-			err = newC.Insert(common.queries)
+			err = newC.Insert(r.Context(), common.queries)
 			if err != nil {
-				log.Printf("error setting cache: %v", err)
+				app.l.Error("error setting cache GetMovies", "error", err)
 			}
 		} else {
 			w.WriteHeader(500)
@@ -72,7 +80,7 @@ func GetMovies(w http.ResponseWriter, r *http.Request) {
 
 // DiscoverMovies handler for coming-soon movies.
 // Responds to /v1/discover?date={YYYY-MM-DD}.
-func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
+func (app *App) DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 	common := prepareResponse(w, r)
 
 	_, err := time.Parse("2006-01-02", common.queryDate)
@@ -84,7 +92,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 
 	data, err := os.ReadFile("./public/discover.json")
 	if err != nil {
-		log.Println(err)
+		app.l.Error("error discoverMovies", "error", err)
 		w.WriteHeader(500)
 		return
 	}
@@ -93,7 +101,7 @@ func DiscoverMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTvMovies responds to /v1/tv-movies?date={YYYY-MM-DD}.
-func GetTvMovies(w http.ResponseWriter, r *http.Request) {
+func (app *App) GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	common := prepareResponse(w, r)
 
 	if common.queryDate == "" {
@@ -105,19 +113,31 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	// Cache
 	cacheKey := "tvmovies"
 	ca := &models.Cache{}
-	err := ca.GetByName(cacheKey, common.queries)
+	err := ca.GetByName(r.Context(), cacheKey, common.queries)
 	if err != nil {
 		cacheStatus(&w, false)
 
-		tms := tmsapi.TmsApi{Key: c.Tms}
-		tms.GetTvMovies(common.queryDate, lineup)
+		ctx, span := app.Tracer().Start(r.Context(), "getTvMovies")
+		span.SetAttributes(
+			attribute.KeyValue{Key: "date", Value: attribute.StringValue(common.queryDate)},
+		)
+		defer span.End()
+
+		tms := tmsapi.NewTMSApi(c.Tms)
+		doErr := tms.GetTvMovies(ctx, common.queryDate, lineup)
+		if doErr != nil {
+			app.l.Error("error getTvMovies", "error", doErr)
+			w.WriteHeader(tms.Status)
+			return
+		}
+
 		w.WriteHeader(tms.Status)
 		w.Write(tms.Response)
 
 		newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
-		err = newC.Insert(common.queries)
+		err = newC.Insert(r.Context(), common.queries)
 		if err != nil {
-			log.Printf("error setting cache: %v", err)
+			app.l.Error("error setting cache GetTvMovies", "error", err)
 		}
 	} else {
 		cacheStatus(&w, true)
@@ -126,7 +146,7 @@ func GetTvMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTvSports responds to /v1/tv-sports?date={YYYY-MM-DD}.
-func GetTvSports(w http.ResponseWriter, r *http.Request) {
+func (app *App) GetTvSports(w http.ResponseWriter, r *http.Request) {
 	common := prepareResponse(w, r)
 
 	if common.queryDate == "" {
@@ -137,19 +157,31 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 
 	cacheKey := "tvsports?" + common.queryDate
 	ca := &models.Cache{}
-	err := ca.GetByName(cacheKey, common.queries)
+	err := ca.GetByName(r.Context(), cacheKey, common.queries)
 	if err != nil {
 		cacheStatus(&w, false)
 
-		tms := tmsapi.TmsApi{Key: c.Tms}
-		tms.GetTvSports(common.queryDate, lineup) // TODO this should return a possible error. else we store no data.
+		ctx, span := app.Tracer().Start(r.Context(), "getTvSports")
+		span.SetAttributes(
+			attribute.KeyValue{Key: "date", Value: attribute.StringValue(common.queryDate)},
+		)
+		defer span.End()
+
+		tms := tmsapi.NewTMSApi(c.Tms)
+		doErr := tms.GetTvSports(ctx, common.queryDate, lineup)
+		if doErr != nil {
+			app.l.Error("error getTvSports", "error", doErr)
+			w.WriteHeader(tms.Status)
+			return
+		}
+
 		w.WriteHeader(tms.Status)
 		w.Write(tms.Response)
 
 		newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
-		err = newC.Insert(common.queries)
+		err = newC.Insert(ctx, common.queries)
 		if err != nil {
-			log.Printf("error setting cache: %v", err)
+			app.l.Error("error setting cache GetTvSports", "error", err)
 		}
 	} else {
 		cacheStatus(&w, true)
@@ -158,7 +190,7 @@ func GetTvSports(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTvSearch responds to /v1/tv-search?title={TITLE}.
-func GetTvSearch(w http.ResponseWriter, r *http.Request) {
+func (app *App) GetTvSearch(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	title := r.URL.Query().Get("title")
 	if title == "" {
@@ -167,21 +199,32 @@ func GetTvSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmz := tvmaze.TvMaze{}
-	tmz.GetSearch(title)
+	ctx, span := app.Tracer().Start(r.Context(), "getTvSearch")
+	span.SetAttributes(
+		attribute.KeyValue{Key: "title", Value: attribute.StringValue(title)},
+	)
+	defer span.End()
 
-	w.WriteHeader(tmz.Status)
-	w.Write(tmz.Response)
+	tvm := tvmaze.NewTVMaze()
+	doErr := tvm.GetSearch(ctx, title)
+	if doErr != nil {
+		app.l.Error("error getTvSearch", "error", doErr)
+		w.WriteHeader(tvm.Status)
+		return
+	}
+
+	w.WriteHeader(tvm.Status)
+	w.Write(tvm.Response)
 }
 
 // GetTvShow responds to /v1/tv-show/{show_id}.
-func GetTvShow(w http.ResponseWriter, r *http.Request) {
+func (app *App) GetTvShow(w http.ResponseWriter, r *http.Request) {
 	common := prepareResponse(w, r)
 
-	tvm := tvmaze.TvMaze{}
+	tvm := tvmaze.NewTVMaze()
 	showID, err := strconv.Atoi(common.vars["show_id"])
 	if err != nil {
-		log.Printf("error reading show id: %s", err)
+		app.l.Error("error reading show id", "error", err)
 		w.WriteHeader(400)
 		return
 	}
@@ -189,19 +232,31 @@ func GetTvShow(w http.ResponseWriter, r *http.Request) {
 	// Check cache.
 	cacheKey := fmt.Sprintf("tvshow=%d", showID)
 	ca := &models.Cache{}
-	err = ca.GetByName(cacheKey, common.queries)
+	err = ca.GetByName(r.Context(), cacheKey, common.queries)
 
 	if err != nil {
 		cacheStatus(&w, false)
-		tvm.GetShow(int64(showID))
+
+		ctx, span := app.Tracer().Start(r.Context(), "getTvShow")
+		span.SetAttributes(
+			attribute.KeyValue{Key: "showID", Value: attribute.IntValue(showID)},
+		)
+		defer span.End()
+
+		doErr := tvm.GetShow(ctx, int64(showID))
+		if doErr != nil {
+			app.l.Error("error getTvShow", "error", doErr)
+			w.WriteHeader(tvm.Status)
+			return
+		}
 
 		w.WriteHeader(tvm.Status)
 		w.Write(tvm.Response)
 
 		newC := &models.Cache{Name: cacheKey, Value: string(tvm.Response)}
-		err = newC.Insert(common.queries)
+		err = newC.Insert(ctx, common.queries)
 		if err != nil {
-			log.Printf("error setting cache: %v", err)
+			app.l.Error("error setting cache GetTvShow", "error", err)
 		}
 		return
 	}
@@ -211,13 +266,13 @@ func GetTvShow(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTvEpisode responds to /v1/tv-show/episode/{id}.
-func GetTvEpisode(w http.ResponseWriter, r *http.Request) {
+func (app *App) GetTvEpisode(w http.ResponseWriter, r *http.Request) {
 	common := prepareResponse(w, r)
 
-	tvm := tvmaze.TvMaze{}
+	tvm := tvmaze.NewTVMaze()
 	episodeID, err := strconv.Atoi(common.vars["id"])
 	if err != nil {
-		log.Printf("error reading episode id: %s", err)
+		app.l.Error("error reading episode id: %s", "error", err)
 		w.WriteHeader(400)
 		return
 	}
@@ -225,19 +280,31 @@ func GetTvEpisode(w http.ResponseWriter, r *http.Request) {
 	// Check cache.
 	cacheKey := fmt.Sprintf("tvepisode=%d", episodeID)
 	ca := &models.Cache{}
-	err = ca.GetByName(cacheKey, common.queries)
+	err = ca.GetByName(r.Context(), cacheKey, common.queries)
 
 	if err != nil {
 		cacheStatus(&w, false)
-		tvm.GetEpisode(int64(episodeID))
+
+		ctx, span := app.Tracer().Start(r.Context(), "getTvEpisode")
+		span.SetAttributes(
+			attribute.KeyValue{Key: "episode", Value: attribute.IntValue(episodeID)},
+		)
+		defer span.End()
+
+		doErr := tvm.GetEpisode(ctx, int64(episodeID))
+		if doErr != nil {
+			app.l.Error("error getTvEpisode", "error", doErr)
+			w.WriteHeader(tvm.Status)
+			return
+		}
 
 		w.WriteHeader(tvm.Status)
 		w.Write(tvm.Response)
 
 		newC := &models.Cache{Name: cacheKey, Value: string(tvm.Response)}
-		err = newC.Insert(common.queries)
+		err = newC.Insert(ctx, common.queries)
 		if err != nil {
-			log.Printf("error setting cache: %v", err)
+			app.l.Error("error setting cache: %v", "error", err)
 		}
 		return
 	}

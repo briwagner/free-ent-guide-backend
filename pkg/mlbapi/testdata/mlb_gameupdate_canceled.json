@@ -1,0 +1,99 @@
+{
+	"copyright": "Copyright 2025 MLB Advanced Media, L.P.  Use of any content on this page acknowledges agreement to the terms posted here http://gdx.mlb.com/components/copyright.txt",
+	"gameData": {
+		"alerts": [],
+		"datetime": {
+			"dayNight": "day"
+		},
+		"flags": {},
+		"game": {
+			"pk": 0
+		},
+		"gameInfo": {},
+		"players": {},
+		"probablePitchers": {},
+		"status": {
+			"abstractGameCode": "O",
+			"abstractGameState": "Other",
+			"codedGameState": "X",
+			"statusCode": "X"
+		},
+		"teams": {
+			"away": {
+				"id": 0,
+				"link": "/api/v1/teams/0"
+			},
+			"home": {
+				"id": 0,
+				"link": "/api/v1/teams/0"
+			}
+		},
+		"weather": {}
+	},
+	"gamePk": 0,
+	"link": "/api/v1.1/game/0/feed/live",
+	"liveData": {
+		"boxscore": {
+			"info": [],
+			"officials": [],
+			"pitchingNotes": [],
+			"teams": {
+				"away": {
+					"batters": [],
+					"battingOrder": [],
+					"bench": [],
+					"bullpen": [],
+					"info": [],
+					"note": [],
+					"pitchers": [],
+					"players": {},
+					"team": {
+						"link": "/api/v1/teams/null"
+					},
+					"teamStats": {}
+				},
+				"home": {
+					"batters": [],
+					"battingOrder": [],
+					"bench": [],
+					"bullpen": [],
+					"info": [],
+					"note": [],
+					"pitchers": [],
+					"players": {},
+					"team": {
+						"link": "/api/v1/teams/null"
+					},
+					"teamStats": {}
+				}
+			},
+			"topPerformers": []
+		},
+		"decisions": {},
+		"leaders": {
+			"hitDistance": {},
+			"hitSpeed": {},
+			"pitchSpeed": {}
+		},
+		"linescore": {
+			"defense": {},
+			"innings": [],
+			"offense": {},
+			"teams": {
+				"away": {},
+				"home": {}
+			}
+		},
+		"plays": {
+			"allPlays": [],
+			"playsByInning": [],
+			"scoringPlays": []
+		}
+	},
+	"metaData": {
+		"gameEvents": [],
+		"logicalEvents": [],
+		"timeStamp": "20251019_150214",
+		"wait": 10
+	}
+}
