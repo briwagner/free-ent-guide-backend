@@ -1,0 +1,37 @@
+{
+	"endpoints": [
+		{
+			"certificate_id": "86dc694c-dc0d-4fe1-84d1-004b35198274",
+			"created_at": "2024-10-31T18:41:19Z",
+			"custom_domain": "static.free-entertainment-guide.com",
+			"endpoint": "free-entertainment-guide.com.tor1.cdn.digitaloceanspaces.com",
+			"id": "385158b2-750d-4f71-9fa6-3eddd1b81dd0",
+			"origin": "free-entertainment-guide.com.tor1.digitaloceanspaces.com",
+			"ttl": 3600
+		},
+		{
+			"created_at": "2024-10-28T01:41:14Z",
+			"endpoint": "alpha-store.tor1.cdn.digitaloceanspaces.com",
+			"id": "39a80091-d002-4117-90e7-046805ce32ce",
+			"origin": "alpha-store.tor1.digitaloceanspaces.com",
+			"ttl": 3600
+		},
+		{
+			"created_at": "2024-12-01T18:00:59Z",
+			"endpoint": "image-history-test.tor1.cdn.digitaloceanspaces.com",
+			"id": "423f80d7-eb6f-4c4c-b6c8-96a6934ab6b1",
+			"origin": "image-history-test.tor1.digitaloceanspaces.com",
+			"ttl": 3600
+		},
+		{
+			"created_at": "2024-11-27T21:46:33Z",
+			"endpoint": "image-history.tor1.cdn.digitaloceanspaces.com",
+			"id": "7b5c09ce-271a-4685-b504-cba45404f604",
+			"origin": "image-history.tor1.digitaloceanspaces.com",
+			"ttl": 3600
+		}
+	],
+	"meta": {
+		"total": 4
+	}
+}
