@@ -91,19 +91,18 @@ type (
 		Records []Record `json:"records"`
 
 		// Build our own map to make this searchable.
-		RecordByTeam map[string]*Record `json:"-"`
+		// teamID => record
+		RecordByTeam map[int]*Record `json:"-"`
 	}
 )
 
 // Finalize orders the teams into divisions with their record.
-func (s Standings) Finalize(lut map[string]Division, divErr error) {
-	if s.RecordByTeam == nil {
-		s.RecordByTeam = make(map[string]*Record)
-	}
+func (s *Standings) Finalize(lut map[string]Division, divErr error) {
+	teamRecords := make(map[int]*Record)
 
 	for _, rec := range s.Records {
 		for _, team := range rec.TeamRecords {
-			if _, exists := s.RecordByTeam[team.Team.Name]; exists {
+			if _, exists := teamRecords[team.Team.ID]; exists {
 				continue
 			}
 
@@ -114,9 +113,11 @@ func (s Standings) Finalize(lut map[string]Division, divErr error) {
 					rec.Division.Name = div.Name
 				}
 			}
-			s.RecordByTeam[team.Team.Name] = &rec
+			teamRecords[team.Team.ID] = &rec
 		}
 	}
+
+	s.RecordByTeam = teamRecords
 }
 
 func (ss *StatusString) UnmarshalJSON(data []byte) error {

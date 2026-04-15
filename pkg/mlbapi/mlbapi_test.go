@@ -3,6 +3,7 @@ package mlbapi
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -148,11 +149,11 @@ func TestGameUpdate(t *testing.T) {
 }
 
 func TestGetStandings(t *testing.T) {
-	t.Skip("live stats will vary")
+	// t.Skip("live stats will vary")
 
 	st, err := GetStandings(t.Context(), &http.Client{Timeout: time.Second * 3})
 	require.Len(t, err, 2)
-	require.NoError(t, err[0])
+	require.NoError(t, err)
 	assert.Len(t, st.Records, 6) // 3 for each league
 	for _, div := range st.Records {
 		assert.NotEqual(t, 0, div.Division.ID)
@@ -175,7 +176,7 @@ func TestGetStandings(t *testing.T) {
 	assert.Equal(t, 0, yanks.LeagueRecord.Ties)
 	assert.Equal(t, ".667", yanks.LeagueRecord.Percentage)
 
-	yanksRec, ok := st.RecordByTeam["New York Yankees"]
+	yanksRec, ok := st.RecordByTeam[147]
 	assert.True(t, ok)
 	assert.Equal(t, 5, len(yanksRec.TeamRecords))
 	var found bool
@@ -195,6 +196,19 @@ func TestGetDivisions(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "American League West", alw.Name)
 	assert.Equal(t, "ALW", alw.Abbreviation)
+
+	// The divisions.json file is specific to a season year.
+	// Must be updated every year.
+	t.Skip("only need to run this once a year")
+	resp, err := http.Get("https://statsapi.mlb.com/api/v1/divisions?sportId=1")
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	f, err := os.OpenFile("divisions.json", os.O_WRONLY|os.O_TRUNC, 0644)
+	require.NoError(t, err)
+	defer f.Close()
+	_, err = io.Copy(f, resp.Body)
+	require.NoError(t, err)
 }
 
 func TestGetGames_Backoff(t *testing.T) {

@@ -25,3 +25,7 @@ cd models
 sqlc generate
 
 Is there a better way to run this?
+
+## MLB
+
+Every season must update the season year (mlbapi.go: const season), and the divisions.json file. There is a test to do that: TestGetDivisions

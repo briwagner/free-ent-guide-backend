@@ -436,14 +436,15 @@ func (t *MLBTeam) GamesByTeam(ctx context.Context, q *modelstore.Queries, d time
 
 // GetStandings fetches the relevant division standings for this team.
 func (t *MLBTeam) GetStandings(ctx context.Context, client *http.Client) (*mlbapi.Record, error) {
-	st, errs := mlbapi.GetStandings(ctx, client)
-	if err := errors.Join(errs...); err != nil {
+	st, err := mlbapi.GetStandings(ctx, client)
+	if err != nil {
 		return nil, err
 	}
 
-	standings, ok := st.RecordByTeam[t.Name]
+	// Use TeamID, what the MLB knows the team for.
+	standings, ok := st.RecordByTeam[t.TeamID]
 	if !ok {
-		return nil, fmt.Errorf("standings not found for %s", t.Name)
+		return nil, fmt.Errorf("standings not found for %d", t.ID)
 	}
 
 	return standings, nil

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"sync"
@@ -15,13 +16,13 @@ import (
 )
 
 //go:embed divisions.json
-var divisionsJSON []byte
+var divisionsJSON []byte // TODO update this every year
 
 const (
 	baseURL    = "https://statsapi.mlb.com"
 	amerLeague = "103"
 	natLeague  = "104"
-	season     = "2025"
+	season     = "2026" // TODO update this every year!!
 )
 
 // ImportDates fetches a single day schedule.
@@ -93,7 +94,7 @@ func GetGameUpdate(client *http.Client, link string) (MLBGameUpdate, error) {
 	return gameup, nil
 }
 
-func GetStandings(ctx context.Context, client *http.Client) (Standings, []error) {
+func GetStandings(ctx context.Context, client *http.Client) (Standings, error) {
 	// testdata/mlb_standings.json // AL only
 
 	var wg sync.WaitGroup
@@ -101,7 +102,7 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, []error)
 	var nlStandings Standings
 	alURL := fmt.Sprintf("%s/%s?leagueId=%s&season=%s&standingsTypes=%s", baseURL, "api/v1/standings", amerLeague, season, "regularSeason")
 	nlURL := fmt.Sprintf("%s/%s?leagueId=%s&season=%s&standingsTypes=%s", baseURL, "api/v1/standings", natLeague, season, "regularSeason")
-	errors := make([]error, 2)
+	errs := make([]error, 2)
 
 	// Do American League
 	wg.Add(1)
@@ -110,19 +111,19 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, []error)
 
 		req, err := http.NewRequestWithContext(ctx, "GET", alURL, nil)
 		if err != nil {
-			errors[0] = err
+			errs[0] = err
 			return
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			errors[0] = err
+			errs[0] = err
 			return
 		}
 
 		defer resp.Body.Close()
 		data, err := io.ReadAll(resp.Body)
 		if err != nil {
-			errors[0] = err
+			errs[0] = err
 			return
 		}
 
@@ -130,7 +131,7 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, []error)
 		dec.UseNumber()
 		err = dec.Decode(&alStandings)
 		if err != nil {
-			errors[0] = err
+			errs[0] = err
 			return
 		}
 	}()
@@ -141,19 +142,19 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, []error)
 
 		req, err := http.NewRequestWithContext(ctx, "GET", nlURL, nil)
 		if err != nil {
-			errors[0] = err
+			errs[0] = err
 			return
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			errors[1] = err
+			errs[1] = err
 			return
 		}
 
 		defer resp.Body.Close()
 		data, err := io.ReadAll(resp.Body)
 		if err != nil {
-			errors[1] = err
+			errs[1] = err
 			return
 		}
 
@@ -161,7 +162,7 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, []error)
 		dec.UseNumber()
 		err = dec.Decode(&nlStandings)
 		if err != nil {
-			errors[1] = err
+			errs[1] = err
 			return
 		}
 	}()
@@ -171,14 +172,20 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, []error)
 	// Get both calls and just smash 'em together.
 	alStandings.Records = append(alStandings.Records, nlStandings.Records...)
 
-	divisionsLU, divErr := GetDivisions()
+	divisionsLUT, divErr := GetDivisions()
 	if divErr != nil {
-		// log.Print(divErr)
-		errors = append(errors, divErr)
+		// what is this error and how can we continue with it?
+		log.Print(divErr)
+		errs = append(errs, divErr)
 	}
-	alStandings.Finalize(divisionsLU, divErr)
+	if len(divisionsLUT) == 0 {
+		errs = append(errs, errors.New("no divisions found in LUT"))
+		return alStandings, errors.Join(errs...)
+	}
 
-	return alStandings, errors
+	alStandings.Finalize(divisionsLUT, divErr)
+
+	return alStandings, errors.Join(errs...)
 }
 
 func GetTeamInfo(client *http.Client, id string) {
