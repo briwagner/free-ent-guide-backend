@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // TODO: this should be passed per user.
@@ -28,10 +29,10 @@ func (app *App) GetMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check cache for stored response.
+	ctx := r.Context()
 	cache := &models.Cache{}
 	cacheKey := r.URL.String()
-	err := cache.GetByName(r.Context(), cacheKey, common.queries)
+	err := cache.GetByName(ctx, cacheKey, common.queries)
 	if err != nil {
 		cacheStatus(&w, false)
 
@@ -45,11 +46,14 @@ func (app *App) GetMovies(w http.ResponseWriter, r *http.Request) {
 			common.queryDate = common.now.In(zone).Format("2006-01-02")
 		}
 
-		ctx, span := app.Tracer().Start(r.Context(), "getMovies")
-		span.SetAttributes(
-			attribute.KeyValue{Key: "zip", Value: attribute.StringValue(common.queryZip)},
-		)
-		defer span.End()
+		if app.Tracer() != nil {
+			var span trace.Span
+			ctx, span = app.Tracer().Start(ctx, "getMovies")
+			span.SetAttributes(
+				attribute.KeyValue{Key: "zip", Value: attribute.StringValue(common.queryZip)},
+			)
+			defer span.End()
+		}
 
 		tms := tmsapi.NewTMSApi(c.Tms)
 		err = tms.GetCinema(ctx, common.queryZip, common.queryDate)
@@ -62,7 +66,7 @@ func (app *App) GetMovies(w http.ResponseWriter, r *http.Request) {
 		// Save to cache.
 		if tms.Status == http.StatusOK {
 			newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
-			err = newC.Insert(r.Context(), common.queries)
+			err = newC.Insert(ctx, common.queries)
 			if err != nil {
 				app.l.Error("error setting cache GetMovies", "error", err)
 			}
@@ -111,17 +115,21 @@ func (app *App) GetTvMovies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Cache
+	ctx := r.Context()
 	cacheKey := "tvmovies"
 	ca := &models.Cache{}
-	err := ca.GetByName(r.Context(), cacheKey, common.queries)
+	err := ca.GetByName(ctx, cacheKey, common.queries)
 	if err != nil {
 		cacheStatus(&w, false)
 
-		ctx, span := app.Tracer().Start(r.Context(), "getTvMovies")
-		span.SetAttributes(
-			attribute.KeyValue{Key: "date", Value: attribute.StringValue(common.queryDate)},
-		)
-		defer span.End()
+		if app.Tracer() != nil {
+			var span trace.Span
+			ctx, span = app.Tracer().Start(ctx, "getTvMovies")
+			span.SetAttributes(
+				attribute.KeyValue{Key: "date", Value: attribute.StringValue(common.queryDate)},
+			)
+			defer span.End()
+		}
 
 		tms := tmsapi.NewTMSApi(c.Tms)
 		doErr := tms.GetTvMovies(ctx, common.queryDate, lineup)
@@ -135,7 +143,7 @@ func (app *App) GetTvMovies(w http.ResponseWriter, r *http.Request) {
 		w.Write(tms.Response)
 
 		newC := &models.Cache{Name: cacheKey, Value: string(tms.Response)}
-		err = newC.Insert(r.Context(), common.queries)
+		err = newC.Insert(ctx, common.queries)
 		if err != nil {
 			app.l.Error("error setting cache GetTvMovies", "error", err)
 		}
@@ -155,17 +163,21 @@ func (app *App) GetTvSports(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
 	cacheKey := "tvsports?" + common.queryDate
 	ca := &models.Cache{}
-	err := ca.GetByName(r.Context(), cacheKey, common.queries)
+	err := ca.GetByName(ctx, cacheKey, common.queries)
 	if err != nil {
 		cacheStatus(&w, false)
 
-		ctx, span := app.Tracer().Start(r.Context(), "getTvSports")
-		span.SetAttributes(
-			attribute.KeyValue{Key: "date", Value: attribute.StringValue(common.queryDate)},
-		)
-		defer span.End()
+		if app.Tracer() != nil {
+			var span trace.Span
+			ctx, span = app.Tracer().Start(ctx, "getTvSports")
+			span.SetAttributes(
+				attribute.KeyValue{Key: "date", Value: attribute.StringValue(common.queryDate)},
+			)
+			defer span.End()
+		}
 
 		tms := tmsapi.NewTMSApi(c.Tms)
 		doErr := tms.GetTvSports(ctx, common.queryDate, lineup)
@@ -199,11 +211,15 @@ func (app *App) GetTvSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, span := app.Tracer().Start(r.Context(), "getTvSearch")
-	span.SetAttributes(
-		attribute.KeyValue{Key: "title", Value: attribute.StringValue(title)},
-	)
-	defer span.End()
+	ctx := r.Context()
+	if app.Tracer() != nil {
+		var span trace.Span
+		ctx, span = app.Tracer().Start(ctx, "getTvSearch")
+		span.SetAttributes(
+			attribute.KeyValue{Key: "title", Value: attribute.StringValue(title)},
+		)
+		defer span.End()
+	}
 
 	tvm := tvmaze.NewTVMaze()
 	doErr := tvm.GetSearch(ctx, title)
@@ -229,19 +245,22 @@ func (app *App) GetTvShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check cache.
+	ctx := r.Context()
 	cacheKey := fmt.Sprintf("tvshow=%d", showID)
 	ca := &models.Cache{}
-	err = ca.GetByName(r.Context(), cacheKey, common.queries)
+	err = ca.GetByName(ctx, cacheKey, common.queries)
 
 	if err != nil {
 		cacheStatus(&w, false)
 
-		ctx, span := app.Tracer().Start(r.Context(), "getTvShow")
-		span.SetAttributes(
-			attribute.KeyValue{Key: "showID", Value: attribute.IntValue(showID)},
-		)
-		defer span.End()
+		if app.Tracer() != nil {
+			var span trace.Span
+			ctx, span = app.Tracer().Start(ctx, "getTvShow")
+			span.SetAttributes(
+				attribute.KeyValue{Key: "showID", Value: attribute.IntValue(showID)},
+			)
+			defer span.End()
+		}
 
 		doErr := tvm.GetShow(ctx, int64(showID))
 		if doErr != nil {
@@ -277,19 +296,22 @@ func (app *App) GetTvEpisode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check cache.
+	ctx := r.Context()
 	cacheKey := fmt.Sprintf("tvepisode=%d", episodeID)
 	ca := &models.Cache{}
-	err = ca.GetByName(r.Context(), cacheKey, common.queries)
+	err = ca.GetByName(ctx, cacheKey, common.queries)
 
 	if err != nil {
 		cacheStatus(&w, false)
 
-		ctx, span := app.Tracer().Start(r.Context(), "getTvEpisode")
-		span.SetAttributes(
-			attribute.KeyValue{Key: "episode", Value: attribute.IntValue(episodeID)},
-		)
-		defer span.End()
+		if app.Tracer() != nil {
+			var span trace.Span
+			ctx, span = app.Tracer().Start(ctx, "getTvEpisode")
+			span.SetAttributes(
+				attribute.KeyValue{Key: "episode", Value: attribute.IntValue(episodeID)},
+			)
+			defer span.End()
+		}
 
 		doErr := tvm.GetEpisode(ctx, int64(episodeID))
 		if doErr != nil {

@@ -83,6 +83,7 @@ func (c *Cache) FromDB(ms modelstore.Caches) {
 	c.Expires = ms.Expires.Time
 }
 
+// String shows useful data in cli output.
 func (c Cache) String() string {
 	return fmt.Sprintf("Cache %d: %s, expires %s", c.ID, c.Name, c.Expires.Format("06/01/02 15:04"))
 }

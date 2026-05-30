@@ -8,6 +8,7 @@ import (
 	"free-ent-guide-backend/pkg/bri_otel"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -39,24 +40,30 @@ func main() {
 		return
 	}
 
-	// Setup OTel for logging, tracing.
 	ctx := context.Background()
-	lp, tp := bri_otel.SetupOtel(ctx, instrumentationName, instrumentationVersion, appName)
-	if lp == nil || tp == nil {
-		panic("failed to setup open telemetry")
+
+	// OTEL setup only on prod env.
+	if c.Env == "prod" {
+		// Setup OTel for logging, tracing.
+		lp, tp := bri_otel.SetupOtel(ctx, instrumentationName, instrumentationVersion, appName)
+		if lp == nil || tp == nil {
+			panic("failed to setup open telemetry")
+		}
+		defer func() {
+			// TODO combine these shutdown funcs
+			if err := lp.Shutdown(ctx); err != nil {
+				log.Printf("shutdown logger error %v", err)
+			}
+			if err := tp.Shutdown(ctx); err != nil {
+				log.Printf("shutdown tracer error %v", err)
+			}
+		}()
+		global.SetLoggerProvider(lp)
+		tc.l = otelslog.NewLogger(appName)
+		tc.t = otel.Tracer(appName)
+	} else {
+		tc.l = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	}
-	defer func() {
-		// TODO combine these shutdown funcs
-		if err := lp.Shutdown(ctx); err != nil {
-			log.Printf("shutdown logger error %v", err)
-		}
-		if err := tp.Shutdown(ctx); err != nil {
-			log.Printf("shutdown tracer error %v", err)
-		}
-	}()
-	global.SetLoggerProvider(lp)
-	tc.l = otelslog.NewLogger(appName)
-	tc.t = otel.Tracer(appName)
 
 	// we don't add timeout to this bc also used by tracer. So timeout is on http.Client
 	err := tc.Run(ctx, os.Args)

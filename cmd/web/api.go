@@ -9,6 +9,7 @@ import (
 	"free-ent-guide-backend/pkg/bri_otel"
 	"free-ent-guide-backend/pkg/cred"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 
@@ -49,22 +50,26 @@ func main() {
 
 	// Setup OTel for logging, tracing (TODO metrics?)
 	ctx := context.Background()
-	lp, tp := bri_otel.SetupOtel(ctx, instrumentationName, instrumentationVersion, appName)
-	if lp == nil || tp == nil {
-		panic("failed to setup open telemetry")
+	if c.Env == "prod" {
+		lp, tp := bri_otel.SetupOtel(ctx, instrumentationName, instrumentationVersion, appName)
+		if lp == nil || tp == nil {
+			panic("failed to setup open telemetry")
+		}
+		defer func() {
+			// TODO combine these shutdown funcs
+			if err := lp.Shutdown(ctx); err != nil {
+				log.Printf("shutdown logger error %v", err)
+			}
+			if err := tp.Shutdown(ctx); err != nil {
+				log.Printf("shutdown tracer error %v", err)
+			}
+		}()
+		global.SetLoggerProvider(lp)
+		app.l = otelslog.NewLogger(appName)
+		app.t = otel.Tracer(appName)
+	} else {
+		app.l = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	}
-	defer func() {
-		// TODO combine these shutdown funcs
-		if err := lp.Shutdown(ctx); err != nil {
-			log.Printf("shutdown logger error %v", err)
-		}
-		if err := tp.Shutdown(ctx); err != nil {
-			log.Printf("shutdown tracer error %v", err)
-		}
-	}()
-	global.SetLoggerProvider(lp)
-	app.l = otelslog.NewLogger(appName)
-	app.t = otel.Tracer(appName)
 
 	// Create router
 	mux := NewRouter(app)
@@ -98,8 +103,8 @@ func main() {
 	// do something before shutdown.
 	// e.g. send slack message. Need to move cli_slack to pkg/
 
-	srv.Shutdown(ctx)
 	app.l.Info("shutting down")
+	srv.Shutdown(ctx)
 	os.Exit(0)
 }
 

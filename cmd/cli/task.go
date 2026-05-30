@@ -74,12 +74,15 @@ func (tc *TaskCommander) Run(ctx context.Context, args []string) error {
 
 	tp := TaskPayload{Cred: tc.Cred, Querier: tc.Querier, client: tc.Client}
 	// Manually start tracer.
-	ctx, span := tc.t.Start(ctx, "cliTask")
-	defer span.End()
-	span.SetAttributes(
-		attribute.KeyValue{Key: "command", Value: attribute.StringValue(task.Command)},
-		attribute.KeyValue{Key: "args", Value: attribute.StringSliceValue(args)},
-	)
+	if tc.t != nil {
+		var span trace.Span
+		ctx, span = tc.t.Start(ctx, "cliTask")
+		defer span.End()
+		span.SetAttributes(
+			attribute.KeyValue{Key: "command", Value: attribute.StringValue(task.Command)},
+			attribute.KeyValue{Key: "args", Value: attribute.StringSliceValue(args)},
+		)
+	}
 
 	return task.Runner(ctx, tc.l, tp, args)
 }
