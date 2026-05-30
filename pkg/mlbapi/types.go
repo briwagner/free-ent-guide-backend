@@ -92,7 +92,7 @@ type (
 
 		// Build our own map to make this searchable.
 		// teamID => record
-		RecordByTeam map[int]*Record `json:"-"`
+		RecordByTeam map[int]*Record `json:"record_by_team"`
 	}
 )
 
@@ -189,6 +189,7 @@ func (gu *MLBGameUpdate) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	// TODO loves to panic here
 	id, err := vals["gamePk"].(json.Number).Int64()
 	if err != nil {
 		return err

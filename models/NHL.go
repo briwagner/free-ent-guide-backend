@@ -205,7 +205,7 @@ func (g *NHLGame) UpdateScore(ctx context.Context, client *http.Client, q *model
 
 	// `Final` is now `OFF`, aka official.
 	if up.Status != "Final" {
-		return fmt.Errorf("no update %s: %w", up.ID, ErrorNotFinished)
+		return fmt.Errorf("no update %d: %w", up.ID, ErrorNotFinished)
 	}
 	g.HomeScore = int(up.HomeScore)
 	g.VisitorScore = int(up.VisitorScore)

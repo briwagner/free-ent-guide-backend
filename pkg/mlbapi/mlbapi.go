@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -19,41 +18,36 @@ import (
 var divisionsJSON []byte // TODO update this every year
 
 const (
-	baseURL    = "https://statsapi.mlb.com"
+	baseURL    = "http://statsapi.mlb.com" // stopped using https bc 406 error, assume rate-limit
 	amerLeague = "103"
 	natLeague  = "104"
 	season     = "2026" // TODO update this every year!!
 )
 
 // ImportDates fetches a single day schedule.
-func ImportDates(client *http.Client, sd time.Time) (*MLBGameDay, error) {
+func ImportDates(ctx context.Context, client *http.Client, sd time.Time) (*MLBGameDay, error) {
 	dt := sd.Format("2006-01-02")
 	url := fmt.Sprintf("%s/api/v1/schedule?sportId=1&startDate=%s&endDate=%s", baseURL, dt, dt)
-	return importDates(client, sd, url)
+	return importDates(ctx, client, sd, url)
 }
 
-// Internal call to manage url for testing.
-func importDates(client *http.Client, sd time.Time, url string) (*MLBGameDay, error) {
+// call to statsapi
+func importDates(ctx context.Context, client *http.Client, sd time.Time, url string) (*MLBGameDay, error) {
 	gameday := &MLBGameDay{}
 
-	var (
-		tries int
-		wait  time.Duration = time.Second * 5
-		resp  *http.Response
-		err   error
-	)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return gameday, err
+	}
 
-	for {
-		tries++
-		resp, err = client.Get(url)
-		if err != nil {
-			if errors.Is(err, context.DeadlineExceeded) && tries < 3 { // max attempts
-				time.Sleep(wait * 2) // double the time for each try
-				continue
-			}
-			return gameday, err
-		}
-		break
+	// TODO added these bc of rate-limit above
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return gameday, err
 	}
 
 	defer resp.Body.Close()
@@ -74,7 +68,12 @@ func GetGameUpdate(client *http.Client, link string) (MLBGameUpdate, error) {
 	var gameup MLBGameUpdate
 
 	url := fmt.Sprintf("%s/%s", baseURL, link)
-	resp, err := client.Get(url)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return gameup, err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return gameup, fmt.Errorf("error fetching MLB update: %w", err)
 	}
@@ -97,34 +96,28 @@ func GetGameUpdate(client *http.Client, link string) (MLBGameUpdate, error) {
 func GetStandings(ctx context.Context, client *http.Client) (Standings, error) {
 	// testdata/mlb_standings.json // AL only
 
-	var wg sync.WaitGroup
-	var alStandings Standings
-	var nlStandings Standings
+	var (
+		alStandings, nlStandings Standings
+	)
 	alURL := fmt.Sprintf("%s/%s?leagueId=%s&season=%s&standingsTypes=%s", baseURL, "api/v1/standings", amerLeague, season, "regularSeason")
 	nlURL := fmt.Sprintf("%s/%s?leagueId=%s&season=%s&standingsTypes=%s", baseURL, "api/v1/standings", natLeague, season, "regularSeason")
 	errs := make([]error, 2)
 
-	// Do American League
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	{
+		// Do American League
 		req, err := http.NewRequestWithContext(ctx, "GET", alURL, nil)
 		if err != nil {
 			errs[0] = err
-			return
 		}
 		resp, err := client.Do(req)
 		if err != nil {
 			errs[0] = err
-			return
 		}
 
 		defer resp.Body.Close()
 		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			errs[0] = err
-			return
 		}
 
 		dec := json.NewDecoder(bytes.NewReader(data))
@@ -132,30 +125,24 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, error) {
 		err = dec.Decode(&alStandings)
 		if err != nil {
 			errs[0] = err
-			return
 		}
-	}()
-	// Do National League
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	}
 
+	{
+		// Do National League
 		req, err := http.NewRequestWithContext(ctx, "GET", nlURL, nil)
 		if err != nil {
 			errs[0] = err
-			return
 		}
 		resp, err := client.Do(req)
 		if err != nil {
 			errs[1] = err
-			return
 		}
 
 		defer resp.Body.Close()
 		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			errs[1] = err
-			return
 		}
 
 		dec := json.NewDecoder(bytes.NewReader(data))
@@ -163,11 +150,8 @@ func GetStandings(ctx context.Context, client *http.Client) (Standings, error) {
 		err = dec.Decode(&nlStandings)
 		if err != nil {
 			errs[1] = err
-			return
 		}
-	}()
-
-	wg.Wait()
+	}
 
 	// Get both calls and just smash 'em together.
 	alStandings.Records = append(alStandings.Records, nlStandings.Records...)

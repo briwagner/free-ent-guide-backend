@@ -40,7 +40,7 @@ func main() {
 
 	// Set-up database.
 	Queries = modelstore.New(models.Setup(c))
-	client = &http.Client{Timeout: time.Second * 5} // TODO why is this not on the app?
+	client = &http.Client{Timeout: time.Second * 8} // TODO why is this not on the app?
 
 	// Set-up authentication.
 	var app App

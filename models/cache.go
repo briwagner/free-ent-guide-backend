@@ -15,10 +15,12 @@ type Cache struct {
 	Value     string
 	UpdatedAt time.Time
 	Expires   time.Time
+	// TODO how do we enforce expiration????
 }
 
 const expiresDur = time.Hour * 1
 
+// Insert creates a new cache entry, setting the updated and expires-at values.
 func (c *Cache) Insert(ctx context.Context, db *modelstore.Queries) error {
 	t := time.Now()
 	vals := modelstore.SetCacheParams{
@@ -50,6 +52,10 @@ func (c *Cache) GetByID(ctx context.Context, id int64, db *modelstore.Queries) e
 	return nil
 }
 
+func (c *Cache) DeleteByID(ctx context.Context, id int64, db *modelstore.Queries) (int64, error) {
+	return db.DeleteCacheByID(ctx, id)
+}
+
 func (c *Cache) GetByName(ctx context.Context, name string, db *modelstore.Queries) error {
 	if name == "" {
 		return errors.New("no cache name passed")
@@ -59,6 +65,12 @@ func (c *Cache) GetByName(ctx context.Context, name string, db *modelstore.Queri
 		return err
 	}
 	c.FromDB(ret)
+
+	if c.Expires.Before(time.Now()) {
+		fmt.Println("stale cache item " + c.Name)
+		_, err = c.DeleteByID(ctx, c.ID, db)
+		return err
+	}
 	return nil
 }
 

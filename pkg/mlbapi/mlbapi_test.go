@@ -236,7 +236,7 @@ func TestGetGames_Backoff(t *testing.T) {
 	ti, err := time.Parse("2006-01-02", "2025-08-11")
 	require.NoError(t, err)
 
-	gd, err := importDates(cli, ti, ts.URL)
+	gd, err := importDates(t.Context(), cli, ti, ts.URL)
 	assert.NoError(t, err)
 	assert.NotNil(t, gd)
 	assert.Equal(t, 3, tries)

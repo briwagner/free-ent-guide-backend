@@ -58,6 +58,7 @@ func main() {
 	tc.l = otelslog.NewLogger(appName)
 	tc.t = otel.Tracer(appName)
 
+	// we don't add timeout to this bc also used by tracer. So timeout is on http.Client
 	err := tc.Run(ctx, os.Args)
 	if err != nil {
 		log.Print(err)

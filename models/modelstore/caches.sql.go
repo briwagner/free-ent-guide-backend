@@ -10,6 +10,19 @@ import (
 	"database/sql"
 )
 
+const deleteCacheByID = `-- name: DeleteCacheByID :execrows
+DELETE FROM caches
+WHERE id = ?
+`
+
+func (q *Queries) DeleteCacheByID(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteCacheByID, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const dropCacheStale = `-- name: DropCacheStale :execrows
 DELETE FROM caches
 WHERE expires < ?

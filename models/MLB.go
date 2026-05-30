@@ -3,11 +3,13 @@ package models
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/mlbapi"
 	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -249,7 +251,7 @@ func (mgs *MLBGames) LoadByDateIncomplete(ctx context.Context, q *modelstore.Que
 // ImportMLB calls to MLB api and saves new games to the DB.
 // String return is posted to Slack.
 func ImportMLB(ctx context.Context, q *modelstore.Queries, client *http.Client, startDate time.Time) (string, error) {
-	gameweek, err := mlbapi.ImportDates(client, startDate)
+	gameweek, err := mlbapi.ImportDates(ctx, client, startDate)
 	if err != nil {
 		return err.Error(), err
 	}
@@ -435,10 +437,43 @@ func (t *MLBTeam) GamesByTeam(ctx context.Context, q *modelstore.Queries, d time
 }
 
 // GetStandings fetches the relevant division standings for this team.
-func (t *MLBTeam) GetStandings(ctx context.Context, client *http.Client) (*mlbapi.Record, error) {
-	st, err := mlbapi.GetStandings(ctx, client)
+func (t *MLBTeam) GetStandings(ctx context.Context, l *slog.Logger, q *modelstore.Queries, client *http.Client) (*mlbapi.Record, error) {
+	var (
+		st       mlbapi.Standings
+		hasCache bool
+	)
+
+	var cacheKey = "mlb_standings"
+	cache := Cache{}
+	err := cache.GetByName(ctx, cacheKey, q)
 	if err != nil {
-		return nil, err
+		l.Info("no cache", "key", cacheKey)
+	} else {
+		l.Info("got cache", "key", cacheKey)
+		err = json.Unmarshal([]byte(cache.Value), &st)
+		if err != nil {
+			l.Error("error unmarshal standings", "error", err)
+			return nil, err
+		}
+		hasCache = true
+	}
+
+	if !hasCache {
+		st, err = mlbapi.GetStandings(ctx, client)
+		if err != nil {
+			return nil, err
+		}
+
+		data, err := json.Marshal(st)
+		if err != nil {
+			return nil, err
+		}
+		newC := Cache{Name: cacheKey, Value: string(data)}
+		err = newC.Insert(ctx, q)
+		if err != nil {
+			l.Error("error marshal standings", "error", err)
+			return nil, err
+		}
 	}
 
 	// Use TeamID, what the MLB knows the team for.

@@ -211,7 +211,7 @@ func (app *App) MLBTeamHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	standing, err := teamData.Team.GetStandings(r.Context(), app.client)
+	standing, err := teamData.Team.GetStandings(r.Context(), app.l, common.queries, app.client)
 	// this does't work in the off-season
 	if len(teamData.PastGames) > 0 {
 		if err != nil {

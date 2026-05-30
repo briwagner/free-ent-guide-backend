@@ -8,6 +8,10 @@ VALUES
 SELECT * FROM caches
 WHERE id = ? LIMIT 1;
 
+-- name: DeleteCacheByID :execrows
+DELETE FROM caches
+WHERE id = ?;
+
 -- name: GetCacheByName :one
 SELECT * FROM caches
 WHERE name = ? LIMIT 1;
