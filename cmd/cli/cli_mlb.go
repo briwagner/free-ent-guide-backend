@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"free-ent-guide-backend/models"
-	"log"
 	"log/slog"
 	"time"
 )
@@ -21,10 +20,9 @@ func handleMLB(ctx context.Context, l *slog.Logger, tp TaskPayload, args []strin
 		if ret == "" {
 			return
 		}
-		fmt.Println(ret)
+		// fmt.Println(ret)
 		err := slackMessage(tp.Cred, ret)
 		if err != nil {
-			log.Println(err)
 			l.Error("error handleMlb", "error", err)
 		}
 	}()

@@ -6,7 +6,7 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/bri_otel"
-	"free-ent-guide-backend/pkg/cred"
+	"free-ent-guide-backend/pkg/config"
 	"log"
 	"log/slog"
 	"os"
@@ -28,11 +28,9 @@ const (
 )
 
 func main() {
-	// Set-up application config.
-	var c cred.Cred
-	c.GetCreds("creds", ".")
-
-	tc := buildTaskCommander(&c, modelstore.New(models.Setup(c)))
+	var c *config.Config
+	c = config.GetCredsFromFile("creds", ".")
+	tc := buildTaskCommander(c, modelstore.New(models.Setup(c.DB)))
 
 	// No sub-command was passed.
 	if len(os.Args) <= 1 {
@@ -76,11 +74,11 @@ func main() {
 	// If this is hanging and won't close, then Otel is not connected.
 }
 
-func buildTaskCommander(c *cred.Cred, q *modelstore.Queries) TaskCommander {
+func buildTaskCommander(c *config.Config, q *modelstore.Queries) TaskCommander {
 	tc := TaskCommander{
 		Cred:    c,
 		Querier: q,
-		Client:  bri_otel.NewOtelClient(5),
+		Client:  bri_otel.NewOtelClient(8),
 	}
 
 	tasks := make(map[string]Task)

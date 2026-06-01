@@ -7,7 +7,7 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/bri_otel"
-	"free-ent-guide-backend/pkg/cred"
+	"free-ent-guide-backend/pkg/config"
 	"log"
 	"log/slog"
 	"os"
@@ -23,10 +23,9 @@ import (
 )
 
 var (
-	c        cred.Cred
+	c        *config.Config
 	counters *expvar.Map
 	Queries  *modelstore.Queries
-	client   *http.Client
 )
 
 const (
@@ -37,16 +36,15 @@ const (
 
 func main() {
 	// Set-up application config.
-	c.GetCreds("creds", ".")
+	c = config.GetCredsFromFile("creds", ".")
 
 	// Set-up database.
-	Queries = modelstore.New(models.Setup(c))
-	client = &http.Client{Timeout: time.Second * 8} // TODO why is this not on the app?
+	Queries = modelstore.New(models.Setup(c.DB))
 
 	// Set-up authentication.
 	var app App
 	app.setupGoGuardian()
-	app.setupClient(5)
+	app.setupClient(8)
 
 	// Setup OTel for logging, tracing (TODO metrics?)
 	ctx := context.Background()
@@ -68,7 +66,7 @@ func main() {
 		app.l = otelslog.NewLogger(appName)
 		app.t = otel.Tracer(appName)
 	} else {
-		app.l = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+		app.l = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	}
 
 	// Create router
@@ -92,11 +90,12 @@ func main() {
 		}
 	}()
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt)
 
-	<-c
+	<-ch
 
+	// what is the point of this?
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 

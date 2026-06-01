@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"free-ent-guide-backend/pkg/moviedb"
-	"log"
 	"log/slog"
 	"os"
 	"time"
@@ -29,7 +28,7 @@ func handleDiscoverMovies(ctx context.Context, l *slog.Logger, tp TaskPayload, a
 		return fmt.Errorf("error parsing date for %s: %w", subCo, err)
 	}
 
-	log.Printf("Fetching discover movies for %s...\n", subCo)
+	l.Info("fetching discover movies", "subcommand", subCo)
 
 	mdb := moviedb.NewMovieDB(tp.Cred.Moviedb)
 	results, err := mdb.GetDiscoverPaged(ctx, subCo)
@@ -57,9 +56,8 @@ func handleDiscoverMovies(ctx context.Context, l *slog.Logger, tp TaskPayload, a
 		return err
 	}
 
-	log.Printf("File generated: %s. Results %d \n", FN, len(results))
 	l.Info("discover file generated", "filename", FN, "results", len(results))
 
-	log.Printf("pushing to bucket %s", Domain)
+	l.Info("discover: pushing to bucket", "bucketname", Domain)
 	return tp.Cred.Spaces.PutFile(FN, FN, Domain)
 }

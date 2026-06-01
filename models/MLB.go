@@ -77,14 +77,15 @@ func FindByGameID(ctx context.Context, q *modelstore.Queries, gameID int) (*MLBG
 }
 
 // UpdateScore pulls update from MLB api.
-func (mg *MLBGame) UpdateScore(ctx context.Context, q *modelstore.Queries, client *http.Client) error {
+// Only called from cli.
+func (mg *MLBGame) UpdateScore(ctx context.Context, l *slog.Logger, q *modelstore.Queries, client *http.Client) error {
 	up, err := mlbapi.GetGameUpdate(client, mg.Link)
 	if err != nil {
 		return err
 	}
 
 	if up.Status != "Final" {
-		log.Printf("game not finished: %d, %s\n", up.GamePK, up.Status) // TODO move this to Grafana logging
+		l.Debug("game not finished", "game ID", up.GamePK, "status", up.Status)
 		return nil
 	}
 

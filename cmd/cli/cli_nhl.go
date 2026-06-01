@@ -9,7 +9,6 @@ import (
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/nhlapi"
-	"log"
 	"log/slog"
 	"slices"
 	"time"
@@ -26,10 +25,10 @@ func handleNHL(ctx context.Context, l *slog.Logger, tp TaskPayload, args []strin
 		if ret == "" {
 			return
 		}
-		fmt.Println(ret)
+		// fmt.Println(ret)
 		err := slackMessage(tp.Cred, ret)
 		if err != nil {
-			log.Println(err)
+			// log.Println(err)
 			l.Error("error handleNhl", "error", err)
 		}
 	}()
@@ -42,15 +41,15 @@ func handleNHL(ctx context.Context, l *slog.Logger, tp TaskPayload, args []strin
 		if len(games) == 0 {
 			return errors.New("no games found")
 		}
-		log.Printf("Got %d NHL games on %s\n", len(games), games[0].Gametime.Format(format))
+		l.Info("got nhl games", "count", len(games), "date", games[0].Gametime.Format(format))
 		return nil
 	}
 
 	// Use only as needed.
 	if subCo == "teamseed" {
-		err := seedNHLTeams(tp.Querier)
+		err := seedNHLTeams(l, tp.Querier)
 		if err != nil {
-			log.Println(err)
+			l.Error("error team seed", "error", err)
 		}
 		return nil
 	}
@@ -71,7 +70,7 @@ func handleNHL(ctx context.Context, l *slog.Logger, tp TaskPayload, args []strin
 //go:embed nhl_teams.json
 var nhlTeamData []byte
 
-func seedNHLTeams(q *modelstore.Queries) error {
+func seedNHLTeams(l *slog.Logger, q *modelstore.Queries) error {
 	// These were taken from old api, based on teams from the 2023-24 game schedule.
 	activeIDs := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 52, 53, 54, 55, 59, 87, 88, 89, 90, 99}
 
@@ -105,6 +104,6 @@ func seedNHLTeams(q *modelstore.Queries) error {
 		}
 	}
 
-	log.Printf("added %d teams", counter)
+	l.Info("added teams", "count", counter)
 	return nil
 }

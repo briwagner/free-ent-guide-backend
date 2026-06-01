@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"free-ent-guide-backend/models/modelstore"
-	"free-ent-guide-backend/pkg/cred"
+	"free-ent-guide-backend/pkg/config"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -19,7 +19,7 @@ type (
 	TaskRunner func(ctx context.Context, l *slog.Logger, tp TaskPayload, args []string) error
 
 	TaskPayload struct {
-		Cred    *cred.Cred
+		Cred    *config.Config
 		Querier *modelstore.Queries
 		client  *http.Client
 	}
@@ -33,7 +33,7 @@ type (
 	}
 
 	TaskCommander struct {
-		Cred    *cred.Cred
+		Cred    *config.Config
 		Querier *modelstore.Queries
 		Tasks   map[string]Task
 		Client  *http.Client

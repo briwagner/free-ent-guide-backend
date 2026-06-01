@@ -1,7 +1,7 @@
 package main
 
 import (
-	"free-ent-guide-backend/pkg/cred"
+	"free-ent-guide-backend/pkg/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +10,7 @@ import (
 
 func Test_Slack(t *testing.T) {
 	msg := "test message"
-	err := slackMessage(&cred.Cred{}, msg)
+	err := slackMessage(&config.Config{}, msg)
 	require.NoError(t, err)
 }
 

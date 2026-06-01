@@ -8,6 +8,7 @@ import (
 	"free-ent-guide-backend/models/modelstore"
 	"free-ent-guide-backend/pkg/nhlapi"
 	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -197,19 +198,21 @@ func (g *NHLGame) UpdateScorev2(q *modelstore.Queries) error {
 var ErrorNotFinished = errors.New("game not finished")
 
 // UpdateScore updates a DB record to set the scores for a completed game.
-func (g *NHLGame) UpdateScore(ctx context.Context, client *http.Client, q *modelstore.Queries) error {
+func (g *NHLGame) UpdateScore(ctx context.Context, l *slog.Logger, client *http.Client, q *modelstore.Queries) error {
 	up, err := nhlapi.GetUpdate(ctx, client, g.GameID)
 	if err != nil {
 		return err
 	}
 
-	// `Final` is now `OFF`, aka official.
-	if up.Status != "Final" {
-		return fmt.Errorf("no update %d: %w", up.ID, ErrorNotFinished)
-	}
 	g.HomeScore = int(up.HomeScore)
 	g.VisitorScore = int(up.VisitorScore)
 	g.Status = up.Status
+	// `Final` is now `OFF`, aka official.
+	if up.Status != "Final" && up.Status != "OFF" {
+		// Silently return; we don't want to save in-progress game details.
+		l.Debug("game not finished", "gameID", g.GameID, "status", g.Status)
+		return nil
+	}
 
 	return g.UpdateScorev2(q)
 }

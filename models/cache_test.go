@@ -4,7 +4,7 @@ import (
 	"context"
 	"free-ent-guide-backend/models"
 	"free-ent-guide-backend/models/modelstore"
-	"free-ent-guide-backend/pkg/cred"
+	"free-ent-guide-backend/pkg/config"
 	"testing"
 	"time"
 
@@ -18,8 +18,8 @@ var (
 
 func init() {
 	// This uses test DB. Change to ent_v2 for other operations.
-	c := cred.Cred{DB: "ent_user:ent_password@tcp(127.0.0.1:3306)/ent_guide_test?charset=utf8mb4&parseTime=True&loc=Local"}
-	st := models.Setup(c)
+	c := config.Config{DB: "ent_user:ent_password@tcp(127.0.0.1:3306)/ent_guide_test?charset=utf8mb4&parseTime=True&loc=Local"}
+	st := models.Setup(c.DB)
 
 	Queries = modelstore.New(st)
 

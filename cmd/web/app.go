@@ -36,7 +36,7 @@ func (app *App) Tracer() trace.Tracer {
 
 // setupClient adds the otel-ready http client.
 func (a *App) setupClient(timeout int) {
-	a.client = bri_otel.NewOtelClient(5)
+	a.client = bri_otel.NewOtelClient(timeout)
 }
 
 // Define strategies, set token expiration time.

@@ -18,7 +18,7 @@ type RequestCommon struct {
 	queries   *modelstore.Queries
 }
 
-// prepareResponse prepares common data for most requests.
+// prepareResponse prepares common data for most requests, i.e. DB connection.
 func prepareResponse(w http.ResponseWriter, r *http.Request) *RequestCommon {
 	vars := mux.Vars(r)
 	enableCors(&w)

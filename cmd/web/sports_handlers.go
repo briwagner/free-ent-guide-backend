@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"free-ent-guide-backend/models"
-	"free-ent-guide-backend/pkg/nhlapi"
 	"net/http"
 	"strconv"
 	"time"
@@ -19,36 +18,31 @@ func (app *App) NHLGameHandler(w http.ResponseWriter, r *http.Request) {
 	var g models.NHLGame
 	gid, err := strconv.Atoi(common.vars["game_id"])
 	if err != nil {
-		app.l.Error("error nhlGameHandler", "error", err)
+		app.l.Error("error nhlGameHandler parsing gid", "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	err = g.FindByGameID(common.queries, gid)
 	if err != nil {
-		app.l.Error("error nhlGameHandler", "error", err)
+		app.l.Error("error nhlGameHandler findByGameID", "game_id", gid, "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	// Fetch scores, timing from the NHL api.
-	gu, err := nhlapi.GetUpdate(r.Context(), client, g.GameID)
+	err = g.UpdateScore(r.Context(), app.l, app.client, common.queries)
 	if err != nil {
-		app.l.Error("error nhlGameHandler", "error", err)
+		app.l.Error("error nhlGameHandler UpdateScore", "game_id", gid, "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	// TODO streamline this so we don't need a custom struct to return?
-	g.HomeScore = int(gu.HomeScore)
-	g.VisitorScore = int(gu.VisitorScore)
-	g.Period = int(gu.Period)
-	g.Status = gu.Status
+	// Convert to format used by frontend.
 	ngu := &models.NHLGameUpdate{}
 	ngu.FromGame(g)
 
 	err = json.NewEncoder(w).Encode(ngu)
 	if err != nil {
-		app.l.Error("error nhlGameHandler", "error", err)
+		app.l.Error("error nhlGameHandler encode", "game_id", gid, "error", err)
 	}
 }
 
@@ -66,7 +60,7 @@ func (app *App) NHLGamesHandler(w http.ResponseWriter, r *http.Request) {
 	gs := &models.NHLGames{}
 	err := gs.LoadByDate(common.queries, common.queryDate)
 	if err != nil {
-		app.l.Error("error nhlGamesHandler", "error", err)
+		app.l.Error("error nhlGamesHandler loadByDate", "date", common.queryDate, "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -78,14 +72,13 @@ func (app *App) NHLGamesHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(gs)
 	if err != nil {
-		app.l.Error("error nhlGamesHandler", "error", gs)
+		app.l.Error("error nhlGamesHandler encode", "error", gs)
 	}
 }
 
 func (app *App) NHLGamesLatest(w http.ResponseWriter, r *http.Request) {
 	common := prepareResponse(w, r)
 
-	// TODO why is this a two-step process?
 	gs, err := models.NHLGetLatestGames(r.Context(), common.queries)
 	if err != nil || len(gs) == 0 {
 		app.l.Error("error nhlGamesLatest", "error", err)
@@ -96,14 +89,14 @@ func (app *App) NHLGamesLatest(w http.ResponseWriter, r *http.Request) {
 	var games models.NHLGames
 	err = games.LoadByDate(common.queries, gs[0].Gametime.Format("2006-01-02"))
 	if err != nil {
-		app.l.Error("error nhlGamesLatest", "error", err)
+		app.l.Error("error nhlGamesLatest loadByDate", "date", gs[0].Gametime.Format("2006-01-02"), "error", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(games)
 	if err != nil {
-		app.l.Error("error nhlGamesLatest", "error", err)
+		app.l.Error("error nhlGamesLatest encode", "error", err)
 	}
 }
 
@@ -117,7 +110,7 @@ func (app *App) NHLGamesNext(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(games)
 	if err != nil {
-		app.l.Error("error nhlGamesNext", "error", err)
+		app.l.Error("error nhlGamesNext encode", "error", err)
 	}
 }
 
@@ -129,22 +122,22 @@ func (app *App) MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 	// Fetch game from database.
 	gameID, err := strconv.Atoi(common.vars["game_id"])
 	if err != nil {
-		app.l.Error("error mlbGameHandler", "error", err)
+		app.l.Error("error mlbGameHandler parsing gameID", "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	g, err := models.FindByGameID(r.Context(), common.queries, gameID)
 	if err != nil {
-		app.l.Error("error mlbGameHandler", "error", err)
+		app.l.Error("error mlbGameHandler findByGameID", "game_id", gameID, "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	// Fetch scores, timing from the MLB api.
-	err = g.GetUpdate(client)
+	err = g.GetUpdate(app.client)
 	if err != nil {
-		app.l.Error("error mlbGameHandler", "error", err)
+		app.l.Error("error mlbGameHandler getUpdate", "game_id", gameID, "error", err)
 		// Special error case for canceled game that should be marked deleted in DB.
 		if errors.Is(err, models.ErrorGameCanceled) {
 			w.WriteHeader(http.StatusGone)
@@ -154,10 +147,23 @@ func (app *App) MLBGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO we are returning the Game, not a GameUpdate anymore.
+	if g.Status == "Final" {
+		// Persist final score to DB, if user initiates before the cron job can catch up.
+		g := models.MLBGame{
+			HomeScore:    g.HomeScore,
+			VisitorScore: g.VisitorScore,
+			Status:       g.Status,
+			GameID:       g.GameID,
+		}
+		err = g.UpdateScoreV2(r.Context(), common.queries)
+		if err != nil {
+			app.l.Error("error updating mlb from handler", "error", err)
+		}
+	}
+
 	err = json.NewEncoder(w).Encode(g)
 	if err != nil {
-		app.l.Error("error mlbGameHandler", "error", err)
+		app.l.Error("error mlbGameHandler enode", "error", err)
 	}
 }
 
@@ -175,14 +181,14 @@ func (app *App) MLBGamesHandler(w http.ResponseWriter, r *http.Request) {
 	games := &models.MLBGames{}
 	err := games.LoadByDate(r.Context(), common.queries, common.queryDate)
 	if err != nil {
-		app.l.Error("error mlbGamesHandler", "error", err)
+		app.l.Error("error mlbGamesHandler loadByDate", "date", common.queryDate, "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(games)
 	if err != nil {
-		app.l.Error("error mlbGamesHandler", "error", err)
+		app.l.Error("error mlbGamesHandler encode", "error", err)
 	}
 }
 
@@ -191,7 +197,7 @@ func (app *App) MLBTeamHandler(w http.ResponseWriter, r *http.Request) {
 
 	teamID, err := strconv.Atoi(common.vars["team_id"])
 	if err != nil {
-		app.l.Error("error mlbTeamHandler", "error", err)
+		app.l.Error("error mlbTeamHandler parsing teamID", "error", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -206,22 +212,22 @@ func (app *App) MLBTeamHandler(w http.ResponseWriter, r *http.Request) {
 	// Use midnight to get any teamData this day.
 	teamData, err := team.GamesByTeam(r.Context(), common.queries, common.now.UTC().Truncate(24*time.Hour))
 	if err != nil {
-		app.l.Error("error mlbTeamHandler", "error", err)
+		app.l.Error("error mlbTeamHandler gamesByTeam", "teamID", teamID, "error", err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
 	standing, err := teamData.Team.GetStandings(r.Context(), app.l, common.queries, app.client)
-	// this does't work in the off-season
+	// this does't work in the off-season, so suppress logs.
 	if len(teamData.PastGames) > 0 {
 		if err != nil {
-			app.l.Warn("error mlbTeamHandler", "error", err, "team name", teamData.Team.Name)
+			app.l.Warn("error mlbTeamHandler pastGames", "error", err, "team name", teamData.Team.Name)
 		}
 	}
 	teamData.Standings = standing
 
 	err = json.NewEncoder(w).Encode(teamData)
 	if err != nil {
-		app.l.Error("error mlbTeamHandler", "error", err)
+		app.l.Error("error mlbTeamHandler encode", "error", err)
 	}
 }

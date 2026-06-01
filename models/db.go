@@ -2,18 +2,23 @@ package models
 
 import (
 	"database/sql"
-	"free-ent-guide-backend/pkg/cred"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+)
+
+type StorageContextType string
+
+const (
+	SqlcStorageContextKey StorageContextType = "sqlc"
 )
 
 type RawStore struct {
 	*sql.DB
 }
 
-func Setup(c cred.Cred) RawStore {
-	rawdb, err := sql.Open("mysql", c.DB)
+func Setup(sqlString string) RawStore {
+	rawdb, err := sql.Open("mysql", sqlString)
 	if err != nil {
 		panic(err)
 	}
@@ -24,14 +29,5 @@ func Setup(c cred.Cred) RawStore {
 	// Log all queries.
 	// loggerAdapter := zerologadapter.New(zerolog.New(os.Stdout))
 	// rawdb = sqldblogger.OpenDriver(c.DB, rawdb.Driver(), loggerAdapter)
-
-	rawstore := RawStore{rawdb}
-
-	return rawstore
+	return RawStore{rawdb}
 }
-
-type StorageContextType string
-
-const (
-	SqlcStorageContextKey StorageContextType = "sqlc"
-)

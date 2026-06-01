@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"free-ent-guide-backend/pkg/cred"
+	"free-ent-guide-backend/pkg/config"
 	"io"
 	"net/http"
 	"strings"
@@ -14,7 +14,7 @@ type SlackBody struct {
 	Text string `json:"text"`
 }
 
-func slackMessage(c *cred.Cred, msg string) error {
+func slackMessage(c *config.Config, msg string) error {
 	if c.SlackURL == "" {
 		return nil
 	}

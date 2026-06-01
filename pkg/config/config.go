@@ -1,4 +1,4 @@
-package cred
+package config
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Cred holds app credentials.
-type Cred struct {
+// Config holds app config.
+type Config struct {
 	Tms           string        `mapstructure:"tms"`
 	Moviedb       string        `mapstructure:"moviedb"`
 	Port          int           `mapstructure:"port"`
@@ -27,8 +27,9 @@ type Cred struct {
 	Spaces        spaces.Config `mapstructure:"spaces"`
 }
 
-// GetCreds copies the configuration file into the cred struct.
-func (c *Cred) GetCreds(fname string, fpath string) {
+// GetCredsFromFile copies the configuration file into the config struct.
+func GetCredsFromFile(fname string, fpath string) *Config {
+	var c Config
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(fpath)
 	// SetConfigFile() can error as it looks for absolute path.
@@ -41,8 +42,9 @@ func (c *Cred) GetCreds(fname string, fpath string) {
 	if err != nil {
 		log.Fatalf("No credentials %v", err)
 	}
+	return &c
 }
 
-func (c *Cred) GetPort() string {
+func (c *Config) GetPort() string {
 	return fmt.Sprintf(":%d", c.Port)
 }
