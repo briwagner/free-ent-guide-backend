@@ -412,9 +412,10 @@ func ImportNHL(ctx context.Context, q *modelstore.Queries, client *http.Client, 
 			}
 			game.VisitorID = away.ID
 
-			if g.GameState == "OFF" {
+			if g.GameState == "OFF" { // normalize game state
 				game.HomeScore = g.Home.Score
 				game.VisitorScore = g.Away.Score
+				game.Status = nhlapi.SetGameState(g.GameState)
 			}
 
 			err = game.Create(q)

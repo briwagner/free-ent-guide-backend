@@ -239,7 +239,7 @@ type NHLGameUpdate struct {
 // As of 11-2023, NHL api has multiple versions of 'Final'.
 // For complete games, it returns "OFF".
 // We set a custom value of 'Final' and send as signal to front-end.
-func setGameState(st string) string {
+func SetGameState(st string) string {
 	switch st {
 	case "OFF", "OVER", "FINAL":
 		return "Final"
@@ -265,7 +265,7 @@ func (g *NHLGameUpdate) UnmarshalJSON(b []byte) error {
 	g.ID = id
 
 	st := cg["gameState"].(string)
-	g.Status = setGameState(st)
+	g.Status = SetGameState(st)
 
 	// Only check for live or past games, else this key is not found.
 	if g.Status == "LIVE" || g.Status == "Final" {
