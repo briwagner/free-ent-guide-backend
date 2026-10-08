@@ -39,6 +39,7 @@ type NHLTeam struct {
 	Tricode     string `json:"triCode"`
 	Name        string `json:"fullName"`
 	Link        string // we don't seem to use this anyway
+	Score       int    `json:"score"` // when importing past games, we don't have the score, though status is OFF
 }
 
 // TODO is this v1 only?

@@ -412,6 +412,11 @@ func ImportNHL(ctx context.Context, q *modelstore.Queries, client *http.Client, 
 			}
 			game.VisitorID = away.ID
 
+			if g.GameState == "OFF" {
+				game.HomeScore = g.Home.Score
+				game.VisitorScore = g.Away.Score
+			}
+
 			err = game.Create(q)
 			if err != nil {
 				countErrs++
